@@ -378,3 +378,23 @@ test('design.md lint：0 错误 0 警告', () => {
   assert.equal(m[1], '0', 'lint errors=' + m[1]);
   assert.equal(m[2], '0', 'lint warnings=' + m[2]);
 });
+
+/* ---------- 14. 站内锚点必须存在（防 #about/#contact 这类死锚点回归） ---------- */
+test('站内 #锚点 都有对应 id；ABOUT/CONTACT 导航指向独立页面', () => {
+  const pages = ['index.html', 'project.html', 'about.html', 'contact.html'];
+  for (const p of pages) {
+    const html = read(p);
+    const anchors = [...html.matchAll(/href="#([A-Za-z][\w-]*)"/g)].map((m) => m[1]);
+    for (const a of anchors) {
+      assert.ok(new RegExp('id="' + a + '"').test(html), p + ' 的 #' + a + ' 无对应 id');
+    }
+    /* 导航里的 About/Contact 必须是页面链接，不能是锚点 */
+    assert.ok(!/href="#about"|href="#contact"/.test(html), p + ' 导航残留 #about/#contact 死锚点');
+  }
+  const navRe = /<a href="([^"]+)">(?:About|Contact)<\/a>/g;
+  for (const p of pages) {
+    for (const m of read(p).matchAll(navRe)) {
+      assert.ok(/^(about|contact)\.html$/.test(m[1]), p + ' 导航 About/Contact 指向 ' + m[1]);
+    }
+  }
+});
