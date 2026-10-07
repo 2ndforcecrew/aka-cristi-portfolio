@@ -325,3 +325,55 @@ timeline.play(next) → breath.restart() → nav.sync() → 6.5s 后 `show((i+1)
 6. WP theme 脚手架：CPT 注册、ACF 字段组 JSON、`theme.json`（由 tokens.css 生成）、
    permalink（`/photography/project-name/`，禁 `?p=123`）。
 7. 性能升级：AVIF/WebP、hero 桌面/手机双裁切、video（手机用 poster）。
+
+---
+
+## 10. ChatGPT 参考融合（v1.1，用户指令，2026-10-08）
+
+用户发来 `aka_cristi_motion_portfolio_v2.html`（ChatGPT 单文件作品集），明确喜欢其**作品展示**，
+要求把以下 5 个模式融进新版。已逐行读过参考源码。**只参考版式与动效**，不照搬以下：
+Unsplash 外链（用自己 assets）、`alert()` 移动菜单（用 v1.0 全屏菜单）、Google Fonts（零外部 URL 铁律）、
+header `backdrop-filter: blur`（spec §06 禁止，改纯色 #FAFAF8）、大圆形 cursor（spec §41 保留普通 cursor）。
+
+### P1 — Hero 杂志封面轮播（版式对齐参考，转场保留 spec）
+- 版式（取自参考）：顶部 mono 行（`N°01 / 06` + `城市 — 年份`，数据取 data.js location/year）；
+  巨标题 Archivo 600 `clamp(58px,9.4vw,145px)/.82` 紧排 `-.065em`（中文 fallback 按 plan §1.1）；
+  右侧巨型描边 A 构图锚点（`min(63vw,850px)`，opacity .7，禁止压住人物脸部→object-position 微调）；
+  底部 dots（34px 短横线，active 62px 白）+ 2px 进度条与 6.5s 轮播同步（linear）；
+  SCROLL ↓（上下 8px，禁 bounce，spec §19）。
+- **转场不取参考的 fade**：保留 v1.0 editorial mask（clip-path wipe right→left / bottom→top，spec §14）。
+- Ken Burns 取参考参数：`scale 1.01→1.07 / 7s linear`（用户明确喜欢参考；覆盖 spec §15 的 1→1.035/6000ms，
+  plan §4 备注此偏离）。
+- 描边 A **不用字体 A**：用 `assets/a-symbol.svg` 的几何，描边渲染版
+  （内联 SVG，paths 改 `fill="none" stroke="currentColor" stroke-width="6"`，方点/针尖保留填充），
+  颜色 `rgba(255,255,255,.82)`。几何不变，不算重画。
+- 保留 v1.0 的分层 timeline（§13：0/.15/.30/.45/.60/.80s）与 A 标 700ms 进 / 450ms 退（§16）。
+
+### P2 — 灰阶优先的图片处理
+- 全站作品图默认 `filter: grayscale(.7) contrast(1.1)`；hover 透出部分色彩
+  （`grayscale(.25~.35)`，transition .5s）。Hero 图 `grayscale(.72) contrast(1.13)`。
+- 统一不同品类图片的视觉系统（spec §54 精神）。
+
+### P3 — 编辑编号体系
+- sectionHead 右侧 `01 / 06` 式索引（mono，#8A8A8A）；卡片左上 `N°01`；
+  archive 条目 `FASHION / 01` + 年份；微标签 10px JetBrains Mono 大写 0.32em；
+  photography head 配 `ARCHIVE / 2024—2026` 式馆藏标签。
+
+### P4 — 双网格性格
+- Photography：均匀 3 列（桌面），`aspect-ratio: 4/5`，档案感；filter 切换用 display:none（spec §22）。
+- Design：12 列不对称（wide `span 7` / 标准 `span 5` / tall `span 4`），
+  长宽比 `4/5`、`16/10`、`3/4` 穿插（spec §26 aligned masonry，边界对齐）。
+- 移动端：photo 2→1 列，design 2 列（wide 跨 2）→1 列。
+
+### P5 — 竖排流动品牌字带（替代 §32 单列循环）
+- 版块之间插入 `.vertical-names`：5 列描边 `AKA.CRISTI`（`-webkit-text-stroke: 1px #b7b7b7`，
+  纸底；深色带用 `rgba(255,255,255,.14)`），每列不同速度/延迟竖向漂移
+  （18s/23s/20s/26s/21s + 负 delay，alternate 往返），当呼吸口。
+- 慢速、不抢戏（spec §32 精神保留：opacity 极低感）。
+
+### P6 — 不采用清单（已决策）
+- 参考 header 的 `blur(12px)` → spec §06 禁止，纯色。
+- 参考 hero fade 切换 → spec §14 禁止，editorial mask。
+- 参考的字体 A（`.bigA` font Archivo）→ 用手绘 A 描边版（§59 Logo 纪律）。
+- 参考 `.magnetic` 磁吸 hover → 可选轻量保留（translate ≤8px，spec §41 允许），不强制。
+- 参考 `pageWipe`（定义了但从未触发）→ 单页原型无页面跳转，不做；WP 阶段按 §40 做。

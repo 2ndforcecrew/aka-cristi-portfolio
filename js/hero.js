@@ -10,9 +10,9 @@
   var AKA = (window.AKA = window.AKA || {});
 
   /* spec §13 timeline 延迟（s） */
-  var TL = { bg: 0, num: 0.15, cat: 0.30, title: 0.45, meta: 0.55, a: 0.60 };
+  var TL = { bg: 0, num: 0.15, loc: 0.15, cat: 0.30, title: 0.45, meta: 0.55, a: 0.60 };
   var SLIDE_MS = 6500;          /* §13：6–8s，取 6.5s */
-  var BREATH_MS = 6000;         /* §15 */
+  var BREATH_MS = 7000;         /* §10 P1：Ken Burns 7s linear（参考参数，覆盖 §15） */
   var EASE = 'cubic-bezier(0.16,1,0.3,1)'; /* 仅文档用，样式在 CSS */
 
   function each(arr, fn) {
@@ -67,6 +67,29 @@
     },
 
     /* ============ 建 slide DOM ============ */
+    /* 描边 A：内联 a-symbol.svg 几何（§10 P1）。
+       paths 改 fill="none" stroke-width="6"；针尖/方点保留填充；
+       几何不变，不算重画。clipPath id 按 slide 加后缀防冲突。 */
+    aOutlineSVG: function (i) {
+      var u = 'a-upper-' + i, l = 'a-lower-' + i;
+      return '<svg viewBox="60 -20 312 432" aria-hidden="true" focusable="false">' +
+        '<defs>' +
+        '<clipPath id="' + u + '"><rect x="0" y="-20" width="460" height="266"/></clipPath>' +
+        '<clipPath id="' + l + '"><rect x="0" y="272" width="460" height="160"/></clipPath>' +
+        '</defs>' +
+        '<g clip-path="url(#' + u + ')"><g transform="translate(28,0)">' +
+        '<path d="M 102 400 L 216 40" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="butt"/>' +
+        '<path d="M 216 40 L 330 400" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="butt"/>' +
+        '<rect x="233" y="-8" width="22" height="48" fill="currentColor"/>' +
+        '</g></g>' +
+        '<g clip-path="url(#' + l + ')">' +
+        '<path d="M 102 400 L 216 40" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="butt"/>' +
+        '<path d="M 216 40 L 330 400" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="butt"/>' +
+        '</g>' +
+        '<rect x="207" y="326" width="18" height="18" fill="currentColor"/>' +
+        '</svg>';
+    },
+
     build: function (works) {
       var wrap = byHook('hero-slides', hero.el);
       if (!wrap) return;
@@ -97,26 +120,29 @@
         bgw.appendChild(bg);
         s.appendChild(bgw);
 
-        /* layer 02：A 标 */
+        /* layer 02：A 标（描边版内联 SVG） */
         var ag = document.createElement('div');
         ag.className = 'hero-agroup';
         ag.setAttribute('data-px', 'a');
-        var aimg = document.createElement('img');
-        aimg.setAttribute('data-layer', 'a');
-        aimg.src = 'assets/a-symbol.svg?v=1.0';
-        aimg.alt = '';
-        aimg.setAttribute('aria-hidden', 'true');
-        ag.appendChild(aimg);
+        var awrap = document.createElement('div');
+        awrap.setAttribute('data-layer', 'a');
+        awrap.setAttribute('aria-hidden', 'true');
+        awrap.innerHTML = hero.aOutlineSVG(i);
+        ag.appendChild(awrap);
         s.appendChild(ag);
 
-        /* layer 03：编号 */
+        /* layer 03：顶部 mono 行（§10 P1：N°01 / 06 + 城市 — 年份） */
         var nw = document.createElement('div');
-        nw.className = 'hero-numwrap';
+        nw.className = 'hero-topline';
         nw.setAttribute('data-px', 'text');
         var num = document.createElement('div');
         num.setAttribute('data-layer', 'num');
-        num.textContent = 'N°' + pad2(i + 1);
+        num.textContent = 'N°' + pad2(i + 1) + ' / ' + pad2(works.length);
+        var loc = document.createElement('div');
+        loc.setAttribute('data-layer', 'loc');
+        loc.textContent = w.location + ' — ' + w.year;
         nw.appendChild(num);
+        nw.appendChild(loc);
         s.appendChild(nw);
 
         /* layer 04–06：文字组 */
@@ -136,6 +162,13 @@
         tg.appendChild(title);
         tg.appendChild(meta);
         s.appendChild(tg);
+
+        /* 底部 2px 进度条（§10 P1：与 6.5s 轮播同步，CSS animation 驱动） */
+        var prog = document.createElement('div');
+        prog.className = 'hero-progress';
+        prog.setAttribute('aria-hidden', 'true');
+        prog.innerHTML = '<i></i>';
+        s.appendChild(prog);
 
         frag.appendChild(s);
         hero.slides.push(s);
@@ -237,7 +270,7 @@
       }, SLIDE_MS);
     },
 
-    /* ============ breath（§15）：scale 1→1.035 / 6000ms ============ */
+    /* ============ breath（§10 P1）：scale 1.01→1.07 / 7000ms linear ============ */
     breath: {
       restart: function () { hero.breathT0 = performance.now(); },
       tick: function (now) {
@@ -246,13 +279,10 @@
         if (!slide) return;
         var img = slide.querySelector('[data-breath]');
         if (!img) return;
-        var t = ((now - hero.breathT0) % BREATH_MS) / BREATH_MS;
-        var e = t * t * (3 - 2 * t); /* smoothstep：弱到感觉不到 */
-        var s = 1 + 0.035 * e;
-        var x = (-1.5 * e).toFixed(3);
-        var y = (0.5 * e).toFixed(3);
-        img.style.transform =
-          'translate(' + x + '%, ' + y + '%) scale(' + s.toFixed(4) + ')';
+        /* 单程 linear：每张 slide 播一次，切换时 restart（参考行为） */
+        var t = Math.min(1, (now - hero.breathT0) / BREATH_MS);
+        var s = 1.01 + 0.06 * t;
+        img.style.transform = 'scale(' + s.toFixed(4) + ')';
       }
     },
 
@@ -301,14 +331,11 @@
       }
     },
 
-    /* ============ nav（§18） ============ */
+    /* ============ nav（§10 P1：短横线 dots；顶部已有 N°01/06，不再重复计数） ============ */
     nav: {
       build: function () {
         var nav = byHook('hero-nav', hero.el);
         if (!nav) return;
-        var count = document.createElement('span');
-        count.className = 'hero-count';
-        count.setAttribute('data-js', 'hero-count');
         var dots = document.createElement('div');
         dots.className = 'hero-dots';
         dots.setAttribute('role', 'tablist');
@@ -317,7 +344,6 @@
           (function (idx) {
             var b = document.createElement('button');
             b.type = 'button';
-            b.textContent = pad2(idx + 1);
             b.setAttribute('role', 'tab');
             b.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
             b.addEventListener('click', function () {
@@ -329,17 +355,12 @@
           })(i);
         }
         nav.innerHTML = '';
-        nav.appendChild(count);
         nav.appendChild(dots);
         hero.nav.sync();
       },
       sync: function () {
         var nav = byHook('hero-nav', hero.el);
         if (!nav) return;
-        var count = nav.querySelector('[data-js="hero-count"]');
-        if (count) {
-          count.textContent = pad2(hero.state.i + 1) + ' / ' + pad2(hero.state.n);
-        }
         var btns = nav.querySelectorAll('.hero-dots button');
         each(btns, function (b, k) {
           b.classList.toggle('is-active', k === hero.state.i);

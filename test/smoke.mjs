@@ -97,7 +97,8 @@ test('tokens.css：:root 含全部色板/easing/断点', () => {
 test('关键选择器存在', () => {
   const all = cssFiles().map((f) => read('css/' + f)).join('\n');
   for (const sel of ['.site-header', '.hero', '.hero-slide', '[data-layer]', '.work-card',
-    '.photo-grid', '.design-grid', '.brand-motion', '.contact-cta', '.site-footer']) {
+    '.photo-grid', '.design-grid', '.vertical-names', '.contact-cta', '.site-footer',
+    '.sec-index', '.micro']) {
     assert.ok(all.includes(sel), '缺选择器 ' + sel);
   }
   assert.ok(all.includes('prefers-reduced-motion'), '缺 reduced-motion 总闸');
@@ -130,7 +131,67 @@ test('SEO：img 皆有 alt；内容图 alt 含 AKA.CRISTI — 前缀', () => {
   assert.ok(read('js/hero.js').includes('AKA.CRISTI — '), 'hero.js alt 模板缺前缀');
 });
 
-/* ---------- 9. design.md lint ---------- */
+/* ---------- 10. v1.1（§10 ChatGPT 参考融合） ---------- */
+test('v1.1 灰阶系统：作品图 grayscale(.7)/hover .3；hero grayscale(.72)', () => {
+  const all = cssFiles().map((f) => read('css/' + f)).join('\n');
+  assert.ok(all.includes('grayscale(.7)'), '缺全站灰阶 grayscale(.7)');
+  assert.ok(all.includes('grayscale(.3)'), '缺 hover 透色 grayscale(.3)');
+  assert.ok(read('css/hero.css').includes('grayscale(.72)'), 'hero 缺 grayscale(.72)');
+  assert.ok(read('css/hero.css').includes('contrast(1.13)'), 'hero 缺 contrast(1.13)');
+});
+
+test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点填充）', () => {
+  const js = read('js/hero.js');
+  assert.ok(js.includes('stroke-width="6"'), '缺描边 stroke-width="6"');
+  assert.ok(js.includes('fill="none"'), '缺 fill="none"');
+  assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
+});
+
+test('v1.1 mask 转场无 fade 回归：clip-path inset 进场，无 fade 关键帧', () => {
+  const heroCss = read('css/hero.css');
+  assert.ok(heroCss.includes('inset(0 0 0 100%)'), '缺 mask 进场 inset(0 0 0 100%)');
+  assert.ok(!/@keyframes\s+[\w-]*fade/i.test(heroCss), 'hero 含 fade 关键帧（§14 禁止）');
+  assert.ok(heroCss.includes('@keyframes hero-progress'), '缺 2px 进度条 hero-progress');
+  assert.ok(heroCss.includes('6.5s linear'), '进度条未与 6.5s 轮播同步');
+});
+
+test('v1.1 字带：.vertical-names 5 列不同速度 alternate 竖漂', () => {
+  const css = read('css/layout.css');
+  assert.ok(css.includes('.vertical-names'), '缺 .vertical-names');
+  assert.ok(css.includes('@keyframes name-drift'), '缺 name-drift');
+  for (const d of ['18s', '23s', '20s', '26s', '21s']) {
+    assert.ok(css.includes(d), '缺字带速度 ' + d);
+  }
+  assert.ok(css.includes('infinite alternate'), '字带非 alternate 往返');
+});
+
+test('v1.1 双网格：design 12 列 span7/5/4 + 长宽比穿插；photo 4/5', () => {
+  const css = read('css/layout.css');
+  assert.ok(css.includes('repeat(12, 1fr)'), 'design 缺 12 列');
+  assert.ok(css.includes('.span7') && css.includes('.span5') && css.includes('.span4'), '缺 span 分配');
+  assert.ok(css.includes('ratio-45') && css.includes('ratio-1610') && css.includes('ratio-34'), '缺长宽比穿插');
+  assert.ok(!/(^|[{;])\s*columns\s*:\s*\d/.test(css), 'design 仍用 CSS columns masonry');
+  assert.ok(read('js/main.js').includes('DESIGN_PAT'), 'main.js 缺 DESIGN_PAT 分配表');
+});
+
+test('v1.1 编号体系：sec-index / archive 条目 / 微标签', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('01 / 06') && html.includes('06 / 06'), '缺 01/06–06/06 编号');
+  assert.ok(html.includes('data-js="photo-archive-label"'), '缺 photo archive 钩子');
+  assert.ok(html.includes('data-js="design-archive-label"'), '缺 design archive 钩子');
+  assert.ok(read('js/main.js').includes("w.category + ' / ' + pad2(n)"), 'archive 条目缺 分类/序号');
+});
+
+test('v1.1 红线补充：无 alert()；header 无 blur；JS 无外部引用', () => {
+  for (const f of jsFiles().map((x) => 'js/' + x)) {
+    assert.ok(!/\balert\s*\(/.test(read(f)), f + ' 含 alert()');
+  }
+  assert.ok(!/backdrop-filter/.test(read('css/layout.css')), 'layout.css 含 backdrop-filter');
+  const headerBlock = read('css/layout.css').match(/\.site-header\s*{[^}]*}/);
+  assert.ok(headerBlock && !/blur\s*\(/.test(headerBlock[0]), '.site-header 含 blur()');
+});
+
+/* ---------- 11. design.md lint ---------- */
 test('design.md lint：0 错误 0 警告', () => {
   const out = execSync('design.md lint DESIGN.md', { cwd: ROOT, encoding: 'utf8' });
   const m = out.match(/"errors":\s*(\d+)[\s\S]*"warnings":\s*(\d+)/);

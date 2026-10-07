@@ -1,4 +1,4 @@
-# AKA.CRISTI — 静态原型 v1.0
+# AKA.CRISTI — 静态原型 v1.1
 
 Avant-Garde Fashion Magazine × Photographer Portfolio × Graphic Design Archive。
 体验关键词：«冷、精密、留白、昂贵、带锋芒。»
@@ -7,6 +7,19 @@ Avant-Garde Fashion Magazine × Photographer Portfolio × Graphic Design Archive
 插件无法跑在 GitHub Pages 上，原型用原生 JS/CSS 复刻 spec 全部 motion 参数
 （timeline / editorial mask 转场 / 呼吸 / A 标动画 / 视差数值与 spec 一一对应）。
 设计系统见 [DESIGN.md](./DESIGN.md)，实施计划见 [BUILD_PLAN.md](./BUILD_PLAN.md)。
+
+## v1.1 变更（BUILD_PLAN §10：ChatGPT 参考融合）
+
+- **Hero**：杂志封面版式——顶部 mono 行 `N°01 / 06` + `城市 — 年份`；
+  巨标题 `clamp(58px,9.4vw,145px)/.82` 紧排；右侧描边 A（内联 a-symbol.svg 几何，
+  `min(63vw,850px)`，opacity .7）；底部短横线 dots（34px→62px）+ 2px 进度条与 6.5s 同步；
+  Ken Burns 改 `scale 1.01→1.07` / 7s linear。**转场仍是 editorial mask（禁 fade）**。
+- **灰阶系统**：作品图默认 `grayscale(.7) contrast(1.1)`，hover 透至 `.3`；hero 图 `.72/1.13`。
+- **编号体系**：sec-head 右侧 `01 / 06`；archive 条目 `分类 / 序号` + 年份；10px mono 微标签；
+  photography `ARCHIVE / 2023—2025`、design `ARCHIVE / 06 PROJECTS`（由 data.js 计算）。
+- **双网格**：photography 均匀 3 列 4/5；design 12 列不对称（span7/5/4，长宽比 4/5、16/10、3/4 穿插）。
+- **字带**：版块间 `.vertical-names`，5 列描边 AKA.CRISTI 不同速度 alternate 竖漂。
+- 不采用：header blur（纯色）、hero fade、大 cursor、alert() 移动菜单（已用全屏菜单）。
 
 ## 本地预览
 
@@ -53,8 +66,8 @@ python3 -m http.server 8080
 | 页面 /about /contact（spec §28/§29） | 首页 about-intro / contact-cta（第一阶段） | 独立页第二阶段 |
 
 SR 参数速查（填 Slider Revolution 时用）：slide 6.5s；timeline 0/.15/.30/.45/(.55)/.60s；
-转场 editorial mask（clip-path inset，RIGHT→LEFT，禁 fade）；呼吸 scale 1→1.035 / 6000ms /
-x −1.5% / y +0.5%；A 标进 700ms（opacity+x+30→0+clip 80%→0）退 450ms（x→−20）；
+转场 editorial mask（clip-path inset，RIGHT→LEFT，禁 fade）；呼吸 scale 1.01→1.07 / 7000ms /
+linear 单程（v1.1 参考参数，覆盖 §15）；A 标进 700ms（opacity+x+30→0+clip 80%→0）退 450ms（x→−20）；
 视差 mouse ±8px，scroll 上 A ±20px / 图 ±8px / 文 ±3px；easing `cubic-bezier(0.16,1,0.3,1)`。
 
 ## 已知折扣
@@ -67,7 +80,7 @@ x −1.5% / y +0.5%；A 标进 700ms（opacity+x+30→0+clip 80%→0）退 450ms
 ## 测试
 
 ```bash
-node test/smoke.mjs          # 9 类检查，全绿
+node test/smoke.mjs          # 16 项检查，全绿（含 7 项 v1.1 新增）
 node --check js/data.js js/hero.js js/main.js
 design.md lint DESIGN.md     # 0 错误 0 警告
 ```

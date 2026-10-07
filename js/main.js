@@ -64,7 +64,7 @@
     return card;
   }
 
-  function photoCell(w, i) {
+  function photoCell(w, n) {
     var cell = document.createElement('article');
     cell.className = 'photo-cell';
     cell.setAttribute('data-id', w.id);
@@ -73,24 +73,37 @@
     img.alt = altFor(w);
     img.loading = 'lazy';
     img.decoding = 'async';
+    /* §10 P3：archive 条目 = 分类 / 序号 + 年份（10px mono 微标签） */
     var meta = document.createElement('div');
-    meta.className = 'work-card-meta';
-    var cat = document.createElement('p');
-    cat.className = 'work-card-cat';
-    cat.textContent = w.category;
+    meta.className = 'photo-meta';
+    var idx = document.createElement('p');
+    idx.className = 'micro';
+    idx.textContent = w.category + ' / ' + pad2(n);
     var title = document.createElement('h3');
     title.className = 'work-card-title';
     title.textContent = w.titleEn;
-    meta.appendChild(cat);
+    var year = document.createElement('p');
+    year.className = 'micro';
+    year.textContent = w.year;
+    meta.appendChild(idx);
     meta.appendChild(title);
+    meta.appendChild(year);
     cell.appendChild(img);
     cell.appendChild(meta);
     return cell;
   }
 
-  function designCell(w) {
+  /* §10 P4：design 12 列不对称分配（行对齐：7+5 / 4+4+4） */
+  var DESIGN_PAT = [
+    ['span7', 'ratio-45'], ['span5', 'ratio-1610'],
+    ['span4', 'ratio-34'], ['span4', 'ratio-45'], ['span4', 'ratio-1610'],
+    ['span7', 'ratio-34']
+  ];
+
+  function designCell(w, i) {
     var cell = document.createElement('article');
-    cell.className = 'design-cell';
+    var pat = DESIGN_PAT[i % DESIGN_PAT.length];
+    cell.className = 'design-cell ' + pat[0] + ' ' + pat[1];
     cell.setAttribute('data-id', w.id);
     var imgw = document.createElement('div');
     imgw.className = 'design-imgwrap';
@@ -134,11 +147,12 @@
     var grid = byHook('photo-grid');
     if (!grid || !AKA.WORKS) return;
     var frag = document.createDocumentFragment();
-    var i = 0;
+    var n = 0; /* 全局 archive 序号（过滤不改变编号） */
     each(AKA.WORKS, function (w) {
       if (w.kind !== 'photo') return;
+      n++;
       if (cat && cat !== 'ALL' && w.category !== cat) return; /* display:none 语义：重渲染，不残留 */
-      frag.appendChild(photoCell(w, i++));
+      frag.appendChild(photoCell(w, n));
     });
     grid.innerHTML = '';
     grid.appendChild(frag);
@@ -148,10 +162,11 @@
     var grid = byHook('design-grid');
     if (!grid || !AKA.WORKS) return;
     var frag = document.createDocumentFragment();
+    var i = 0;
     each(AKA.WORKS, function (w) {
       if (w.kind !== 'design') return;
       if (cat && cat !== 'ALL' && w.category !== cat) return;
-      frag.appendChild(designCell(w));
+      frag.appendChild(designCell(w, i++));
     });
     grid.innerHTML = '';
     grid.appendChild(frag);
@@ -231,11 +246,31 @@
     if (y) y.textContent = String(new Date().getFullYear());
   }
 
+  /* ---------- 馆藏标签（§10 P3：ARCHIVE / 2023—2025 式，由 data.js 计算） ---------- */
+  function initArchiveLabels() {
+    var works = Array.isArray(AKA.WORKS) ? AKA.WORKS : [];
+    var photos = works.filter(function (w) { return w.kind === 'photo'; });
+    var years = photos
+      .map(function (w) { return parseInt(w.year, 10); })
+      .filter(function (y) { return !isNaN(y); });
+    var pl = byHook('photo-archive-label');
+    if (pl && years.length) {
+      pl.textContent = 'ARCHIVE / ' + Math.min.apply(null, years) +
+        '—' + Math.max.apply(null, years);
+    }
+    var designs = works.filter(function (w) { return w.kind === 'design'; });
+    var dl = byHook('design-archive-label');
+    if (dl) {
+      dl.textContent = 'ARCHIVE / ' + pad2(designs.length) + ' PROJECTS';
+    }
+  }
+
   /* ---------- 启动 ---------- */
   function init() {
     renderSelected();
     initFilter('photo-filter', ['ALL'].concat(AKA.PHOTO_CATS || []), renderPhotoGrid);
     initFilter('design-filter', ['ALL'].concat(AKA.DESIGN_CATS || []), renderDesignGrid);
+    initArchiveLabels();
     initMenu();
     initReveal();
     initYear();

@@ -138,6 +138,40 @@
   border-bottom: 1px solid var(--gray-300);
   padding-bottom: var(--space-4);
 }
+.sec-head-right {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+/* §10 P3：编辑编号体系 */
+.sec-index {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+.sec-archive { color: var(--gray-500); }
+/* 10px mono 微标签（§10 P3） */
+.micro {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+.sec-index-static {
+  color: var(--gray-500);
+  margin-bottom: var(--space-4);
+}
+.footer-colophon {
+  color: var(--gray-500);
+  margin-top: var(--space-3);
+}
 .sec-title {
   font-size: clamp(var(--text-h2-min), 4vw, var(--text-h2-max));
   text-transform: uppercase;
@@ -209,9 +243,14 @@
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  transition: transform 400ms var(--ease-out);
+  /* §10 P2：灰阶优先，hover 透出部分色彩 */
+  filter: grayscale(.7) contrast(1.1);
+  transition: transform 400ms var(--ease-out), filter 500ms var(--ease-out);
 }
-.work-card:hover .work-card-img img { transform: scale(1.03); } /* hover 图 scale 1.03 / 400ms */
+.work-card:hover .work-card-img img {
+  transform: scale(1.03); /* hover 图 scale 1.03 / 400ms */
+  filter: grayscale(.3) contrast(1.12);
+}
 .work-card-meta { padding: var(--space-3); }
 .work-card-cat {
   font-family: var(--font-mono);
@@ -232,7 +271,7 @@
   margin-top: 4px;
 }
 
-/* ================= photography grid（spec §23） ================= */
+/* ================= photography grid（spec §23 + §10 P4：均匀 3 列，4/5 档案感） ================= */
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -246,69 +285,109 @@
 }
 .photo-cell img {
   width: 100%;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 5;
   object-fit: cover;
-  transition: transform 400ms var(--ease-out);
+  filter: grayscale(.7) contrast(1.1); /* §10 P2 */
+  transition: transform 400ms var(--ease-out), filter 500ms var(--ease-out);
 }
-.photo-cell:hover img { transform: scale(1.03); }
-.photo-cell .work-card-meta { padding: var(--space-2) 0 0; }
+.photo-cell:hover img {
+  transform: scale(1.03);
+  filter: grayscale(.3) contrast(1.12);
+}
+.photo-meta { padding: var(--space-2) 0 0; }
+.photo-meta .micro { color: var(--gray-500); }
+.photo-meta .work-card-title { margin: 6px 0 4px; }
 
-/* ================= design grid：aligned masonry（spec §26） ================= */
+/* ================= design grid：12 列不对称（spec §26 + §10 P4） ================= */
 .design-grid {
-  columns: 3;
-  column-gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  align-items: start;
 }
 .design-cell {
-  break-inside: avoid;
-  margin-bottom: 24px;
   display: block;
   border: 1px solid var(--gray-300);
   background: var(--paper);
   text-align: left;
+  /* 无阴影；边界对齐靠 grid */
 }
+.design-cell.span7 { grid-column: span 7; }
+.design-cell.span5 { grid-column: span 5; }
+.design-cell.span4 { grid-column: span 4; }
 .design-cell:hover { border-color: var(--ink); }
 .design-cell img {
   width: 100%;
-  height: auto; /* 自然比例 */
-  transition: transform 400ms var(--ease-out);
+  object-fit: cover;
+  filter: grayscale(.7) contrast(1.1); /* §10 P2：SVG 占位与真图统一 */
+  transition: transform 400ms var(--ease-out), filter 500ms var(--ease-out);
 }
+/* 长宽比穿插：4/5、16/10、3/4 */
+.design-cell.ratio-45 img { aspect-ratio: 4 / 5; }
+.design-cell.ratio-1610 img { aspect-ratio: 16 / 10; }
+.design-cell.ratio-34 img { aspect-ratio: 3 / 4; }
 .design-cell .design-imgwrap { overflow: hidden; }
-.design-cell:hover .design-imgwrap img { transform: scale(1.03); }
+.design-cell:hover .design-imgwrap img {
+  transform: scale(1.03);
+  filter: grayscale(.3) contrast(1.12);
+}
 .design-cell .work-card-meta { padding: var(--space-3); }
-/* design SVG 占位灰度处理（§54） */
-.design-cell img[src$=".svg"] { filter: grayscale(1); }
 
-/* ================= brand statement（spec §32） ================= */
+/* ================= brand statement（spec §32 + §10 P5 竖排流动品牌字带） ================= */
 .statement {
   position: relative;
   overflow: hidden;
   border-top: 1px solid var(--gray-300);
   border-bottom: 1px solid var(--gray-300);
 }
-.brand-motion {
+/* §10 P5：5 列描边 AKA.CRISTI，不同速度/延迟竖向漂移（alternate 往返），当呼吸口 */
+.vertical-names {
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  overflow: hidden;
+  height: 190px;
+  border-top: 1px solid var(--gray-300);
+  border-bottom: 1px solid var(--gray-300);
+}
+.statement .vertical-names {
   position: absolute;
   inset: 0;
+  height: auto;
+  border: 0;
+  opacity: .55; /* 做背景时更淡，不抢正文 */
+}
+.name-col {
+  width: 20%;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
   align-items: center;
-  pointer-events: none;
-  user-select: none;
-  opacity: 0.08; /* 0.05–0.10，不抢作品 */
+  gap: 30px;
+  padding-top: 24px;
+  animation: name-drift 18s ease-in-out infinite alternate;
+  will-change: transform;
 }
-.brand-motion span {
+.name-col:nth-child(2) { animation-duration: 23s; animation-delay: -8s; }
+.name-col:nth-child(3) { animation-duration: 20s; animation-delay: -3s; }
+.name-col:nth-child(4) { animation-duration: 26s; animation-delay: -13s; }
+.name-col:nth-child(5) { animation-duration: 21s; animation-delay: -5s; }
+.outline-name {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(60px, 12vw, 160px);
-  letter-spacing: 0.1em;
+  font-size: clamp(34px, 5vw, 70px);
+  line-height: .8;
+  letter-spacing: -.05em;
   white-space: nowrap;
   color: transparent;
-  -webkit-text-stroke: 1px var(--ink); /* outline / hollow */
-  animation: brand-drift 36s linear infinite; /* 25–45s 慢速循环 */
+  -webkit-text-stroke: 1px #b7b7b7; /* 纸底描边 */
 }
-@keyframes brand-drift {
-  from { transform: translateY(-50%); }
-  to { transform: translateY(0%); }
+.vertical-names--dark .outline-name {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, .14); /* 深色带 */
+}
+@keyframes name-drift {
+  from { transform: translateY(-70px); }
+  to { transform: translateY(70px); }
 }
 .statement-inner {
   position: relative;
@@ -332,6 +411,7 @@
   width: 100%;
   max-height: 70vh;
   object-fit: cover;
+  filter: grayscale(.7) contrast(1.1); /* §10 P2：全站作品图统一 */
 }
 .about-screen2 {
   display: grid;
@@ -419,9 +499,8 @@
 
 /* ================= 断点 ================= */
 @media (max-width: 1279px) {
-  /* tablet：8 列概念，gutter 保持 24 */
+  /* tablet：8 列概念，gutter 保持 24；photo 2 列；design 保持 12 列不对称 */
   .photo-grid { grid-template-columns: repeat(2, 1fr); }
-  .design-grid { columns: 2; }
 }
 
 @media (max-width: 768px) {
@@ -429,14 +508,27 @@
   .site-header { height: 62px; }
   .site-nav { display: none; }          /* 汉堡接管 */
   .menu-toggle { display: block; }
-  .photo-grid { grid-template-columns: 1fr; gap: 16px; }
-  .design-grid { columns: 1; column-gap: 16px; }
+  .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } /* §10 P4 */
+  .design-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } /* §10 P4 */
+  .design-cell.span7 { grid-column: span 2; } /* wide 跨 2 */
+  .design-cell.span5,
+  .design-cell.span4 { grid-column: span 1; }
   .selected-grid { grid-template-columns: 1fr; }
   .about-screen2 { grid-template-columns: 1fr; }
   .container { padding-inline: var(--space-3); }
+  /* 字带移动端：4 列 */
+  .vertical-names { height: 130px; }
+  .name-col { width: 25%; }
+  .name-col:nth-child(n+5) { display: none; }
+  .outline-name { font-size: 38px; }
 }
 
 @media (max-width: 480px) {
   .brand .wordmark { display: none; }   /* ≤480px 字标收进菜单，只留 A */
   .site-header { height: 60px; }
+  .photo-grid { grid-template-columns: 1fr; } /* §10 P4：2→1 */
+  .design-grid { grid-template-columns: 1fr; } /* §10 P4：→1 列 */
+  .design-cell.span7,
+  .design-cell.span5,
+  .design-cell.span4 { grid-column: span 1; }
 }

@@ -10,13 +10,13 @@
   <meta property="og:title" content="AKA.CRISTI">
   <meta property="og:description" content="Cold / Precise / Editorial / Expensive / Sharp.">
   <title>AKA.CRISTI</title>
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.0">
-  <link rel="preload" as="image" href="assets/img/photo-01.jpg?v=1.0">
-  <link rel="stylesheet" href="css/tokens.css?v=1.0">
-  <link rel="stylesheet" href="css/base.css?v=1.0">
-  <link rel="stylesheet" href="css/layout.css?v=1.0">
-  <link rel="stylesheet" href="css/hero.css?v=1.0">
-  <link rel="stylesheet" href="css/motion.css?v=1.0">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.1">
+  <link rel="preload" as="image" href="assets/img/photo-01.jpg?v=1.1">
+  <link rel="stylesheet" href="css/tokens.css?v=1.1">
+  <link rel="stylesheet" href="css/base.css?v=1.1">
+  <link rel="stylesheet" href="css/layout.css?v=1.1">
+  <link rel="stylesheet" href="css/hero.css?v=1.1">
+  <link rel="stylesheet" href="css/motion.css?v=1.1">
 </head>
 <body>
 
@@ -24,7 +24,7 @@
   <header class="site-header" data-js="site-header">
     <div class="header-inner">
       <a class="brand" href="#top" data-js="brand" aria-label="AKA.CRISTI — top">
-        <img class="brand-a" src="assets/a-symbol.svg?v=1.0" alt="" aria-hidden="true">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.1" alt="" aria-hidden="true">
         <span class="wordmark">AKA.CRISTI</span>
       </a>
       <nav class="site-nav" data-js="site-nav" aria-label="Primary">
@@ -43,7 +43,7 @@
   <!-- Mobile menu（spec §38） -->
   <div class="mobile-menu" data-js="mobile-menu" aria-hidden="true">
     <div class="mobile-menu-top">
-      <img class="brand-a" src="assets/a-symbol.svg?v=1.0" alt="AKA.CRISTI">
+      <img class="brand-a" src="assets/a-symbol.svg?v=1.1" alt="AKA.CRISTI">
       <button class="menu-close" type="button" data-js="menu-close">Close</button>
     </div>
     <nav aria-label="Mobile">
@@ -63,43 +63,67 @@
       <div class="scroll-indicator" aria-hidden="true">Scroll<br>↓</div>
     </section>
 
-    <!-- Selected work（spec §20） -->
+    <!-- Selected work（spec §20 + §10 P3 编号） -->
     <section class="section" id="work">
       <div class="container">
         <div class="sec-head" data-js="reveal">
           <h2 class="sec-title">Selected Work</h2>
-          <a class="sec-link" href="#photography">View all work →</a>
+          <div class="sec-head-right">
+            <a class="sec-link" href="#photography">View all work →</a>
+            <span class="sec-index">01 / 06</span>
+          </div>
         </div>
         <div class="selected-grid" data-js="selected-grid"></div>
       </div>
     </section>
 
-    <!-- Photography（spec §22–§23） -->
+    <!-- Photography（spec §22–§23 + §10 P3/P4） -->
     <section class="section" id="photography">
       <div class="container">
         <div class="sec-head" data-js="reveal">
           <h2 class="sec-title">Photography</h2>
+          <div class="sec-head-right">
+            <span class="micro sec-archive" data-js="photo-archive-label">Archive</span>
+            <span class="sec-index">02 / 06</span>
+          </div>
         </div>
         <div class="filter" data-js="photo-filter" role="tablist" aria-label="Photography categories"></div>
         <div class="photo-grid" data-js="photo-grid"></div>
       </div>
     </section>
 
-    <!-- Graphic design（spec §26） -->
+    <!-- 竖排流动品牌字带（§10 P5，版块间呼吸口） -->
+    <div class="vertical-names" aria-hidden="true">
+      <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+      <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+      <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+      <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+      <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+    </div>
+
+    <!-- Graphic design（spec §26 + §10 P3/P4） -->
     <section class="section" id="design">
       <div class="container">
         <div class="sec-head" data-js="reveal">
           <h2 class="sec-title">Graphic Design</h2>
+          <div class="sec-head-right">
+            <span class="micro sec-archive" data-js="design-archive-label">Archive</span>
+            <span class="sec-index">03 / 06</span>
+          </div>
         </div>
         <div class="filter" data-js="design-filter" role="tablist" aria-label="Design categories"></div>
         <div class="design-grid" data-js="design-grid"></div>
       </div>
     </section>
 
-    <!-- Brand statement（spec §32） -->
+    <!-- Brand statement（spec §32 + §10 P5） -->
     <section class="statement" aria-label="Brand statement">
-      <div class="brand-motion" data-js="brand-motion" aria-hidden="true">
-        <span>AKA.CRISTI</span><span>AKA.CRISTI</span><span>AKA.CRISTI</span><span>AKA.CRISTI</span><span>AKA.CRISTI</span>
+      <div class="vertical-names" aria-hidden="true">
+        <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+        <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+        <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+        <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
+        <div class="name-col"><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span><span class="outline-name">AKA.CRISTI</span></div>
       </div>
       <div class="container">
         <div class="statement-inner" data-js="reveal">
@@ -108,12 +132,13 @@
       </div>
     </section>
 
-    <!-- About intro（spec §28） -->
+    <!-- About intro（spec §28 + §10 P3 编号） -->
     <section class="section" id="about">
       <div class="container">
+        <p class="micro sec-index-static" data-js="reveal">04 / 06 — About</p>
         <div class="about-screen1" data-js="reveal">
           <h2 class="about-word">AKA.CRISTI</h2>
-          <img class="about-hero-img" src="assets/img/bw-01.jpg?v=1.0" alt="AKA.CRISTI — HAUTE SILHOUETTE — PERSONAL" loading="lazy" decoding="async">
+          <img class="about-hero-img" src="assets/img/bw-01.jpg?v=1.1" alt="AKA.CRISTI — HAUTE SILHOUETTE — PERSONAL" loading="lazy" decoding="async">
         </div>
         <div class="about-screen2" data-js="reveal">
           <p class="about-disc">Photography</p>
@@ -129,9 +154,10 @@
       </div>
     </section>
 
-    <!-- Contact CTA（spec §30） -->
+    <!-- Contact CTA（spec §30 + §10 P3 编号） -->
     <section class="section contact-cta" id="contact">
       <div class="container" data-js="reveal">
+        <p class="micro sec-index-static">05 / 06 — Contact</p>
         <h2 class="cta-title">Let&rsquo;s make<br>something<br>sharp.</h2>
         <a class="btn-start" href="mailto:hello@cristi.studio?subject=AKA.CRISTI%20—%20Project%20Inquiry">Start a project</a>
       </div>
@@ -142,7 +168,7 @@
   <footer class="site-footer">
     <div class="container">
       <a class="footer-brand" href="#top" aria-label="AKA.CRISTI — top">
-        <img class="brand-a" src="assets/a-symbol.svg?v=1.0" alt="" aria-hidden="true">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.1" alt="" aria-hidden="true">
         <span class="wordmark">AKA.CRISTI</span>
       </a>
       <nav class="footer-links" aria-label="Social">
@@ -152,11 +178,12 @@
         <a href="#">Other</a>
       </nav>
       <p class="footer-copy">© AKA.CRISTI <span data-js="year">2026</span></p>
+      <p class="micro footer-colophon">06 / 06 — Colophon</p>
     </div>
   </footer>
 
-  <script src="js/data.js?v=1.0"></script>
-  <script src="js/hero.js?v=1.0"></script>
-  <script src="js/main.js?v=1.0"></script>
+  <script src="js/data.js?v=1.1"></script>
+  <script src="js/hero.js?v=1.1"></script>
+  <script src="js/main.js?v=1.1"></script>
 </body>
 </html>

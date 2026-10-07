@@ -56,8 +56,10 @@
   .hero-slide { clip-path: inset(0 0 0 0) !important; }
   .hero-slide:not(.is-active) { visibility: hidden; }
   .scroll-indicator { animation: none !important; }
-  /* brand statement：静态 */
-  .brand-motion span { animation: none !important; }
+  /* hero 进度条：静态 */
+  .hero-progress i { animation: none !important; }
+  /* 竖排字带（§10 P5）：静态 */
+  .vertical-names .name-col { animation: none !important; }
   /* 移动菜单：直接出现 */
   .mobile-menu { transition: none !important; }
 }
