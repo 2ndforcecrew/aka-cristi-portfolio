@@ -53,6 +53,7 @@
       if (s0) {
         s0.classList.add('is-active');
         s0.setAttribute('aria-hidden', 'false');
+        hero.tone.sync(s0);
         if (hero.state.reduced) {
           each(s0.querySelectorAll('[data-layer]'), function (l) {
             l.classList.add('in');
@@ -64,6 +65,16 @@
       }
       hero.nav.sync();
       if (!hero.state.reduced) hero.auto();
+    },
+
+    /* ============ 主题：浅色 slide 时 section 切 is-light ============ */
+    /* dots / scroll-indicator 是 slide 的兄弟元素，主题必须挂在 section.hero 上 */
+    tone: {
+      sync: function (s) {
+        if (hero.el) {
+          hero.el.classList.toggle('is-light', !!(s && s.classList.contains('is-light')));
+        }
+      }
     },
 
     /* ============ 建 slide DOM ============ */
@@ -230,6 +241,7 @@
           each(nxt.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
           nxt.classList.add('is-active');
           nxt.setAttribute('aria-hidden', 'false');
+          hero.tone.sync(nxt);
           st.i = n;
           hero.nav.sync();
           return;
@@ -243,6 +255,7 @@
         /* 进场：mask 从右侧展开（RIGHT→LEFT） */
         nxt.classList.add('is-active', 'pre-enter');
         nxt.setAttribute('aria-hidden', 'false');
+        hero.tone.sync(nxt);
         void nxt.offsetWidth; /* 回流，确保 pre-enter 生效 */
         nxt.classList.remove('pre-enter');
         nxt.classList.add('is-entering');

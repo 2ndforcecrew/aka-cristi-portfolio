@@ -191,21 +191,27 @@ test('v1.1 红线补充：无 alert()；header 无 blur；JS 无外部引用', (
   assert.ok(headerBlock && !/blur\s*\(/.test(headerBlock[0]), '.site-header 含 blur()');
 });
 
-test('v1.2 浅色 slide：tone=light 的 slide 前景转 ink', () => {
+test('v1.2 浅色 slide：tone=light 的 slide 前景转 ink（主题挂 section.hero）', () => {
   const data = read('js/data.js');
   assert.ok(/tone:\s*'light'/.test(data), 'data.js 缺少 tone=light');
   const heroJs = read('js/hero.js');
-  assert.ok(/is-light/.test(heroJs), 'hero.js 未加 is-light 类');
+  assert.ok(/tone:\s*{/.test(heroJs) && /hero\.tone\.sync/.test(heroJs),
+    'hero.js 缺少 tone.sync（主题须挂 section.hero，dots/scroll 是兄弟元素）');
   const css = read('css/hero.css');
   for (const sel of [
-    '.hero-slide.is-light .hero-textgroup',
-    '.hero-slide.is-light .hero-topline',
-    '.hero-slide.is-light [data-layer="a"]',
-    '.hero-slide.is-light .hero-dots button.is-active',
-    '.hero-slide.is-light .hero-progress i',
+    '.hero.is-light .hero-textgroup',
+    '.hero.is-light .hero-topline',
+    '.hero.is-light [data-layer="a"]',
+    '.hero.is-light [data-layer="meta"]',
+    '.hero.is-light .scroll-indicator',
+    '.hero.is-light .hero-dots button.is-active',
+    '.hero.is-light .hero-progress i',
   ]) {
     assert.ok(css.includes(sel), 'hero.css 缺少 ' + sel);
   }
+  /* 回归：旧的 .hero-slide.is-light 后代选择器套不上兄弟元素，不许残留 */
+  assert.ok(!/\.hero-slide\.is-light\s+\.(hero-dots|scroll-indicator)/.test(css),
+    'hero.css 残留套不上的 .hero-slide.is-light 兄弟选择器');
 });
 
 /* ---------- 11. design.md lint ---------- */

@@ -87,15 +87,17 @@
               transform 700ms var(--ease-out),
               clip-path 700ms var(--ease-out);
 }
-/* 浅色 slide：前景全部转 ink（A / 文字 / dots / 进度条 / scroll 指示器） */
-.hero-slide.is-light .hero-textgroup { color: var(--ink); }
-.hero-slide.is-light .hero-topline { color: var(--ink); }
-.hero-slide.is-light .scroll-indicator { color: var(--ink); }
-.hero-slide.is-light [data-layer="a"] { color: rgba(10, 10, 12, .82); }
-.hero-slide.is-light .hero-dots button { background: rgba(10, 10, 12, .35); background-clip: content-box; }
-.hero-slide.is-light .hero-dots button:hover { background-color: rgba(10, 10, 12, .7); background-clip: content-box; }
-.hero-slide.is-light .hero-dots button.is-active { background-color: var(--ink); background-clip: content-box; }
-.hero-slide.is-light .hero-progress i { background: var(--ink); }
+/* 浅色 slide：前景全部转 ink（A / 文字 / dots / 进度条 / scroll 指示器）；
+   注意 dots / scroll-indicator 是 slide 的兄弟元素，主题挂在 section.hero 上（JS: hero.tone.sync） */
+.hero.is-light .hero-textgroup { color: var(--ink); }
+.hero.is-light .hero-topline { color: var(--ink); }
+.hero.is-light .scroll-indicator { color: var(--ink); }
+.hero.is-light [data-layer="a"] { color: rgba(10, 10, 12, .82); }
+.hero.is-light [data-layer="meta"] { color: rgba(10, 10, 12, .75); }
+.hero.is-light .hero-dots button { background: rgba(10, 10, 12, .35); background-clip: content-box; }
+.hero.is-light .hero-dots button:hover { background-color: rgba(10, 10, 12, .7); background-clip: content-box; }
+.hero.is-light .hero-dots button.is-active { background-color: var(--ink); background-clip: content-box; }
+.hero.is-light .hero-progress i { background: var(--ink); }
 [data-layer="a"] svg {
   width: 100%;
   height: auto;
