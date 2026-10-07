@@ -24,10 +24,11 @@
     return 'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category;
   }
 
-  /* ---------- 卡片 ---------- */
+  /* ---------- 卡片（Phase 2：整卡即链接 → project.html?id=） ---------- */
   function workCard(w, i) {
-    var card = document.createElement('article');
+    var card = document.createElement('a');
     card.className = 'work-card';
+    card.href = 'project.html?id=' + encodeURIComponent(w.id);
     card.setAttribute('data-id', w.id);
 
     var num = document.createElement('span');
@@ -36,12 +37,7 @@
 
     var imgw = document.createElement('div');
     imgw.className = 'work-card-img';
-    var img = document.createElement('img');
-    img.src = w.cover;
-    img.alt = altFor(w);
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    imgw.appendChild(img);
+    imgw.appendChild(AKA.picture(w.cover, altFor(w)));
 
     var meta = document.createElement('div');
     meta.className = 'work-card-meta';
@@ -65,14 +61,11 @@
   }
 
   function photoCell(w, n) {
-    var cell = document.createElement('article');
+    var cell = document.createElement('a');
     cell.className = 'photo-cell';
+    cell.href = 'project.html?id=' + encodeURIComponent(w.id);
     cell.setAttribute('data-id', w.id);
-    var img = document.createElement('img');
-    img.src = w.cover;
-    img.alt = altFor(w);
-    img.loading = 'lazy';
-    img.decoding = 'async';
+    cell.appendChild(AKA.picture(w.cover, altFor(w)));
     /* §10 P3：archive 条目 = 分类 / 序号 + 年份（10px mono 微标签） */
     var meta = document.createElement('div');
     meta.className = 'photo-meta';
@@ -88,7 +81,6 @@
     meta.appendChild(idx);
     meta.appendChild(title);
     meta.appendChild(year);
-    cell.appendChild(img);
     cell.appendChild(meta);
     return cell;
   }
@@ -101,18 +93,14 @@
   ];
 
   function designCell(w, i) {
-    var cell = document.createElement('article');
+    var cell = document.createElement('a');
     var pat = DESIGN_PAT[i % DESIGN_PAT.length];
     cell.className = 'design-cell ' + pat[0] + ' ' + pat[1];
+    cell.href = 'project.html?id=' + encodeURIComponent(w.id);
     cell.setAttribute('data-id', w.id);
     var imgw = document.createElement('div');
     imgw.className = 'design-imgwrap';
-    var img = document.createElement('img');
-    img.src = w.cover;
-    img.alt = altFor(w);
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    imgw.appendChild(img);
+    imgw.appendChild(AKA.picture(w.cover, altFor(w)));
     var meta = document.createElement('div');
     meta.className = 'work-card-meta';
     var cat = document.createElement('p');

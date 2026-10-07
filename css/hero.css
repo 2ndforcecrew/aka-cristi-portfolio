@@ -55,6 +55,12 @@
   transform: scale(1.06);
   transition: opacity 900ms var(--ease-out), transform 1400ms var(--ease-out);
 }
+/* §43 WebP：picture 块级化，内层 img 继承原有规则 */
+[data-layer="bg"] picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 [data-layer="bg"].in { opacity: 1; transform: scale(1); }
 [data-layer="bg"] img {
   width: 100%;

@@ -129,4 +129,24 @@
 
   /* hero 用 6 张 photography（spec §46：6–10 slides） */
   AKA.HERO_WORKS = AKA.WORKS.filter(function (w) { return w.kind === 'photo'; });
+
+  /* 图片 helper（Phase 2，§43）：jpg → <picture> webp 优先 + jpg fallback；
+     svg / 其他原样返回 <img>。供 hero.js / main.js / project.js 共用。 */
+  AKA.picture = function (src, alt, opts) {
+    opts = opts || {};
+    var img = document.createElement('img');
+    img.src = src;
+    img.alt = alt || '';
+    img.decoding = 'async';
+    img.loading = opts.eager ? 'eager' : 'lazy';
+    if (opts.eager) img.fetchPriority = 'high';
+    if (!/\.jpe?g$/i.test(src)) return img;
+    var pic = document.createElement('picture');
+    var s = document.createElement('source');
+    s.type = 'image/webp';
+    s.srcset = src.replace(/\.jpe?g$/i, '.webp');
+    pic.appendChild(s);
+    pic.appendChild(img);
+    return pic;
+  };
 })();

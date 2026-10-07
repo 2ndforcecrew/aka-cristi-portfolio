@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AKA.CRISTI — Project detail. Photography / Graphic Design. Cold / Precise / Editorial / Expensive / Sharp.">
+  <meta name="author" content="AKA.CRISTI">
+  <meta name="theme-color" content="#FAFAF8">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AKA.CRISTI">
+  <meta property="og:description" content="Cold / Precise / Editorial / Expensive / Sharp.">
+  <title>AKA.CRISTI</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.4">
+  <link rel="stylesheet" href="css/tokens.css?v=1.4">
+  <link rel="stylesheet" href="css/base.css?v=1.4">
+  <link rel="stylesheet" href="css/layout.css?v=1.4">
+  <link rel="stylesheet" href="css/hero.css?v=1.4">
+  <link rel="stylesheet" href="css/motion.css?v=1.4">
+  <link rel="stylesheet" href="css/pages.css?v=1.4">
+  <link rel="stylesheet" href="css/transition.css?v=1.4">
+</head>
+<body>
+
+  <!-- Header（spec §06，跨页版本） -->
+  <header class="site-header" data-js="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html" data-js="brand" aria-label="AKA.CRISTI — home">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.4" alt="" aria-hidden="true">
+        <span class="wordmark">AKA.CRISTI</span>
+      </a>
+      <nav class="site-nav" data-js="site-nav" aria-label="Primary">
+        <a href="index.html#work">Work</a>
+        <a href="index.html#photography">Photography</a>
+        <a href="index.html#design">Design</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <button class="menu-toggle" type="button" data-js="menu-toggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile menu（spec §38，跨页版本） -->
+  <div class="mobile-menu" data-js="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-top">
+      <img class="brand-a" src="assets/a-symbol.svg?v=1.4" alt="AKA.CRISTI">
+      <button class="menu-close" type="button" data-js="menu-close">Close</button>
+    </div>
+    <nav aria-label="Mobile">
+      <a href="index.html#work">Work</a>
+      <a href="index.html#photography">Photography</a>
+      <a href="index.html#design">Design</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+
+  <main data-js="project-main">
+    <!-- 正常内容容器（id 无效时隐藏） -->
+    <div data-js="project-content">
+
+      <!-- Hero（AKA_PROJECT_HERO：非自动轮播，静态呈现） -->
+      <section class="hero project-hero" data-js="project-hero" aria-label="Project hero">
+        <div class="hero-slides" data-js="project-hero-slides"></div>
+        <div class="scroll-indicator" aria-hidden="true">Scroll<br>↓</div>
+      </section>
+
+      <!-- Project information -->
+      <section class="section" aria-label="Project information">
+        <div class="container" data-js="reveal">
+          <div class="sec-head">
+            <h2 class="sec-title">Project Information</h2>
+            <div class="sec-head-right">
+              <span class="micro sec-index" data-js="project-hero-num">N°01 / 12</span>
+            </div>
+          </div>
+          <dl class="project-info" data-js="project-info"></dl>
+        </div>
+      </section>
+
+      <!-- Image series -->
+      <section class="section" aria-label="Image series">
+        <div class="container" data-js="reveal">
+          <div class="sec-head">
+            <h2 class="sec-title">Image Series</h2>
+          </div>
+          <div class="series-list" data-js="project-series"></div>
+        </div>
+      </section>
+
+      <!-- Description -->
+      <section class="section" aria-label="Description">
+        <div class="container" data-js="reveal">
+          <div class="sec-head">
+            <h2 class="sec-title">Description</h2>
+          </div>
+          <div class="project-desc measure" data-js="project-desc"></div>
+        </div>
+      </section>
+
+      <!-- Credits -->
+      <section class="section" aria-label="Credits">
+        <div class="container" data-js="reveal">
+          <h3 class="micro-label">Credits</h3>
+          <p class="project-credits-text" data-js="project-credits"></p>
+        </div>
+      </section>
+
+      <!-- Design system（仅 design 类作品，JS 决定显隐） -->
+      <section class="section" aria-label="Design system" data-js="project-ds-section" hidden>
+        <div class="container" data-js="reveal">
+          <div class="sec-head">
+            <h2 class="sec-title">Design System</h2>
+          </div>
+          <div class="ds-swatches" data-js="project-ds-swatches"></div>
+          <div class="ds-type" data-js="project-ds-type"></div>
+        </div>
+      </section>
+
+      <!-- Next project -->
+      <section class="section" aria-label="Next project">
+        <div class="container" data-js="reveal">
+          <div class="sec-head">
+            <h2 class="sec-title">Next Project</h2>
+          </div>
+          <div data-js="project-next"></div>
+        </div>
+      </section>
+
+    </div><!-- /project-content -->
+
+    <!-- id 无效或缺失：优雅 NOT FOUND（JS 决定显隐） -->
+    <section class="not-found" aria-label="Project not found" data-js="project-notfound" hidden>
+      <div class="container">
+        <h1 class="not-found-title">PROJECT<br>NOT FOUND</h1>
+        <p class="not-found-note">This project does not exist or was moved.</p>
+        <a class="not-found-back" href="index.html">&larr; Back to index</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer（spec §31，跨页版本） -->
+  <footer class="site-footer">
+    <div class="container">
+      <a class="footer-brand" href="index.html" aria-label="AKA.CRISTI — home">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.4" alt="" aria-hidden="true">
+        <span class="wordmark">AKA.CRISTI</span>
+      </a>
+      <nav class="footer-links" aria-label="Social">
+        <a href="#">Instagram</a>
+        <a href="mailto:hello@cristi.studio">Email</a>
+        <a href="#">Behance</a>
+        <a href="#">Other</a>
+      </nav>
+      <p class="footer-copy">© AKA.CRISTI <span data-js="year">2026</span></p>
+      <p class="micro footer-colophon">Colophon</p>
+    </div>
+  </footer>
+
+  <script src="js/data.js?v=1.4"></script>
+  <script src="js/hero.js?v=1.4"></script>
+  <script src="js/main.js?v=1.4"></script>
+  <script src="js/project.js?v=1.4"></script>
+  <script src="js/transition.js?v=1.4"></script>
+</body>
+</html>

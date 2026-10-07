@@ -65,6 +65,10 @@ JetBrains Mono、0.32em 字距的 label 形式出现。整体冷、精密、留�
 
 语言策略：英文 label 为主（FASHION / EDITORIAL / N°01），中文标题为辅，全部左对齐。
 
+Phase 2（多页）：`index.html` / `project.html`（`?id=` 读 data.js）/ `about.html` / `contact.html`，
+站内跳转走 §40 页面转场（见 Motion）。图片走 WebP 优先：`<picture>` + jpg fallback（PIL 质量 82），
+svg 占位图保持原样。
+
 ## Colors
 
 - **ink (#0A0A0A)**：主文字、页眉描边、按钮底色、页脚底色。
@@ -109,6 +113,23 @@ JetBrains Mono、0.32em 字距的 label 形式出现。整体冷、精密、留�
   about `04 / 06`、contact `05 / 06`、footer `06 / 06 — Colophon`；10px mono 微标签全站统一。
 - **contact-cta**：`START A PROJECT` 黑底白字 16px 32px；hover 反转为透明底 + 1px ink 描边 + ink 字。
 - **footer**：#0A0A0A 底，文字 paper，hover frost。
+- **project.html（AKA_PROJECT_HERO，非自动轮播）**：全幅 hero 图 + `PROJECT` / `N°序号`
+  （data.js 顺序）/ 大标题 / 年份 / 分类 / scroll cue；复用 hero.css 的 7 层类与
+  `.hero.is-light` 浅色主题（tone=light 的作品）；滚动视差：图 translateY（rAF 节流，禁 blur）。
+  **PROJECT INFORMATION**：两列信息表（YEAR / CLIENT / LOCATION / CATEGORY / CREDITS，
+  dt 为 mono 微标签）。**IMAGE SERIES**：gallery 序列，其中一张 100vw 全幅断点
+  （`width:100vw; margin-left:calc(50% - 50vw)`）。**DESCRIPTION**：68ch 左对齐。
+  **DESIGN SYSTEM**（仅 design 类）：色板 swatch（ink/paper/5 档灰 + hex 标签）+
+  字体样本（Archivo 600 / Inter 400 / JetBrains Mono 500）。**NEXT PROJECT**：
+  按 data.js 顺序下一条（末条回绕）。id 无效/缺失 → 优雅的 `PROJECT NOT FOUND` + 返回首页，
+  不许白屏。
+- **about.html（三屏宣言）**：屏1 `AKA.CRISTI` 大标题 + 图；屏2 四行 disciplines
+  （PHOTOGRAPHY / GRAPHIC DESIGN / ART DIRECTION / VISUAL IDENTITY）；屏3 英文宣言长文案
+  （冷冽、精确、昂贵调性，约 150 词），68ch 左对齐。
+- **contact.html**：`LET'S MAKE SOMETHING SHARP.` 大标题；底线式表单
+  （border-bottom 1px #D9D9D9，focus 2px ink，无圆角，背景 transparent）；
+  无后端：提交拼 `mailto:`（subject 含姓名+类型，body 含各字段）跳转，同时明示直接邮箱；
+  空字段校验用 #B00020 深红小字 mono 提示，保持克制。
 
 ## Motion
 
@@ -125,6 +146,11 @@ JetBrains Mono、0.32em 字距的 label 形式出现。整体冷、精密、留�
   禁 glow / shadow / bounce / gradient / blur / neon。
 - 所有动效过两道门：`prefers-reduced-motion` 直接给终态（hero 停 autoplay/timeline/parallax/breath，
   slide 静态切换）；移动端简化。
+- 页面转场（§40）：站内 4 页（index / project / about / contact）跳转时，ink 面板从底部 wipe 进入
+  （translateY 100%→0，350ms）→ 中央 A 标闪现（`assets/a-symbol.svg` + `filter: invert(1)` 得 paper 白，
+  120px，~200ms）→ 跳转；新页面若 `document.referrer` 同源，面板从顶部 wipe 退出（0→-100%，350ms）。
+  总计 500–700ms。页内锚点（`#work` 等）不拦截；`prefers-reduced-motion` 直接跳转无动画；
+  修饰键/右键新标签/外链/`mailto:` 不拦截；1600ms 兜底强制跳转，浏览器前进/后退走原生导航，不卡死。
 
 ## Don'ts
 

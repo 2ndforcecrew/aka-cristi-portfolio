@@ -122,14 +122,13 @@
         bgw.setAttribute('data-px', 'bg');
         var bg = document.createElement('div');
         bg.setAttribute('data-layer', 'bg');
-        var img = document.createElement('img');
-        img.src = w.hero || w.cover;
-        img.alt = 'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category;
-        img.decoding = 'async';
-        if (i === 0) { img.loading = 'eager'; img.fetchPriority = 'high'; }
-        else { img.loading = 'lazy'; }
-        img.setAttribute('data-breath', '1');
-        bg.appendChild(img);
+        /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback */
+        var pic = AKA.picture(w.hero || w.cover,
+          'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category,
+          { eager: i === 0 });
+        var heroImg = (pic.tagName === 'PICTURE') ? pic.querySelector('img') : pic;
+        heroImg.setAttribute('data-breath', '1');
+        bg.appendChild(pic);
         bgw.appendChild(bg);
         s.appendChild(bgw);
 

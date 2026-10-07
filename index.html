@@ -10,13 +10,14 @@
   <meta property="og:title" content="AKA.CRISTI">
   <meta property="og:description" content="Cold / Precise / Editorial / Expensive / Sharp.">
   <title>AKA.CRISTI</title>
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.3">
-  <link rel="preload" as="image" href="assets/img/photo-01.jpg?v=1.3">
-  <link rel="stylesheet" href="css/tokens.css?v=1.3">
-  <link rel="stylesheet" href="css/base.css?v=1.3">
-  <link rel="stylesheet" href="css/layout.css?v=1.3">
-  <link rel="stylesheet" href="css/hero.css?v=1.3">
-  <link rel="stylesheet" href="css/motion.css?v=1.3">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.4">
+  <link rel="preload" as="image" type="image/webp" href="assets/img/photo-01.webp?v=1.4">
+  <link rel="stylesheet" href="css/tokens.css?v=1.4">
+  <link rel="stylesheet" href="css/base.css?v=1.4">
+  <link rel="stylesheet" href="css/layout.css?v=1.4">
+  <link rel="stylesheet" href="css/hero.css?v=1.4">
+  <link rel="stylesheet" href="css/motion.css?v=1.4">
+  <link rel="stylesheet" href="css/transition.css?v=1.4">
 </head>
 <body>
 
@@ -24,7 +25,7 @@
   <header class="site-header" data-js="site-header">
     <div class="header-inner">
       <a class="brand" href="#top" data-js="brand" aria-label="AKA.CRISTI — top">
-        <img class="brand-a" src="assets/a-symbol.svg?v=1.3" alt="" aria-hidden="true">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.4" alt="" aria-hidden="true">
         <span class="wordmark">AKA.CRISTI</span>
       </a>
       <nav class="site-nav" data-js="site-nav" aria-label="Primary">
@@ -43,7 +44,7 @@
   <!-- Mobile menu（spec §38） -->
   <div class="mobile-menu" data-js="mobile-menu" aria-hidden="true">
     <div class="mobile-menu-top">
-      <img class="brand-a" src="assets/a-symbol.svg?v=1.3" alt="AKA.CRISTI">
+      <img class="brand-a" src="assets/a-symbol.svg?v=1.4" alt="AKA.CRISTI">
       <button class="menu-close" type="button" data-js="menu-close">Close</button>
     </div>
     <nav aria-label="Mobile">
@@ -138,7 +139,10 @@
         <p class="micro sec-index-static" data-js="reveal">04 / 06 — About</p>
         <div class="about-screen1" data-js="reveal">
           <h2 class="about-word">AKA.CRISTI</h2>
-          <img class="about-hero-img" src="assets/img/bw-01.jpg?v=1.3" alt="AKA.CRISTI — HAUTE SILHOUETTE — PERSONAL" loading="lazy" decoding="async">
+          <picture>
+            <source type="image/webp" srcset="assets/img/bw-01.webp?v=1.4">
+            <img class="about-hero-img" src="assets/img/bw-01.jpg?v=1.4" alt="AKA.CRISTI — HAUTE SILHOUETTE — PERSONAL" loading="lazy" decoding="async">
+          </picture>
         </div>
         <div class="about-screen2" data-js="reveal">
           <p class="about-disc">Photography</p>
@@ -168,7 +172,7 @@
   <footer class="site-footer">
     <div class="container">
       <a class="footer-brand" href="#top" aria-label="AKA.CRISTI — top">
-        <img class="brand-a" src="assets/a-symbol.svg?v=1.3" alt="" aria-hidden="true">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.4" alt="" aria-hidden="true">
         <span class="wordmark">AKA.CRISTI</span>
       </a>
       <nav class="footer-links" aria-label="Social">
@@ -182,8 +186,9 @@
     </div>
   </footer>
 
-  <script src="js/data.js?v=1.3"></script>
-  <script src="js/hero.js?v=1.3"></script>
-  <script src="js/main.js?v=1.3"></script>
+  <script src="js/data.js?v=1.4"></script>
+  <script src="js/hero.js?v=1.4"></script>
+  <script src="js/main.js?v=1.4"></script>
+  <script src="js/transition.js?v=1.4"></script>
 </body>
 </html>

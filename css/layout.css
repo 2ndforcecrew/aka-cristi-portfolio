@@ -226,6 +226,16 @@
   /* 无 shadow */
 }
 .work-card:hover { border-color: var(--ink); } /* hover：边框转 ink */
+/* Phase 2：卡片即链接（project.html?id=）；WebP picture 块级化 */
+a.work-card, a.photo-cell, a.design-cell {
+  color: inherit;
+  text-decoration: none;
+}
+.work-card-img picture,
+.photo-cell picture,
+.design-imgwrap picture {
+  display: block;
+}
 .work-card-num {
   display: block;
   font-family: var(--font-mono);
