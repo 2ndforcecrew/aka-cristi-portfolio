@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 -20 312 432" role="img" aria-label="AKA.CRISTI A symbol">
+  <!-- 斷裂 A · 400u 網格手繪幾何（DESIGN-v3 精確參數）
+       雙腿 64u 筆畫：左 (102,400)-(216,40)，右 (330,400)-(216,40)
+       斷裂：y 246–272 橫向 26u 切口，上半截右移 28u
+       針尖：22u 寬，自頂點 (244,40) 向上至 y=-8
+       懸浮方點：18u，中心 (216,335) -->
+  <defs>
+    <clipPath id="a-upper">
+      <rect x="0" y="-20" width="460" height="266"/>
+    </clipPath>
+    <clipPath id="a-lower">
+      <rect x="0" y="272" width="460" height="160"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#a-upper)">
+    <g transform="translate(28,0)">
+      <path d="M 102 400 L 216 40" fill="none" stroke="currentColor"
+            stroke-width="64" stroke-linecap="butt"/>
+      <path d="M 216 40 L 330 400" fill="none" stroke="currentColor"
+            stroke-width="64" stroke-linecap="butt"/>
+      <rect x="233" y="-8" width="22" height="48" fill="currentColor"/>
+    </g>
+  </g>
+  <g clip-path="url(#a-lower)">
+    <path d="M 102 400 L 216 40" fill="none" stroke="currentColor"
+          stroke-width="64" stroke-linecap="butt"/>
+    <path d="M 216 40 L 330 400" fill="none" stroke="currentColor"
+          stroke-width="64" stroke-linecap="butt"/>
+  </g>
+  <rect x="207" y="326" width="18" height="18" fill="currentColor"/>
+</svg>

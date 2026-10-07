@@ -1,0 +1,63 @@
+/* ============================================================
+ * AKA.CRISTI — motion.css
+ * 通用 reveal、hover（冷静）、prefers-reduced-motion 总闸、移动端简化。
+ * Hero 专属动效在 hero.css。Easing 统一 var(--ease-out)。
+ * ============================================================ */
+
+/* ---------- 通用 reveal ---------- */
+[data-js="reveal"] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+}
+[data-js="reveal"].in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- 移动菜单过渡（layout.css 配合） ---------- */
+/* （过渡定义在 layout.css，此处无额外规则） */
+
+/* ============================================================
+ * 移动端简化（≤768px）
+ * ============================================================ */
+@media (max-width: 768px) {
+  [data-js="reveal"] {
+    transform: translateY(14px);
+    transition-duration: 500ms;
+  }
+}
+
+/* ============================================================
+ * 总闸：prefers-reduced-motion —— 关动效，给终态（spec §42/§49）
+ * hero：停 autoplay / timeline / breath / parallax，slide 静态切换
+ * （hero.js 用 matchMedia 同步关闭 JS 侧）。
+ * ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* reveal：直接终态 */
+  [data-js="reveal"] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* hero layers：直接终态，静态切换 */
+  .hero-slide [data-layer] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: inset(0 0 0 0) !important;
+  }
+  .hero-slide { clip-path: inset(0 0 0 0) !important; }
+  .hero-slide:not(.is-active) { visibility: hidden; }
+  .scroll-indicator { animation: none !important; }
+  /* brand statement：静态 */
+  .brand-motion span { animation: none !important; }
+  /* 移动菜单：直接出现 */
+  .mobile-menu { transition: none !important; }
+}

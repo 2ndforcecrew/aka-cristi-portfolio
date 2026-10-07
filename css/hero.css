@@ -1,0 +1,231 @@
+/* ============================================================
+ * AKA.CRISTI — hero.css（AKA_HOME_HERO，spec §07–§19）
+ * 100vw×100vh editorial fullscreen motion system。
+ * 7 层 layer：bg / A / num / cat / title / meta / scroll。
+ * 转场：editorial mask（clip-path inset，RIGHT→LEFT），禁普通 fade。
+ * Easing 统一 var(--ease-out)。
+ * ============================================================ */
+
+.hero {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.hero-slides {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- slide 骨架 ---------- */
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  clip-path: inset(0 0 0 0);
+}
+.hero-slide.is-active {
+  visibility: visible;
+  z-index: 1;
+}
+/* editorial mask 进场：从右侧展开（RIGHT→LEFT，§14） */
+.hero-slide.pre-enter { clip-path: inset(0 0 0 100%); }
+.hero-slide.is-entering {
+  transition: clip-path 900ms var(--ease-out);
+  clip-path: inset(0 0 0 0);
+}
+/* 退场：clip 向左收起 + x -20px / 450ms */
+.hero-slide.is-leaving {
+  transition: clip-path 450ms var(--ease-out), transform 450ms var(--ease-out);
+  clip-path: inset(0 100% 0 0);
+  transform: translateX(-20px);
+}
+
+/* ---------- layer 01：背景图 ---------- */
+.hero-bgwrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+[data-layer="bg"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.06);
+  transition: opacity 900ms var(--ease-out), transform 1400ms var(--ease-out);
+}
+[data-layer="bg"].in { opacity: 1; transform: scale(1); }
+[data-layer="bg"] img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* §10 / §54：黑白优先、高对比；无暖黄、无柔光 */
+  filter: grayscale(1) contrast(1.08);
+  will-change: transform; /* breath（§15）由 JS 写 transform */
+}
+
+/* ---------- layer 02：巨大 A 标（§16） ---------- */
+.hero-agroup {
+  position: absolute;
+  right: 5vw;
+  top: 50%;
+  width: 52vw;               /* 桌面 45–60vw */
+  max-width: 760px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+[data-layer="a"] {
+  width: 100%;
+  height: auto;
+  color: #FAFAF8;            /* A 永黑或白：照片上用白 */
+  opacity: 0;
+  transform: translateX(30px);
+  clip-path: inset(0 80% 0 0); /* clip 80% → 0 */
+  transition: opacity 700ms var(--ease-out),
+              transform 700ms var(--ease-out),
+              clip-path 700ms var(--ease-out);
+}
+[data-layer="a"].in {
+  opacity: 1;
+  transform: translateX(0);
+  clip-path: inset(0 0 0 0);
+}
+/* 禁旋转 / 弹跳 / 辉光 / 3D：全站无此类声明 */
+
+/* ---------- 文字组（§17 视差：整体为一组） ---------- */
+.hero-textgroup {
+  position: absolute;
+  left: clamp(24px, 6vw, 96px);
+  bottom: 120px;
+  z-index: 2;
+  color: #FAFAF8;
+  max-width: 60ch;
+}
+.hero-numwrap {
+  position: absolute;
+  left: clamp(24px, 6vw, 96px);
+  top: calc(76px + 28px);
+  z-index: 2;
+  color: #FAFAF8;
+}
+
+/* layer 03–06：timeline 入场（§13） */
+[data-layer="num"],
+[data-layer="cat"],
+[data-layer="title"],
+[data-layer="meta"] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+}
+[data-layer="num"].in,
+[data-layer="cat"].in,
+[data-layer="title"].in,
+[data-layer="meta"].in {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-layer="num"],
+[data-layer="cat"],
+[data-layer="meta"] {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-layer="cat"] { margin-bottom: 12px; }
+[data-layer="title"] {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(var(--text-display-min), 7vw, var(--text-display-max));
+  line-height: 1.02;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+[data-layer="meta"] { opacity: 0; color: rgba(250, 250, 248, 0.75); }
+[data-layer="meta"].in { opacity: 1; }
+
+/* ---------- layer 07：scroll 指示器（§19，常驻） ---------- */
+.scroll-indicator {
+  position: absolute;
+  right: clamp(24px, 4vw, 48px);
+  bottom: 32px;
+  z-index: 3;
+  color: #FAFAF8;
+  font-family: var(--font-mono);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  text-align: right;
+  line-height: 1.9;
+  animation: scroll-nudge 2.6s ease-in-out infinite alternate; /* 上下 8px，禁 bounce */
+}
+@keyframes scroll-nudge {
+  from { transform: translateY(-4px); }
+  to { transform: translateY(4px); }
+}
+
+/* ---------- hero 导航（§18）：01/06 + 数字列表 ---------- */
+.hero-nav {
+  position: absolute;
+  left: clamp(24px, 6vw, 96px);
+  bottom: 32px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  color: #FAFAF8;
+}
+.hero-count {
+  font-family: var(--font-mono);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+}
+.hero-dots { display: flex; gap: 14px; }
+.hero-dots button {
+  font-family: var(--font-mono);
+  font-size: var(--label-size);
+  letter-spacing: 0.18em;
+  color: rgba(250, 250, 248, 0.55); /* 非 active（纸面 §18 #8A8A8A 的照片适配） */
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+}
+.hero-dots button:hover {
+  border-bottom-color: #FAFAF8; /* hover 1px 下划线 */
+  color: #FAFAF8;
+}
+.hero-dots button.is-active {
+  color: #FAFAF8;
+  border-bottom-color: #FAFAF8;
+}
+
+/* ---------- 断点 ---------- */
+@media (max-width: 768px) {
+  .hero-agroup {
+    width: 68vw;
+    right: 4vw;
+  }
+  .hero-textgroup { bottom: 150px; }
+}
+
+@media (max-width: 480px) {
+  /* §37：隐藏 mono 辅助标签 */
+  [data-layer="num"],
+  [data-layer="meta"] { display: none; }
+  .hero-agroup {
+    width: 74vw;              /* 65–80vw */
+    top: auto;
+    bottom: 12vh;
+    transform: none;
+    right: 2vw;
+    opacity: 0.9;
+  }
+  .hero-textgroup {
+    bottom: auto;
+    top: calc(60px + 8vh);    /* 文字移位避让（§42 优先移位） */
+  }
+  .hero-nav { bottom: 24px; }
+  .scroll-indicator { display: none; }
+}

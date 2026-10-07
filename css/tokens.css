@@ -1,0 +1,70 @@
+/* ============================================================
+ * AKA.CRISTI — 设计 token（spec §51）
+ * 七组：COLOR / TYPE / SPACE / GRID / RADIUS / MOTION / BREAKPOINT
+ * 未来直转 WordPress theme.json（字段名保持一致）。
+ * 零外部依赖；全部纯 CSS 变量。
+ * ============================================================ */
+:root {
+  /* ---------- COLOR（spec §34） ---------- */
+  --ink: #0A0A0A;
+  --paper: #FAFAF8;
+  --gray-900: #1A1A1A;
+  --gray-700: #3A3A3A;
+  --gray-500: #8A8A8A;
+  --gray-300: #D9D9D9;
+  --gray-100: #EFEFEB;
+  /* Frost：全站 <5%，只用于 hover / 链接，永不进 Logo */
+  --frost: #A8C5D6;
+  --success: #2E7D4F;
+  --warning: #B7791F;
+  --error: #C23B2E;
+
+  /* ---------- TYPE（spec §33；零外部 URL，系统栈 fallback） ---------- */
+  --font-display: "Archivo", "Helvetica Neue", Helvetica, Arial, "Noto Sans TC", sans-serif;
+  --font-body: "Inter", system-ui, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --text-display-min: 40px;
+  --text-display-max: 80px;
+  --text-h2-min: 28px;
+  --text-h2-max: 44px;
+  --text-body: 16px;
+  --leading-body: 1.7;
+  --label-size: 12px;
+  --label-tracking: 0.32em;   /* 英文 label 一律大写 + mono + 0.32em（spec §59） */
+  --wordmark-tracking: 0.32em;
+
+  /* ---------- SPACE（8pt 网格，spec §35） ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --space-7: 64px;
+  --space-8: 96px;
+  --space-9: 128px;
+  --section-pad: clamp(48px, 8vw, 128px); /* section 上下：桌面 96–128 / 手机 48–64 */
+
+  /* ---------- GRID（spec §36 / §37） ---------- */
+  --container: 1200px;
+  --measure: 68ch;            /* 正文最大宽度 */
+  --gutter: 24px;             /* 桌面 gutter；手机 16px（layout.css 覆盖） */
+
+  /* ---------- RADIUS（spec §52：禁 pill） ---------- */
+  --radius-none: 0px;         /* 品牌默认 */
+  --radius-sm: 2px;           /* 头像 / 小标签 */
+  --radius-ui: 4px;           /* 一般 UI 上限 */
+
+  /* ---------- MOTION（spec §49 / §50） ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-enter: 550ms;           /* 快进 400–700ms */
+  --t-exit: 400ms;            /* 快退 300–500ms */
+  --t-hold: 3500ms;           /* 停留 2–5s（中值，供 JS 参考） */
+  --hero-slide: 6500ms;       /* hero 每张 6.5s（spec §13：6–8s） */
+
+  /* ---------- BREAKPOINT（spec §12 / §37，仅文档 token；媒体查询用字面值） ---------- */
+  --bp-desktop: 1280px;
+  --bp-tablet: 768px;
+  --bp-mobile: 480px;
+}

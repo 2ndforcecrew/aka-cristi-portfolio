@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AKA.CRISTI — Avant-garde fashion magazine × photographer portfolio × graphic design archive. Photography / Typography / A Symbol / Motion / White Space.">
+  <meta name="author" content="AKA.CRISTI">
+  <meta name="theme-color" content="#FAFAF8">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AKA.CRISTI">
+  <meta property="og:description" content="Cold / Precise / Editorial / Expensive / Sharp.">
+  <title>AKA.CRISTI</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.0">
+  <link rel="preload" as="image" href="assets/img/photo-01.jpg?v=1.0">
+  <link rel="stylesheet" href="css/tokens.css?v=1.0">
+  <link rel="stylesheet" href="css/base.css?v=1.0">
+  <link rel="stylesheet" href="css/layout.css?v=1.0">
+  <link rel="stylesheet" href="css/hero.css?v=1.0">
+  <link rel="stylesheet" href="css/motion.css?v=1.0">
+</head>
+<body>
+
+  <!-- Header（spec §06） -->
+  <header class="site-header" data-js="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" data-js="brand" aria-label="AKA.CRISTI — top">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.0" alt="" aria-hidden="true">
+        <span class="wordmark">AKA.CRISTI</span>
+      </a>
+      <nav class="site-nav" data-js="site-nav" aria-label="Primary">
+        <a href="#work">Work</a>
+        <a href="#photography">Photography</a>
+        <a href="#design">Design</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button class="menu-toggle" type="button" data-js="menu-toggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile menu（spec §38） -->
+  <div class="mobile-menu" data-js="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-top">
+      <img class="brand-a" src="assets/a-symbol.svg?v=1.0" alt="AKA.CRISTI">
+      <button class="menu-close" type="button" data-js="menu-close">Close</button>
+    </div>
+    <nav aria-label="Mobile">
+      <a href="#work">Work</a>
+      <a href="#photography">Photography</a>
+      <a href="#design">Design</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+
+  <main>
+    <!-- Hero（AKA_HOME_HERO，spec §07–§19） -->
+    <section class="hero" id="top" data-js="hero" role="region" aria-roledescription="carousel" aria-label="AKA.CRISTI — featured works">
+      <div class="hero-slides" data-js="hero-slides"></div>
+      <div class="hero-nav" data-js="hero-nav" aria-label="Hero navigation"></div>
+      <div class="scroll-indicator" aria-hidden="true">Scroll<br>↓</div>
+    </section>
+
+    <!-- Selected work（spec §20） -->
+    <section class="section" id="work">
+      <div class="container">
+        <div class="sec-head" data-js="reveal">
+          <h2 class="sec-title">Selected Work</h2>
+          <a class="sec-link" href="#photography">View all work →</a>
+        </div>
+        <div class="selected-grid" data-js="selected-grid"></div>
+      </div>
+    </section>
+
+    <!-- Photography（spec §22–§23） -->
+    <section class="section" id="photography">
+      <div class="container">
+        <div class="sec-head" data-js="reveal">
+          <h2 class="sec-title">Photography</h2>
+        </div>
+        <div class="filter" data-js="photo-filter" role="tablist" aria-label="Photography categories"></div>
+        <div class="photo-grid" data-js="photo-grid"></div>
+      </div>
+    </section>
+
+    <!-- Graphic design（spec §26） -->
+    <section class="section" id="design">
+      <div class="container">
+        <div class="sec-head" data-js="reveal">
+          <h2 class="sec-title">Graphic Design</h2>
+        </div>
+        <div class="filter" data-js="design-filter" role="tablist" aria-label="Design categories"></div>
+        <div class="design-grid" data-js="design-grid"></div>
+      </div>
+    </section>
+
+    <!-- Brand statement（spec §32） -->
+    <section class="statement" aria-label="Brand statement">
+      <div class="brand-motion" data-js="brand-motion" aria-hidden="true">
+        <span>AKA.CRISTI</span><span>AKA.CRISTI</span><span>AKA.CRISTI</span><span>AKA.CRISTI</span><span>AKA.CRISTI</span>
+      </div>
+      <div class="container">
+        <div class="statement-inner" data-js="reveal">
+          <h2 class="statement-title">Photography is content. Typography is structure. Motion is behaviour.</h2>
+        </div>
+      </div>
+    </section>
+
+    <!-- About intro（spec §28） -->
+    <section class="section" id="about">
+      <div class="container">
+        <div class="about-screen1" data-js="reveal">
+          <h2 class="about-word">AKA.CRISTI</h2>
+          <img class="about-hero-img" src="assets/img/bw-01.jpg?v=1.0" alt="AKA.CRISTI — HAUTE SILHOUETTE — PERSONAL" loading="lazy" decoding="async">
+        </div>
+        <div class="about-screen2" data-js="reveal">
+          <p class="about-disc">Photography</p>
+          <p class="about-disc">Graphic Design</p>
+          <p class="about-disc">Art Direction</p>
+          <p class="about-disc">Visual Identity</p>
+        </div>
+        <div class="about-long measure" data-js="reveal">
+          <p>AKA.CRISTI is not a traditional photographer portfolio. It is an avant-garde fashion magazine, a design archive, and a single-brand gallery — cold, precise, and sharp.</p>
+          <p>The work moves between two mediums: the camera chases light and posture; paper reconstructs that emotion into a visual language a brand can keep. Lens captures. Paper settles. Both share one aesthetic.</p>
+          <p>From shutter to final piece, every step is controlled under the same eye — because the photographer and the designer are the same person.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact CTA（spec §30） -->
+    <section class="section contact-cta" id="contact">
+      <div class="container" data-js="reveal">
+        <h2 class="cta-title">Let&rsquo;s make<br>something<br>sharp.</h2>
+        <a class="btn-start" href="mailto:hello@cristi.studio?subject=AKA.CRISTI%20—%20Project%20Inquiry">Start a project</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer（spec §31） -->
+  <footer class="site-footer">
+    <div class="container">
+      <a class="footer-brand" href="#top" aria-label="AKA.CRISTI — top">
+        <img class="brand-a" src="assets/a-symbol.svg?v=1.0" alt="" aria-hidden="true">
+        <span class="wordmark">AKA.CRISTI</span>
+      </a>
+      <nav class="footer-links" aria-label="Social">
+        <a href="#">Instagram</a>
+        <a href="mailto:hello@cristi.studio">Email</a>
+        <a href="#">Behance</a>
+        <a href="#">Other</a>
+      </nav>
+      <p class="footer-copy">© AKA.CRISTI <span data-js="year">2026</span></p>
+    </div>
+  </footer>
+
+  <script src="js/data.js?v=1.0"></script>
+  <script src="js/hero.js?v=1.0"></script>
+  <script src="js/main.js?v=1.0"></script>
+</body>
+</html>
