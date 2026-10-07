@@ -53,7 +53,7 @@
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     {
-      id: 'morning-mist', kind: 'photo', category: 'CAMPAIGN',
+      id: 'morning-mist', kind: 'photo', category: 'CAMPAIGN', tone: 'light',
       title: '晨雾时装', titleEn: 'MORNING MIST', year: '2023',
       client: 'MAISON BRUME', location: 'MILAN',
       cover: 'assets/img/bw-01.jpg', hero: 'assets/img/bw-01.jpg',
@@ -62,7 +62,7 @@
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     {
-      id: 'haute-silhouette', kind: 'photo', category: 'PERSONAL',
+      id: 'haute-silhouette', kind: 'photo', category: 'PERSONAL', tone: 'light',
       title: '高定剪影', titleEn: 'HAUTE SILHOUETTE', year: '2023',
       client: 'PERSONAL', location: 'LONDON',
       cover: 'assets/img/bw-02.jpg', hero: 'assets/img/bw-02.jpg',

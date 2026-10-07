@@ -98,6 +98,8 @@
       each(works, function (w, i) {
         var s = document.createElement('article');
         s.className = 'hero-slide';
+        /* 浅色照片：前景全部转 ink（描边 A / 文字 / dots / 进度条） */
+        if (w.tone === 'light') s.classList.add('is-light');
         s.setAttribute('data-js', 'hero-slide');
         s.setAttribute('aria-roledescription', 'slide');
         s.setAttribute('aria-label', (i + 1) + ' / ' + works.length + ' — ' + w.titleEn);
