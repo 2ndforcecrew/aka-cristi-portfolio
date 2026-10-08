@@ -529,3 +529,19 @@ test('i18n：cat/city 映射 + 未知值原样返回', () => {
   assert.equal(i18n.t('nav.work'), '作品');
   assert.equal(i18n.t('no.such.key'), 'no.such.key');
 });
+
+/* ---------- 17. 筛选分类必须有中文映射且有作品使用 ---------- */
+test('筛选分类：PHOTO_CATS/DESIGN_CATS 都有中文映射、无幽灵分类', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js/i18n.js'), 'utf8');
+  const catBlock = src.match(/var CAT_MAP = \{([\s\S]*?)\};/)[1];
+  const data = fs.readFileSync(path.join(ROOT, 'js/data.js'), 'utf8');
+  for (const v of ['PHOTO_CATS', 'DESIGN_CATS']) {
+    const cats = eval(data.match(new RegExp('AKA\\.' + v + ' = (\\[[^\\]]*\\])'))[1]);
+    const workCats = new Set([...data.matchAll(/category:\s*'([^']+)'/g)].map((m) => m[1]));
+    for (const c of cats) {
+      assert.ok(new RegExp("'" + c + "':").test(catBlock) || c === 'ALL',
+        v + ' 的分类 ' + c + ' 缺中文映射');
+      assert.ok(workCats.has(c), v + ' 的分类 ' + c + ' 没有作品使用（幽灵分类）');
+    }
+  }
+});
