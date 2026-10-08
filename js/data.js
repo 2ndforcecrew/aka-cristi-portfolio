@@ -154,9 +154,9 @@
     }
   ];
 
-  /* hero 用 photography + video（spec §46：6–10 slides；v2.7-B：开场即概念影像） */
+  /* hero 3 张（v2.8.7：用户要求从 7 张减到 3 张）：视频开场 + 2 张新 AI 图 */
   AKA.HERO_WORKS = AKA.WORKS.filter(function (w) {
-    return ['photo', 'video'].indexOf(w.kind) > -1;
+    return w.id === 'river-leviathan' || w.id === 'neon-city-nights' || w.id === 'urban-soliloquy';
   });
 
   /* 图片 helper（Phase 2，§43）：jpg → <picture> webp 优先 + jpg fallback；
