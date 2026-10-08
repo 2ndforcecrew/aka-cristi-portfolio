@@ -1,8 +1,10 @@
 /* ============================================================
  * AKA.CRISTI — hero.css（AKA_HOME_HERO，spec §07–§19）
- * v1.9：滚轮驱动轮播。section 高 n*100vh；.hero-pin sticky 锁 100vh；
- * .hero-track 随滚动位移（一半一半）；位移本身即过渡，无 mask 切换。
- * 7 层 layer：bg / A / num / cat / title / meta / scroll。
+ * v2.0：50/50 split-screen。左半图片 / 右半纸色文字面板；
+ *   滚轮驱动两半反向运动（图上 / 文下），过渡中一半一半；
+ *   移动端（≤768px）两半上下堆叠（图 52% / 文 48%），同向运动。
+ * chrome（dots / 箭头 / 进度条 / scroll 指示器）全部
+ *   mix-blend-mode: difference，深浅自适应；无 is-light 主题切换。
  * Easing 统一 var(--ease-out)。
  * ============================================================ */
 
@@ -11,7 +13,7 @@
   background: var(--paper);
   /* 高度由 JS 设为 n*100vh（scroll-driven 滚动区） */
 }
-/* sticky 视口：锁 100vh，track 在内部位移 */
+/* sticky 视口：锁 100vh，两半在内部位移 */
 .hero-pin {
   position: sticky;
   top: 0;
@@ -19,26 +21,42 @@
   min-height: 560px;
   overflow: hidden;
 }
-.hero-track {
-  position: relative;
-  will-change: transform;
-}
 
-/* ---------- slide 骨架：正常流纵向排布，每张 100vh ---------- */
+/* ---------- slide 骨架：绝对叠放，两半各自位移 ---------- */
+/* 只有 active slide 可交互（hero-link 只在当前张可点） */
 .hero-slide {
-  position: relative;
-  height: 100vh;
-  min-height: 560px;
-  overflow: hidden;
-}
-/* v1.9：位移本身即过渡，mask 切换（is-active/is-entering/is-leaving/pre-enter）已删除 */
-
-/* ---------- layer 01：背景图 ---------- */
-.hero-bgwrap {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  pointer-events: none;
 }
+.hero-slide.is-active { pointer-events: auto; }
+
+/* ---------- 两半：scroll 驱动写 transform（JS），位移本身即过渡 ---------- */
+.half {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  overflow: hidden;
+  will-change: transform;
+}
+.half-img {
+  left: 0;
+  width: 50%;
+  background: var(--ink); /* 图未载入时的底 */
+}
+.half-txt {
+  right: 0;
+  width: 50%;
+  background: var(--paper);
+  color: var(--ink);
+}
+/* mouse parallax 目标（与 scroll 位移分层，不冲突） */
+.half-in {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- 左半：图片 ---------- */
 [data-layer="bg"] {
   position: absolute;
   inset: 0;
@@ -57,100 +75,46 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 30%; /* 臉部偏上，避開左下標題與右側 A 標（§10 P1） */
+  object-position: 50% 30%; /* 臉部偏上 */
   /* §10 P2：hero 灰階優先 */
   filter: grayscale(.72) contrast(1.13);
   will-change: transform; /* breath（§10 P1：scale 1.01→1.07 / 7s linear）由 JS 寫 transform */
 }
 
-/* ---------- layer 02：巨大 A 标（§16 + §10 P1 描边版） ---------- */
-.hero-agroup {
+/* ---------- 右半：纸色文字面板（editorial 左对齐） ---------- */
+.txt-inner {
   position: absolute;
-  right: 5vw;
+  left: clamp(24px, 5vw, 72px);
+  right: clamp(24px, 4vw, 64px);
   top: 50%;
-  width: min(63vw, 850px);       /* §10 P1：构图锚点 */
   transform: translateY(-50%);
-  pointer-events: none;
+  text-align: left;
 }
-/* 内联描边 A：a-symbol.svg 几何，paths fill="none" stroke-width="6"，
-   针尖/方点保留填充；几何不变，不算重画 */
-[data-layer="a"] {
-  width: 100%;
-  color: rgba(255, 255, 255, .82); /* A 永黑或白：深色照片用白（.82） */
-  opacity: 0;
-  transform: translateX(30px);
-  clip-path: inset(0 80% 0 0); /* clip 80% → 0 */
-  transition: opacity 700ms var(--ease-out),
-              transform 700ms var(--ease-out),
-              clip-path 700ms var(--ease-out);
-}
-/* 浅色 slide：前景全部转 ink（A / 文字 / dots / 进度条 / scroll 指示器）；
-   注意 dots / scroll-indicator 是 slide 的兄弟元素，主题挂在 section.hero 上（JS: hero.tone.sync） */
-.hero.is-light .hero-textgroup { color: var(--ink); }
-.hero.is-light .hero-topline { color: var(--ink); }
-.hero.is-light .scroll-indicator { color: var(--ink); }
-.hero.is-light [data-layer="a"] { color: rgba(10, 10, 12, .82); }
-.hero.is-light [data-layer="meta"] { color: rgba(10, 10, 12, .75); }
-.hero.is-light .hero-dots button { background: rgba(10, 10, 12, .35); background-clip: content-box; }
-.hero.is-light .hero-dots button:hover { background-color: rgba(10, 10, 12, .7); background-clip: content-box; }
-.hero.is-light .hero-dots button.is-active { background-color: var(--ink); background-clip: content-box; }
-.hero.is-light .hero-progress i { background: var(--ink); }
-[data-layer="a"] svg {
-  width: 100%;
-  height: auto;
-}
-[data-layer="a"].in {
-  opacity: .7; /* §10 P1：锚点不透明度 */
-  transform: translateX(0);
-  clip-path: inset(0 0 0 0);
-}
-/* 禁旋转 / 弹跳 / 辉光 / 3D：全站无此类声明 */
-
-/* ---------- 文字组（§17 视差：整体为一组） ---------- */
-.hero-textgroup {
-  position: absolute;
-  left: clamp(24px, 6vw, 96px);
-  bottom: 120px;
-  z-index: 2;
-  color: #FAFAF8;
-  max-width: 60ch;
-}
-/* ---------- 顶部 mono 行（§10 P1：N°01 / 06 + 城市 — 年份） ---------- */
-.hero-topline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(76px + 28px);
-  z-index: 2;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-inline: clamp(24px, 6vw, 96px);
-  color: #FAFAF8;
-  pointer-events: none;
-}
-
-/* layer 03–06：timeline 入场（§13） */
+/* 图层入场（§13 stagger，由 JS 按序加 .in） */
 [data-layer="num"],
-[data-layer="loc"],
 [data-layer="cat"],
 [data-layer="title"],
-[data-layer="meta"] {
+[data-layer="title-en"],
+[data-layer="desc"],
+[data-layer="meta"],
+[data-layer="link"] {
   opacity: 0;
   transform: translateY(26px);
   transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
 }
 [data-layer="num"].in,
-[data-layer="loc"].in,
 [data-layer="cat"].in,
 [data-layer="title"].in,
-[data-layer="meta"].in {
+[data-layer="title-en"].in,
+[data-layer="desc"].in,
+[data-layer="meta"].in,
+[data-layer="link"].in {
   opacity: 1;
   transform: translateY(0);
 }
 [data-layer="num"],
-[data-layer="loc"],
 [data-layer="cat"],
+[data-layer="title-en"],
 [data-layer="meta"] {
   font-family: var(--font-mono);
   font-weight: 500;
@@ -158,26 +122,76 @@
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
 }
-[data-layer="cat"] { margin-bottom: 12px; }
+[data-layer="num"] { color: var(--gray-500); margin-bottom: 14px; }
+[data-layer="cat"] { margin-bottom: 18px; }
 [data-layer="title"] {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(58px, 9.4vw, 145px); /* §10 P1：杂志封面巨标题 */
-  line-height: .82;
-  letter-spacing: -.065em;
+  font-size: clamp(40px, 5.4vw, 92px); /* 半幅面板，字号按 50vw 校准 */
+  line-height: .92;
+  letter-spacing: -.04em;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
-[data-layer="meta"] { opacity: 0; color: rgba(250, 250, 248, 0.75); }
-[data-layer="meta"].in { opacity: 1; }
+[data-layer="title-en"] { color: var(--gray-700); margin-bottom: 22px; }
+[data-layer="desc"] {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--gray-700);
+  max-width: 38ch;
+  margin-bottom: 26px;
+}
+[data-layer="meta"] { color: var(--gray-500); margin-bottom: 30px; }
+[data-layer="link"] {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 1px;
+}
+[data-layer="link"]:hover { text-decoration-thickness: 2px; }
 
-/* ---------- layer 07：scroll 指示器（§19，常驻） ---------- */
+/* ---------- A 水印：描边版内联 SVG，faint ink（右半面板） ---------- */
+.txt-a {
+  position: absolute;
+  right: 3vw;
+  bottom: 5vh;
+  width: min(26vw, 340px);
+  color: rgba(10, 10, 12, .09);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(30px);
+  clip-path: inset(0 80% 0 0); /* clip 80% → 0 */
+  transition: opacity 700ms var(--ease-out),
+              transform 700ms var(--ease-out),
+              clip-path 700ms var(--ease-out);
+}
+.txt-a.in {
+  opacity: 1;
+  transform: translateX(0);
+  clip-path: inset(0 0 0 0);
+}
+.txt-a svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* 禁旋转 / 弹跳 / 辉光 / 3D：全站无此类声明 */
+
+/* ---------- layer：scroll 指示器（§19，常驻） ---------- */
 .scroll-indicator {
   position: absolute;
   right: clamp(24px, 4vw, 48px);
   bottom: 32px;
   z-index: 3;
-  color: #FAFAF8;
+  color: #fff;
+  mix-blend-mode: difference; /* 深浅自适应：图上白、纸上黑 */
   font-family: var(--font-mono);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
@@ -201,24 +215,26 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  color: #FAFAF8;
+  color: #fff;
+  mix-blend-mode: difference; /* 深浅自适应 */
 }
 .hero-dots { display: flex; gap: 9px; align-items: center; }
 .hero-dots button {
   width: 34px;
   height: 2px;              /* 34px 短横线 */
   padding: 6px 0;           /* 点击热区 */
-  background: rgba(250, 250, 248, .35);
+  background: rgba(255, 255, 255, .35);
   background-clip: content-box;
+  border: none;
   transition: width .4s var(--ease-out), background-color .4s var(--ease-out);
 }
-.hero-dots button:hover { background-color: rgba(250, 250, 248, .7); background-clip: content-box; }
+.hero-dots button:hover { background-color: rgba(255, 255, 255, .7); background-clip: content-box; }
 .hero-dots button.is-active {
-  width: 62px;              /* active 62px 白 */
-  background-color: #FAFAF8;
+  width: 62px;              /* active 62px */
+  background-color: #fff;
   background-clip: content-box;
 }
-/* 底部 2px 进度条：v1.9 起由 JS 按 scroll 进度直接 scaleX（无 keyframes） */
+/* 底部 2px 进度条：由 JS 按 scroll 进度直接 scaleX（无 keyframes） */
 .hero-progress {
   position: absolute;
   left: 0;
@@ -227,43 +243,14 @@
   z-index: 3;
   height: 2px;
   pointer-events: none;
+  mix-blend-mode: difference; /* 深浅自适应 */
 }
 .hero-progress i {
   display: block;
   height: 100%;
-  background: #FAFAF8;
+  background: #fff;
   transform: scaleX(0);
   transform-origin: 0 50%;
-}
-
-/* ---------- 断点 ---------- */
-@media (max-width: 768px) {
-  .hero-agroup {
-    width: 68vw;
-    right: 4vw;
-  }
-  .hero-textgroup { bottom: 150px; }
-}
-
-@media (max-width: 480px) {
-  /* §37：隐藏 mono 辅助标签 */
-  [data-layer="num"],
-  [data-layer="loc"],
-  [data-layer="meta"] { display: none; }
-  .hero-agroup {
-    width: 74vw;              /* 65–80vw */
-    top: auto;
-    bottom: 12vh;
-    transform: none;
-    right: 2vw;
-    opacity: 0.9;
-  }
-  .hero-textgroup {
-    bottom: auto;
-    top: calc(60px + 8vh);    /* 文字移位避让（§42 优先移位） */
-  }
-  .hero-nav { bottom: 24px; }
-  .scroll-indicator { display: none; }
 }
 
 /* ---------- 左右箭头（JS 生成，hover 显现；触屏常显） ---------- */
@@ -280,7 +267,8 @@
   background: none;
   border: none;
   padding: 0;
-  color: #FAFAF8;
+  color: #fff;
+  mix-blend-mode: difference; /* 深浅自适应 */
   font-size: 30px;
   line-height: 1;
   opacity: 0;
@@ -289,7 +277,6 @@
 }
 .hero-arrow--prev { left: clamp(6px, 2vw, 24px); }
 .hero-arrow--next { right: clamp(6px, 2vw, 24px); }
-.hero.is-light .hero-arrow { color: var(--ink); }
 @media (hover: hover) {
   .hero:hover .hero-arrow { opacity: .6; }
   .hero .hero-arrow:hover { opacity: 1; }
@@ -327,4 +314,151 @@
 .hero.has-cursor button { cursor: none; }
 @media (prefers-reduced-motion: reduce) {
   .hero-cursor { display: none; }
+}
+
+/* ---------- 断点：≤768px 两半上下堆叠（图上 52% / 文下 48%），同向运动 ---------- */
+@media (max-width: 768px) {
+  .half-img {
+    width: 100%;
+    height: 52%;
+  }
+  .half-txt {
+    width: 100%;
+    height: 48%;
+    top: 52%;
+  }
+  .txt-inner {
+    left: 24px;
+    right: 24px;
+  }
+  [data-layer="title"] { font-size: clamp(34px, 9vw, 56px); }
+  [data-layer="desc"] {
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 18px;
+  }
+  [data-layer="meta"] { margin-bottom: 20px; }
+  .txt-a {
+    width: 38vw;
+    right: 4vw;
+    bottom: 3vh;
+  }
+}
+
+@media (max-width: 480px) {
+  /* §37：隐藏 mono 辅助标签 */
+  [data-layer="num"],
+  [data-layer="meta"] { display: none; }
+  .hero-nav { bottom: 24px; }
+  .scroll-indicator { display: none; }
+}
+
+/* ============================================================
+ * v2.0 兼容：project.html 的 AKA_PROJECT_HERO（非自动轮播，静态呈现）
+ * 复用旧全幅 hero 类（hero-slide / hero-bgwrap / hero-agroup /
+ * hero-topline / hero-textgroup / is-light）。首页已改 split-screen，
+ * 此处恢复 v1.9 全幅样式，仅作用于 .project-hero，不影响首页。
+ * ============================================================ */
+.project-hero { overflow: hidden; }
+.project-hero .hero-slide {
+  position: relative;
+  inset: auto;
+  height: 100vh;
+  min-height: 560px;
+  overflow: hidden;
+  pointer-events: auto;
+}
+/* layer 01：背景 */
+.project-hero .hero-bgwrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+/* layer 02：巨大 A 标（白版描边，浅色照片转 ink） */
+.project-hero .hero-agroup {
+  position: absolute;
+  right: 5vw;
+  top: 50%;
+  width: min(63vw, 850px);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.project-hero [data-layer="a"] {
+  width: 100%;
+  color: rgba(255, 255, 255, .82);
+  opacity: 0;
+  transform: translateX(30px);
+  clip-path: inset(0 80% 0 0);
+  transition: opacity 700ms var(--ease-out),
+              transform 700ms var(--ease-out),
+              clip-path 700ms var(--ease-out);
+}
+.project-hero [data-layer="a"].in {
+  opacity: .7;
+  transform: translateX(0);
+  clip-path: inset(0 0 0 0);
+}
+.project-hero [data-layer="a"] svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* layer 03：顶部 mono 行 */
+.project-hero .hero-topline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(76px + 28px);
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-inline: clamp(24px, 6vw, 96px);
+  color: #FAFAF8;
+  pointer-events: none;
+}
+.project-hero [data-layer="num"],
+.project-hero [data-layer="loc"],
+.project-hero [data-layer="cat"] { color: #FAFAF8; }
+/* loc：首页 v2.0 不用，project 页保留 */
+.project-hero [data-layer="loc"] {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+}
+.project-hero [data-layer="loc"].in { opacity: 1; transform: translateY(0); }
+/* layer 04–06：文字组（全幅巨标题） */
+.project-hero .hero-textgroup {
+  position: absolute;
+  left: clamp(24px, 6vw, 96px);
+  bottom: 120px;
+  z-index: 2;
+  color: #FAFAF8;
+  max-width: 60ch;
+}
+.project-hero [data-layer="title"] {
+  font-size: clamp(58px, 9.4vw, 145px);
+  line-height: .82;
+  letter-spacing: -.065em;
+  margin-bottom: 16px;
+}
+.project-hero [data-layer="meta"] { color: rgba(250, 250, 248, 0.75); }
+/* 浅色照片：前景转 ink（scroll 指示器走 difference 自适应，无需覆盖） */
+.project-hero.is-light .hero-textgroup { color: var(--ink); }
+.project-hero.is-light .hero-topline { color: var(--ink); }
+.project-hero.is-light [data-layer="num"],
+.project-hero.is-light [data-layer="loc"],
+.project-hero.is-light [data-layer="cat"] { color: var(--ink); }
+.project-hero.is-light [data-layer="a"] { color: rgba(10, 10, 12, .82); }
+.project-hero.is-light [data-layer="meta"] { color: rgba(10, 10, 12, .75); }
+@media (max-width: 480px) {
+  .project-hero .hero-textgroup {
+    bottom: auto;
+    top: calc(60px + 8vh); /* 文字移位避让（§42 优先移位） */
+  }
 }

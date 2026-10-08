@@ -175,30 +175,75 @@ test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点�
   assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
 });
 
-test('v1.9 scroll-driven 轮播：hero-pin/track 结构 + scroll 驱动 + 无 autoplay 残留', () => {
+test('v2.0 split-screen：两半结构 + 反向位移 + difference chrome + 无 is-light', () => {
   const html = read('index.html');
   assert.ok(html.includes('data-js="hero-pin"'), 'index 缺 hero-pin');
-  assert.ok(html.includes('data-js="hero-track"'), 'index 缺 hero-track');
+  assert.ok(!html.includes('data-js="hero-track"'), 'hero-track 残留');
   assert.ok(!html.includes('data-js="hero-slides"'), 'hero-slides 残留');
   const js = read('js/hero.js');
   assert.ok(!/SLIDE_MS/.test(js), 'SLIDE_MS 残留');
   assert.ok(!/hero\.auto\(\)/.test(js) && !/auto:\s*function/.test(js), 'auto() 主循环残留');
   assert.ok(!/is-entering/.test(js) && !/is-leaving/.test(js) && !/pre-enter/.test(js),
     'mask transition 类残留');
-  assert.ok(!/transition:\s*\{/.test(js), 'transition.to 残留');
+  const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+  assert.ok(!/tone:\s*{/.test(jsNoComment) && !/tone\.sync/.test(jsNoComment),
+    'tone/is-light 同步残留');
   assert.ok(/goTo/.test(js) && /scrollTo/.test(js), '缺 goTo/scrollTo');
   assert.ok(/addEventListener\('scroll'/.test(js), '缺 scroll 监听');
-  assert.ok(js.includes("translateY(' + (-p * total)"), '缺 track 位移');
+  /* 两半结构 + 反向位移数学 */
+  assert.ok(js.includes('half-img') && js.includes('half-txt'), '缺两半结构');
+  assert.ok(/f = i - span/.test(js) || /i - p\s*\*\s*\(hero\.state\.n - 1\)/.test(js),
+    '缺 f = i - p*(n-1) 位移数学');
+  assert.ok(/txtY = mobile \? imgY : -imgY/.test(js), '缺桌面反向/移动端同向分支');
+  assert.ok(/matchMedia\(MOBILE_Q\)/.test(js) || /max-width: 768px/.test(js), '缺移动端断点判断');
+  assert.ok(/data-px['"], '8'/.test(js) && /data-px['"], '3'/.test(js), '缺 data-px 8/3');
+  assert.ok(/data-hook['"], 'hero-link'/.test(js), '缺 hero-link hook');
+  assert.ok(js.includes("project.html?id=' + w.id + '&v=2.0"), 'hero-link href 缺 ?v 占位');
+  assert.ok(/is-active/.test(js), '缺 is-active pointer-events 切换');
   assert.ok(js.includes('scaleX('), '进度条缺 JS scaleX 驱动');
   assert.ok(/goTo\(idx\)/.test(js), 'dots 未走 goTo');
   assert.ok(/state\.reduced \? 'auto' : 'smooth'/.test(js), 'goTo 缺 reduced-motion 分支');
   const css = read('css/hero.css');
-  assert.ok(css.includes('.hero-pin'), 'CSS 缺 .hero-pin');
-  assert.ok(/\.hero-pin\s*\{[^}]*position:\s*sticky/.test(css), 'hero-pin 非 sticky');
-  assert.ok(css.includes('.hero-track'), 'CSS 缺 .hero-track');
-  assert.ok(!/@keyframes hero-progress/.test(css), 'hero-progress keyframes 残留');
-  assert.ok(!/@keyframes\s+[\w-]*fade/i.test(css), 'hero 含 fade 关键帧（§14 禁止）');
-  assert.ok(!/\.hero-slide\s*\{[^}]*position:\s*absolute/.test(css), 'slide 仍 absolute');
+  assert.ok(css.includes('.half-img') && css.includes('.half-txt'), 'CSS 缺两半');
+  assert.ok(/\.hero-slide\s*\{[^}]*position:\s*absolute/.test(css), 'slide 非 absolute 叠放');
+  assert.ok(!/\.hero-track/.test(css), 'CSS hero-track 残留');
+  assert.ok(!/\.hero\.is-light/.test(css), 'CSS is-light 残留');
+  assert.ok(!/\.hero-slide\.is-light/.test(css), 'CSS slide is-light 残留');
+  /* difference chrome */
+  for (const sel of ['.hero-nav', '.hero-arrow', '.hero-progress', '.scroll-indicator']) {
+    const block = css.match(new RegExp(sel.replace(/\./g, '\\.') + '\\s*\\{[^}]*\\}'));
+    assert.ok(block && /mix-blend-mode:\s*difference/.test(block[0]), sel + ' 缺 difference');
+  }
+  /* 移动端堆叠 */
+  assert.ok(/@media\s*\(max-width:\s*768px\)[\s\S]*?\.half-img\s*\{[^}]*height:\s*52%/.test(css),
+    '移动端缺图上 52% 堆叠');
+  /* i18n 新 key */
+  const i18n = loadI18n();
+  assert.ok(i18n.dict.zh['hero.view'] && i18n.dict.en['hero.view'], '缺 hero.view key');
+});
+
+test('v2.0 回归：首页 hero 无 is-light/tone；project 页 is-light 保留', () => {
+  /* 剥注释后再查（注释里允许出现违禁词，如版本说明） */
+  const heroJs = read('js/hero.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+  const heroCss = read('css/hero.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(!/is-light/.test(heroJs), 'hero.js 残留 is-light');
+  assert.ok(!/(^|[^-])\.hero\.is-light/.test(heroCss), '首页 hero 残留 .hero.is-light');
+  assert.ok(!/tone\.sync/.test(heroJs), 'hero.js 残留 tone.sync');
+  /* project.html 是独立页面，浅色主题保留（非首页 hero） */
+  assert.ok(/is-light/.test(read('js/project.js') + read('project.html')),
+    'project 页 is-light 被误删');
+  /* v2.0 兼容块：project 页复用的旧全幅 hero 类必须在 hero.css 里恢复 */
+  const compatCss = read('css/hero.css');
+  for (const sel of [
+    '.project-hero .hero-bgwrap',
+    '.project-hero .hero-agroup',
+    '.project-hero .hero-topline',
+    '.project-hero .hero-textgroup',
+    '.project-hero.is-light .hero-textgroup',
+    '.project-hero [data-layer="loc"]',
+  ]) {
+    assert.ok(compatCss.includes(sel), 'hero.css 缺 project 兼容 ' + sel);
+  }
 });
 
 test('v1.1 字带：.vertical-names 5 列不同速度 alternate 竖漂', () => {
@@ -237,27 +282,8 @@ test('v1.1 红线补充：无 alert()；header 无 blur；JS 无外部引用', (
   assert.ok(headerBlock && !/blur\s*\(/.test(headerBlock[0]), '.site-header 含 blur()');
 });
 
-test('v1.2 浅色 slide：tone=light 的 slide 前景转 ink（主题挂 section.hero）', () => {
-  const data = read('js/data.js');
-  assert.ok(/tone:\s*'light'/.test(data), 'data.js 缺少 tone=light');
-  const heroJs = read('js/hero.js');
-  assert.ok(/tone:\s*{/.test(heroJs) && /hero\.tone\.sync/.test(heroJs),
-    'hero.js 缺少 tone.sync（主题须挂 section.hero，dots/scroll 是兄弟元素）');
-  const css = read('css/hero.css');
-  for (const sel of [
-    '.hero.is-light .hero-textgroup',
-    '.hero.is-light .hero-topline',
-    '.hero.is-light [data-layer="a"]',
-    '.hero.is-light [data-layer="meta"]',
-    '.hero.is-light .scroll-indicator',
-    '.hero.is-light .hero-dots button.is-active',
-    '.hero.is-light .hero-progress i',
-  ]) {
-    assert.ok(css.includes(sel), 'hero.css 缺少 ' + sel);
-  }
-  /* 回归：旧的 .hero-slide.is-light 后代选择器套不上兄弟元素，不许残留 */
-  assert.ok(!/\.hero-slide\.is-light\s+\.(hero-dots|scroll-indicator)/.test(css),
-    'hero.css 残留套不上的 .hero-slide.is-light 兄弟选择器');
+test('v1.2 遗留：data.js 保留 tone=light 字段（project 页仍在用）', () => {
+  assert.ok(/tone:\s*'light'/.test(read('js/data.js')), 'data.js 缺少 tone=light');
 });
 
 /* ---------- 12. Phase 2：WebP ---------- */
@@ -435,7 +461,6 @@ test('轮播：键盘 ←/→（表单守卫）、箭头按钮、方形光标', 
   assert.ok(/Previous slide/.test(js) && /Next slide/.test(js), 'hero.js 箭头无障碍标签缺失');
   const css = read('css/hero.css');
   assert.ok(css.includes('.hero-arrow'), 'hero.css 缺少 .hero-arrow');
-  assert.ok(css.includes('.hero.is-light .hero-arrow'), 'hero.css 箭头缺少浅色主题');
   assert.ok(css.includes('(hover: none)'), 'hero.css 箭头缺少触屏常显');
   // 自定义光标
   assert.ok(/cursor:\s*{/.test(js), 'hero.js 缺少 cursor 模块');

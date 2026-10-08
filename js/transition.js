@@ -57,7 +57,7 @@
     panel.setAttribute('aria-hidden', 'true');
     var aImg = document.createElement('img');
     aImg.className = 'page-wipe-a';
-    aImg.src = 'assets/logo/aka-cristi-white.png?v=1.9'; /* ink 黑底，用白版笔触 LOGO */
+    aImg.src = 'assets/logo/aka-cristi-white.png?v=2.0'; /* ink 黑底，用白版笔触 LOGO */
     aImg.alt = '';
     aImg.setAttribute('aria-hidden', 'true');
     document.body.appendChild(panel);

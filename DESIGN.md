@@ -91,14 +91,21 @@ svg 占位图保持原样。
 - 圆角只有 0px（品牌默认）/ 2px（头像、小标签）/ 4px（一般 UI 上限）。**禁止 pill（999px）**。
 - **header**：72–80px（手机 60–64px），左 A 标（20px 高 img）+ AKA.CRISTI 字标，
   右 nav（mono label，hover 1px 下划线），底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
-- **hero**：100vw×100vh，7 层 layer（背景图 / 巨大 A 标 / 顶部 mono 行 / 分类 / 标题 / 元数据 / scroll 指示器），
-  v1.9 起为滚轮驱动（section 高 n*100vh，pin sticky，track 位移；无 autoplay、无 mask 转场），
-  禁普通 fade / 标准左右 slide。
-  顶部 mono 行：`N°01 / 06` + `城市 — 年份`（取 data.js location/year）。
-  标题 Archivo 600 `clamp(58px,9.4vw,145px)/.82`，`-.065em` 紧排。
-  A 标为描边版（内联 a-symbol.svg 几何：paths `fill="none" stroke-width="6"`，针尖/方点保留填充，
-  几何不变）：`min(63vw,850px)`，`rgba(255,255,255,.82)`，稳定态 opacity .7。
-  底部短横线 dots（34px→active 62px 白）+ 2px 进度条由 JS 按 scroll 进度 scaleX。
+- **hero（v2.0：50/50 split-screen）**：左半图片（50%×100vh）/ 右半纸色文字面板
+  （50%×100vh）；滚轮驱动两半**反向运动**（图上 / 文下），过渡中每半都是一半一半；
+  移动端（≤768px）两半上下堆叠（图 52% / 文 48%），同向运动。
+  section 高 n*100vh，`.hero-pin` sticky 锁 100vh；slide 绝对叠放，
+  每半按 `f = i - p*(n-1)` 位移（`translateY(f*vh)` / 桌面文半 `-f*vh`）；
+  位移本身即过渡，**无 autoplay、无 mask 转场**。禁普通 fade / 标准左右 slide。
+  右半面板：顶部 mono 行 `N°01 / 06`、分类、Archivo 600 大标题
+  `clamp(40px,5.4vw,92px)/.92`（按 50vw 校准）、英文副标题、描述（38ch）、
+  年份—地点—分类 meta、`查看项目 →` 下划线链接；A 标退为面板水印
+  （描边版内联 a-symbol.svg 几何：paths `fill="none" stroke-width="6"`，
+  针尖/方点保留填充，几何不变）：`min(26vw,340px)`，`rgba(10,10,12,.09)`。
+  只有 active slide 可交互（`pointer-events`）。
+  chrome（dots / 箭头 / 2px 进度条 / scroll 指示器）全部
+  `mix-blend-mode: difference` 深浅自适应，**无 is-light 主题切换**。
+  底部短横线 dots（34px→active 62px）+ 2px 进度条由 JS 按 scroll 进度 scaleX。
   Hero 图 `grayscale(.72) contrast(1.13)`；Ken Burns `scale 1.01→1.07` / 7s linear（单程）。
 - **work-card**：1px #D9D9D9 边框，无 shadow；hover 边框转 ink + 图 scale(1.03) / 400ms；
   图默认 `grayscale(.7) contrast(1.1)`，hover 透至 `grayscale(.3)`（.5s）。
@@ -135,12 +142,18 @@ svg 占位图保持原样。
 ## Motion
 
 - Easing 统一 `cubic-bezier(0.16, 1, 0.3, 1)`；快进 400–700ms / 停留 2–5s / 快退 300–500ms。
-- Hero timeline（§13）：0s 图 → 0.15s 编号/城市年份 → 0.30s 分类 → 0.45s 标题 → 0.60s A 标 →
-  0.80s 稳定；每张 slide 进入视口时播一遍。
-- **Hero 滚轮驱动（v1.9，替代 autoplay）**：section 高 `n*100vh`；`.hero-pin` sticky 锁 100vh；
-  `.hero-track` 随 scroll 位移（`translateY(-p*(elH-vh))`，rAF 节流 + passive 监听），
-  过渡中一半一半；位移本身即过渡，**无 mask 切换、无自动轮播**。`idx=round(p*(n-1))` 变化时：
-  主题同步（is-light）+ dots 同步 + timeline 重播 + breath 重开。
+- Hero timeline（§13）：0s 图 → 0.12s 编号 → 0.22s 分类 → 0.32s 标题 →
+  0.40s 英文副标题 → 0.48s 描述 → 0.56s meta → 0.64s 链接 → 0.60s A 水印；
+  每张 slide 进入视口时播一遍（右半面板为主）。
+- **Hero 滚轮驱动（v2.0 split-screen，替代 v1.9 track 位移）**：section 高 `n*100vh`；
+  `.hero-pin` sticky 锁 100vh；slide 绝对叠放（无 `.hero-track`）。
+  scroll 更新时对每张 slide `i` 计算 `f = i - p*(n-1)`：
+  `.half-img` → `translateY(f*vh)`，`.half-txt` → 桌面反向 `translateY(-f*vh)`、
+  移动端（`matchMedia('(max-width: 768px)')`）同向 `translateY(f*vh)`；
+  rAF 节流 + passive 监听。`idx=round(p*(n-1))` 变化时：
+  is-active（pointer-events）+ dots 同步 + timeline 重播 + breath 重开。
+  mouse parallax 保留（`data-px` 直接写像素：img 8 / txt 3，作用在 `.half-in` 上，
+  与 scroll 位移分层不冲突）；scroll 三层视差已删除。
   底部 2px 进度条由 JS 按 scroll 进度 `scaleX(p)`；scroll 指示器滚开（p>0.03）即淡出。
   dots / 箭头 / 键盘 ←/→ 统一走 `goTo(i)` → `scrollTo({top: elTop+i*vh, smooth})`
   （reduced-motion 用 'auto'；键盘保留表单守卫，pin 在视口内才响应）。
@@ -148,8 +161,8 @@ svg 占位图保持原样。
   弱到"让图片呼吸，而不是让观众注意到动画"。
 - A 标（§16）：进场 opacity 0→1、x +30→0、clip 80%→0、700ms；退场 x 0→-20、opacity→0、450ms。
   禁旋转 / 弹跳 / 辉光 / 3D。
-- 视差（§17）：mouse ±8px（lerp，pin 区间）；v1.9 起删除 scroll 三层视差
-  （sticky 时 section rect.top 恒 ~0，已无意义）；手机关 mouse parallax。
+- 视差（§17）：mouse lerp（pin 区间；v2.0 起 `data-px` 直接写像素：左半图 ±8px /
+  右半文 ±3px，作用在 `.half-in` 上）；scroll 三层视差已删除；手机关 mouse parallax。
 - Hover 必须冷静：border 色、underline、scale 1.03、位移 4–8px、frost。
   禁 glow / shadow / bounce / gradient / blur / neon。
 - 所有动效过两道门：`prefers-reduced-motion` 直接给终态（hero 无 timeline 动画/parallax/breath，
@@ -162,7 +175,7 @@ svg 占位图保持原样。
 - 轮播键盘：`←`/`→` 切上下张（仅 hero 在视口内；焦点在 INPUT/TEXTAREA/SELECT/contentEditable
   时不劫持，循环首尾）。
 - 轮播箭头：JS 生成 `←`/`→` 按钮，hero 两侧垂直居中；桌面 hover 显现（.6→1），触屏常显（.65）；
-  浅色 slide 切 ink 色；可聚焦 + aria-label。
+  `mix-blend-mode: difference` 深浅自适应；可聚焦 + aria-label。
 - 方形跟随光标（fine pointer 限定）：16px 方形描边（2px 圆角），`mix-blend-mode: difference`
   深浅自适应；lerp 跟随；悬停 button/a 时放大到 30px；hero 区域隐藏原生光标；
   `mouseleave` 隐藏；reduced-motion / 触屏不启用。
