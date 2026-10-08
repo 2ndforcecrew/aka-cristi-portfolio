@@ -1,8 +1,8 @@
 /* ============================================================
- * AKA.CRISTI — 服务跑马灯（v2.3）
+ * AKA.CRISTI — 服务跑马灯（v2.3 建，v2.6 ScrollVelocity 速度模型，v2.7 实心字）
  * 黑底横条，大字无限循环（中英对照），JS 驱动 rAF；
- * hover：方形反色透镜跟随鼠标（mix-blend-mode: difference）
- *       + 滚动加速。reduced-motion：静止。
+ * hover：方形反色透镜跟随鼠标（mix-blend-mode: difference）；
+ * 速度跟滚动速度走、可倒带。reduced-motion：静止。
  * ============================================================ */
 .marquee {
   position: relative;
@@ -30,23 +30,22 @@
   gap: 22px;
   white-space: nowrap;
 }
-/* v2.4：中英同尺寸、空心描边、小字 */
+/* v2.7：实心字（空心描边在 difference 透镜下镂空处闪紫，已投诉），字号略降 */
 .mq-zh,
 .mq-en {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(28px, 4vw, 64px);
+  font-size: clamp(24px, 3.4vw, 52px);
   letter-spacing: .04em;
   line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--paper);
+  color: var(--paper);   /* 实心：随深色模式自动反转（白条黑字/黑条白字） */
   white-space: nowrap;
 }
 .mq-brand {
   letter-spacing: .06em;
 }
 .mq-sep {
-  font-size: clamp(16px, 1.8vw, 26px);
+  font-size: clamp(14px, 1.5vw, 22px);
   color: var(--paper);
   margin-inline: clamp(24px, 3.5vw, 56px);
   user-select: none;

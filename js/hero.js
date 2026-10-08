@@ -2,7 +2,7 @@
  * AKA.CRISTI — hero.js（AKA_HOME_HERO，spec §07–§19）
  * v2.5：图片固定位置交叉淡入 + 文字反向滚动。section 高 n*100vh；
  *   .hero-pin sticky 锁 100vh；
- *   .hero-fixed：6 张 .hero-slide-img 叠在同一固定位置（absolute inset-0），
+ *   .hero-fixed：7 张 .hero-slide-img 叠在同一固定位置（absolute inset-0），
  *     滚轮驱动交叉淡入（opacity = 1-|i-f|，内层图 scale = 1.06-0.06*opacity，
  *     JS 直接驱动，无 CSS transition）；描边 A 为 pin 内单个静态水印 .hero-a-fixed；
  *   .hero-track-txt（文字 slide，倒序 [5..0]）位移 translateY(-(1-p)*total)，
@@ -68,8 +68,8 @@
       hero.scroll.update();
     },
 
-    /* ============ 建 slide DOM（v2.5：6 张图叠放交叉淡入 + 文字 track） ============ */
-    /* .hero-fixed：6 张 .hero-slide-img（顺序 [0..5]）absolute 叠在同一固定位置，
+    /* ============ 建 slide DOM（v2.5：7 张图叠放交叉淡入 + 文字 track） ============ */
+    /* .hero-fixed：7 张 .hero-slide-img（顺序 [0..6]）absolute 叠在同一固定位置，
        每张含全幅 bg（[data-layer="bg"] + data-px mouse 视差）；opacity/scale 由
        scroll.update 按帧直接写（无 CSS transition）。
        .hero-a-fixed：pin 内单个静态描边 A 水印（图片层之上、文字层之下）。
@@ -102,7 +102,7 @@
       if (!txtWrap) return;
       hero.txtSlides = [];
 
-      /* ---- 图片层：6 张叠放，同一固定位置，交叉淡入 ---- */
+      /* ---- 图片层：7 张叠放，同一固定位置，交叉淡入 ---- */
       if (fixedWrap) {
         var imgFrag = document.createDocumentFragment();
         each(works, function (w, i) {
@@ -118,13 +118,34 @@
           bgw.setAttribute('data-px', 'bg');
           var bg = document.createElement('div');
           bg.setAttribute('data-layer', 'bg');
-          /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback */
-          var pic = AKA.picture(w.hero || w.cover,
-            'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category,
-            { eager: i === 0 });
-          var picImg = (pic.tagName === 'PICTURE') ? pic.querySelector('img') : pic;
-          s._img = picImg;
-          bg.appendChild(pic);
+          /* v2.7-B：kind==='video' 建 <video>（muted/loop/playsinline/poster），
+             参与同一套 crossfade（opacity/scale 写在 video 元素上） */
+          if (w.kind === 'video' && w.video) {
+            var vid = document.createElement('video');
+            vid.muted = true;
+            vid.loop = true;
+            vid.playsInline = true;
+            vid.setAttribute('playsinline', '');
+            vid.setAttribute('muted', '');
+            vid.preload = 'metadata';
+            vid.poster = w.poster || w.hero || '';
+            vid.setAttribute('aria-label', 'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category);
+            var vsrc = document.createElement('source');
+            vsrc.src = w.video;
+            vsrc.type = 'video/mp4';
+            vid.appendChild(vsrc);
+            s._img = vid;    /* crossfade scale 复用 _img 通道 */
+            s._video = vid;
+            bg.appendChild(vid);
+          } else {
+            /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback */
+            var pic = AKA.picture(w.hero || w.cover,
+              'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category,
+              { eager: i === 0 });
+            var picImg = (pic.tagName === 'PICTURE') ? pic.querySelector('img') : pic;
+            s._img = picImg;
+            bg.appendChild(pic);
+          }
           bgw.appendChild(bg);
           s.appendChild(bgw);
 
@@ -269,11 +290,11 @@
       each(hero.txtSlides, function (t) {
         if (t && t._work) hero.paintSlide(t, t._work, t._idx, hero.state.n);
       });
-      /* 6 张 img slide 的 alt 按当前语言更新 */
+      /* 7 张 img slide 的 alt 按当前语言更新（video 无 alt，用 aria-label） */
       each(hero.imgSlides, function (s) {
         var w = s && s._work;
         var img = s && s._img;
-        if (!w || !img) return;
+        if (!w || !img || img.tagName !== 'IMG') return;
         var title = zh ? w.title : w.titleEn;
         var cat = I ? I.cat(w.category) : w.category;
         img.setAttribute('alt', 'AKA.CRISTI — ' + title + ' — ' + cat);
@@ -329,6 +350,26 @@
       /* v2.6：标题 ch stagger replay（与图层入场同节奏，TL.title 0.45s） */
       var tel = txt.querySelector('[data-layer="title"]');
       if (AKA.fx && tel) AKA.fx.replay(tel, hero.state.reduced ? 0 : 450);
+      /* v2.7-B：视频 slide 播放控制——active 的播，其余停 */
+      hero.videoSync();
+    },
+
+    /* ============ v2.7-B：视频播放同步 ============ */
+    /* active index 的 video.play()（promise rejection catch 住），其余 pause；
+       reduced-motion 下不自动播（只显示 poster） */
+    videoSync: function () {
+      each(hero.imgSlides, function (s, k) {
+        var v = s && s._video;
+        if (!v) return;
+        if (k === hero.state.i && !hero.state.reduced && !document.hidden) {
+          try {
+            var pr = v.play();
+            if (pr && pr.catch) pr.catch(function () { /* 自动播放被拒：静默留 poster */ });
+          } catch (e) { /* 忽略 */ }
+        } else {
+          v.pause();
+        }
+      });
     },
 
     /* ============ scroll 驱动（v1.9） ============ */
@@ -496,6 +537,10 @@
     a11y: {
       bind: function () {
         if (!hero.el) return;
+        /* v2.7-B：切后台时全部视频 pause，回来后按当前 active 恢复 */
+        document.addEventListener('visibilitychange', function () {
+          hero.videoSync();
+        });
         /* 键盘 ←/→：pin 区间在视口内时走 scroll；表单输入时不劫持 */
         document.addEventListener('keydown', function (ev) {
           var t = ev.target;

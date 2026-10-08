@@ -15,6 +15,21 @@
   AKA.DESIGN_CATS = ['BRANDING', 'POSTER', 'ART DIRECTION', 'TYPOGRAPHY', 'EDITORIAL', 'AUTOMOTIVE'];
 
   AKA.WORKS = [
+    /* ---------------- 概念影像（v2.7-B：首屏轮播开场即视频） ---------------- */
+    {
+      id: 'river-leviathan', kind: 'video', category: 'FILM',
+      title: '江雾巨兽', titleEn: 'RIVER LEVIATHAN', year: '2026',
+      client: 'PERSONAL', location: 'RIVERSIDE',
+      cover: 'assets/video/river-leviathan-poster.jpg',
+      hero: 'assets/video/river-leviathan-poster.jpg',
+      video: 'assets/video/river-leviathan.mp4',
+      poster: 'assets/video/river-leviathan-poster.jpg',
+      description: '黑白概念短片——巨兽自城市江雾中浮现，一镜十秒。',
+      descEn: 'B&W concept short — a leviathan surfacing through urban river mist, one ten-second take.',
+      gallery: ['assets/video/river-leviathan-poster.jpg'],
+      credits: 'FILM — AKA.CRISTI',
+      tone: 'dark'
+    },
     /* ---------------- PHOTOGRAPHY ---------------- */
     {
       id: 'neon-city-nights', kind: 'photo', category: 'FASHION',
@@ -139,8 +154,10 @@
     }
   ];
 
-  /* hero 用 6 张 photography（spec §46：6–10 slides） */
-  AKA.HERO_WORKS = AKA.WORKS.filter(function (w) { return w.kind === 'photo'; });
+  /* hero 用 photography + video（spec §46：6–10 slides；v2.7-B：开场即概念影像） */
+  AKA.HERO_WORKS = AKA.WORKS.filter(function (w) {
+    return ['photo', 'video'].indexOf(w.kind) > -1;
+  });
 
   /* 图片 helper（Phase 2，§43）：jpg → <picture> webp 优先 + jpg fallback；
      svg / 其他原样返回 <img>。供 hero.js / main.js / project.js 共用。 */

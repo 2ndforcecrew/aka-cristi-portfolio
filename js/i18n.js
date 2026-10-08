@@ -15,13 +15,13 @@
     'FASHION': '时装', 'PORTRAIT': '肖像', 'EDITORIAL': '编辑',
     'BEAUTY': '美妆', 'CAMPAIGN': '广告大片', 'PERSONAL': '个人创作',
     'BRANDING': '品牌形象', 'POSTER': '海报', 'TYPOGRAPHY': '字体实验',
-    'ART DIRECTION': '艺术指导', 'AUTOMOTIVE': '汽车'
+    'ART DIRECTION': '艺术指导', 'AUTOMOTIVE': '汽车', 'FILM': '概念影像'
   };
   var CITY_MAP = {
     'SHANGHAI': '上海', 'TAIPEI': '台北', 'PARIS': '巴黎',
     'HONG KONG': '香港', 'MILAN': '米兰', 'LONDON': '伦敦',
     'SHENZHEN': '深圳', 'GUANGZHOU': '广州', 'BEIJING': '北京',
-    'DONGGUAN': '东莞'
+    'DONGGUAN': '东莞', 'RIVERSIDE': '江畔'
   };
 
   /* ---------- 字典（zh/en key 必须完全对应，smoke 校验） ---------- */

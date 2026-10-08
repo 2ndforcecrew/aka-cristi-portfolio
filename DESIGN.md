@@ -93,11 +93,16 @@ svg 占位图保持原样。
   右 nav（**无衬线粗体** font-display 700 / 15px，hover 1px 下划线；v2.1 起含 HOME），
   nav 字间距 v2.2 起收窄为 `.08em`，
   底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
-- **hero（v2.5：图片固定位置交叉淡入 + 文字反向滚动）**：`.hero-fixed` 内 6 张
-  `.hero-slide-img`（顺序 [0..5]）absolute 叠在同一固定位置；滚轮驱动**交叉淡入**
+- **hero（v2.5：图片固定位置交叉淡入 + 文字反向滚动）**：`.hero-fixed` 内 7 张
+  `.hero-slide-img`（顺序 [0..6]）absolute 叠在同一固定位置；滚轮驱动**交叉淡入**
   （JS 按帧直接写，无 CSS transition）：`f = p*(n-1)`，每张
   `opacity = 1-|i-f|`，内层图 `scale = 1.06-0.06*opacity`（进入时收敛）；
   描边 A 为 pin 内**单个静态**水印 `.hero-a-fixed`（图片层之上、文字层之下，faint 白）；
+  **v2.7-B**：首位为概念影像 `river-leviathan`（`kind: 'video'`，10s h264 720p，
+  `<video muted loop playsinline preload="metadata" poster>`），参与同一套 crossfade；
+  active 时 `play()`（promise catch）、其余 `pause()`、`document.hidden` 全停、
+  reduced-motion 只留 poster；`HERO_WORKS` 取 `['photo','video']`，摄影网格仍只取 photo；
+  poster 有 jpg + webp（ImageTrail 的 `.jpg→.webp` 替换可直接用）。
   section 高 n*100vh，`.hero-pin` sticky 锁 100vh；
   `.hero-track-txt`（文字 slide，倒序 [5..0]，透明，只含 topline + textgroup）位移
   `translateY(-(1-p)*total)`，滚轮往下时文字往下走（反向），在固定视口位置一张张经过；
@@ -121,8 +126,9 @@ svg 占位图保持原样。
 - **服务跑马灯**（v2.3，替代 Selected Work，占 `#work` 锚点；**v2.6 改 ScrollVelocity**）：
   ink 黑底横条，大字无限循环 `AKA.CRISTI ✦ 平面设计 GRAPHIC DESIGN ✦ 时装摄影 FASHION PHOTOGRAPHY ✦
   品牌设计 BRAND DESIGN ✦ 画册设计 BROCHURE DESIGN ✦ 包装设计 PACKAGING DESIGN ✦
-  展览设计 EXHIBITION DESIGN`（v2.4 起：中英同尺寸空心描边小字，
-  `clamp(28px,4vw,64px)` + `-webkit-text-stroke: 1.5px`）；JS rAF 驱动（两组序列无缝循环）；
+  展览设计 EXHIBITION DESIGN`（v2.4：中英同尺寸空心描边小字，`clamp(28px,4vw,64px)` +
+  `-webkit-text-stroke: 1.5px`；**v2.7-A 改实心** `color: var(--paper)` 去描边，
+  字号略降 `clamp(24px,3.4vw,52px)`——空心字在 difference 透镜镂空处闪紫，被投诉）；JS rAF 驱动（两组序列无缝循环）；
   速度 = `70px/s + 平滑滚动速度*4`（lerp 0.08，上滚反转方向，轻微 `skewX` 随速度 ±8°）；
   hover 210px/s 加速已删（与速度模型冲突）；方形反色透镜保留
   （`mix-blend-mode: difference` 白方块 170px，lerp 缓动）；细指针限定，reduced-motion 静止。
@@ -211,8 +217,12 @@ svg 占位图保持原样。
   reduced-motion / 触屏不启用。
 - 黑白主题切换（v2.4）：`js/theme.js` + `localStorage['aka-theme']`（默认 light）；
   `html[data-theme="dark"]` 覆盖 `--paper:#0A0A0A; --ink:#FAFAF8`，灰阶反转，
-  `--frost`/`--neon` 不变；header 语言切换旁加方形色块按钮（亮色黑块 / 暗色白块，
-  `data-js="theme-toggle"`，四页 header + 移动菜单都有）；各页 `<head>` 内联防闪烁脚本；
+  `--frost`/`--neon` 不变；**v2.7-A 起**语言/主题按钮移出 header，
+  改为视口右侧固定浮动按钮组 `.float-controls`（`position: fixed; right: 18px; top: 50%`，
+  纵向排列；44px 方形/移动端 36px，radius 2px，1px ink 边框，paper 底；
+  z-index 150：内容/导航之上，移动菜单 overlay(200)/转场(9999)/光标(10001)之下；
+  语言按钮「中/EN」纵向堆叠；沿用 `data-js` 绑定，`js/theme.js`/`js/i18n.js` 无需改动；
+  hero 左右箭头对称内移避让）；各页 `<head>` 内联防闪烁脚本；
   深色下笔触 LOGO `filter: invert(1)`；转场面板恒黑（`#0A0A0A`）；跑马灯自动反转为白条黑字。
 
 ## Brand（笔触 LOGO，2026-10-08 用户提供）
@@ -240,8 +250,9 @@ svg 占位图保持原样。
   各模块防御：`AKA.i18n` 缺失时退回英文原文。
 - `cat()`/`city()` 映射分类与城市（未知值原样返回）；作品 `title`（中）/`titleEn`（英）、
   `description`（中）/`descEn`（英）按语言选用。
-- 切换按钮：header 与移动菜单各一个 `<button class="lang-toggle" data-js="lang-toggle">`，
-  显示 `中 / EN`（当前高亮），mono 小字无 pill；JS 统一绑定。
+- 切换按钮（**v2.7-A 起**）：四页各一个 `.float-controls` 浮动组（含
+  `<button class="lang-toggle" data-js="lang-toggle">` + `<button class="theme-toggle" data-js="theme-toggle">`），
+  显示 `中 / EN`（纵向堆叠，当前高亮），mono 小字无 pill；JS 按 `data-js` 统一绑定（原 header/移动菜单内的按钮已移除）。
 - 中文字体：系统 fallback（`--font-body` 已含 PingFang TC / Noto Sans TC / Microsoft JhengHei），
   不引入外部字体。HTML 静态默认英文（无 JS 时完整可读），`applyStatic` 在 DOMContentLoaded 即转中文。
 

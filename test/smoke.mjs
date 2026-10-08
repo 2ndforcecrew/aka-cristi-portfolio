@@ -86,20 +86,27 @@ function loadWorks() {
   new Function('window', src)(sandbox.window);
   return sandbox.window.AKA.WORKS;
 }
-test('data.js：12 条、字段齐全、分类合法、cover 文件存在', () => {
+test('data.js：13 条、字段齐全、分类合法、cover 文件存在', () => {
   const works = loadWorks();
-  assert.equal(works.length, 12);
+  assert.equal(works.length, 13);
   const photoCats = ['FASHION', 'EDITORIAL', 'PORTRAIT', 'CAMPAIGN', 'BEAUTY', 'PERSONAL'];
   const designCats = ['BRANDING', 'POSTER', 'ART DIRECTION', 'TYPOGRAPHY', 'EDITORIAL', 'AUTOMOTIVE', 'EXPERIMENTAL'];
+  const filmCats = ['FILM'];
   const fields = ['id', 'kind', 'category', 'title', 'titleEn', 'year', 'client',
     'location', 'cover', 'hero', 'gallery', 'description', 'credits'];
   for (const w of works) {
     for (const f of fields) assert.ok(w[f] !== undefined && w[f] !== '', w.id + ' 缺字段 ' + f);
-    assert.ok(['photo', 'design'].includes(w.kind), w.id + ' kind 非法');
-    const cats = w.kind === 'photo' ? photoCats : designCats;
+    assert.ok(['photo', 'design', 'video'].includes(w.kind), w.id + ' kind 非法');
+    const cats = w.kind === 'photo' ? photoCats : w.kind === 'video' ? filmCats : designCats;
     assert.ok(cats.includes(w.category), w.id + ' category 非法：' + w.category);
     assert.ok(exists(w.cover), w.id + ' cover 不存在：' + w.cover);
     assert.ok(Array.isArray(w.gallery) && w.gallery.includes(w.cover), w.id + ' gallery 异常');
+    /* v2.7-B：video 条目必须带 video/poster 且文件存在 */
+    if (w.kind === 'video') {
+      assert.ok(w.video && exists(w.video), w.id + ' video 文件缺失');
+      assert.ok(w.poster && exists(w.poster), w.id + ' poster 文件缺失');
+      assert.ok(exists(w.poster.replace(/\.jpg$/, '.webp')), w.id + ' 缺 poster webp（ImageTrail 用）');
+    }
   }
   const photos = works.filter((w) => w.kind === 'photo');
   assert.equal(photos.length, 6, 'hero 需要 6 张 photography');
@@ -524,9 +531,9 @@ test('i18n：4 页所有 [data-i18n] 的 key 都在 dict 里', () => {
   }
 });
 
-test('i18n：12 件作品都有 title/titleEn/description/descEn', () => {
+test('i18n：13 件作品都有 title/titleEn/description/descEn', () => {
   const works = loadWorks();
-  assert.equal(works.length, 12);
+  assert.equal(works.length, 13);
   for (const w of works) {
     for (const f of ['title', 'titleEn', 'description', 'descEn']) {
       assert.ok(w[f] !== undefined && w[f] !== '', w.id + ' 缺 ' + f);
@@ -540,11 +547,15 @@ test('i18n：12 件作品都有 title/titleEn/description/descEn', () => {
   assert.ok(byId['packaging-design'].descEn.includes('fragrance'), 'packaging descEn 异常');
 });
 
-test('i18n：4 页都有 lang-toggle（header+移动菜单）且 i18n.js 在 data.js 之后引入', () => {
+test('i18n：4 页各有 1 个 lang-toggle（位于 .float-controls，header/移动菜单已移除）且 i18n.js 在 data.js 之后引入', () => {
   for (const p of PAGES) {
     const html = read(p);
     const toggles = [...html.matchAll(/data-js="lang-toggle"/g)].length;
-    assert.ok(toggles >= 2, p + ' lang-toggle 不足 2 个：' + toggles);
+    assert.equal(toggles, 1, p + ' lang-toggle 应恰好 1 个：' + toggles);
+    const themes = [...html.matchAll(/data-js="theme-toggle"/g)].length;
+    assert.equal(themes, 1, p + ' theme-toggle 应恰好 1 个：' + themes);
+    assert.ok(html.includes('class="float-controls"'), p + ' 缺 .float-controls');
+    assert.ok(!html.includes('mobile-lang'), p + ' mobile-lang 残留');
     const di = html.indexOf('js/data.js');
     const ii = html.indexOf('js/i18n.js');
     assert.ok(di !== -1 && ii !== -1 && ii > di, p + ' i18n.js 未在 data.js 之后引入');
@@ -607,9 +618,10 @@ test('跑马灯：#work 为 marquee、无 selected 残留、7 项服务、lens+S
   assert.ok(!mq.includes('HOVER_SPEED'), 'HOVER_SPEED 应删除');
   assert.ok(mq.includes('speedFor'), '缺 ScrollVelocity 速度函数 speedFor');
   assert.ok(mq.includes('prefers-reduced-motion'), 'reduced-motion 降级必须存在');
-  /* v2.4：中英同尺寸空心描边小字 */
-  assert.ok(css.includes('-webkit-text-stroke'), '跑马灯文字必须空心描边');
+  /* v2.7：空心改实心（difference 透镜在镂空处闪紫，已投诉） */
+  assert.ok(!css.includes('-webkit-text-stroke'), '跑马灯不应再有空心描边');
   assert.ok(/\.mq-zh,\s*\.mq-en/.test(css), '中英必须同规则同尺寸');
+  assert.ok(css.includes('font-size: clamp(24px, 3.4vw, 52px)'), '跑马灯字号应为 clamp(24px, 3.4vw, 52px)');
   const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
   assert.ok(!main.includes('renderSelected'), 'renderSelected 必须删除');
   assert.ok(!main.includes('workCard'), 'workCard 死代码必须删除');
@@ -898,15 +910,15 @@ test('v2.6 hero 接入：build 分词 / paintSlide 重建 / setActive replay / l
 /* ---------- 46. HTML 接入：引用 / data-split / magnet / rot 容器 ---------- */
 test('v2.6 HTML 接入：effects 引用与钩子', () => {
   const index = read('index.html');
-  assert.ok(index.includes('css/effects.css?v=2.5.1'), 'index 缺 effects.css');
-  assert.ok(index.includes('js/effects.js?v=2.5.1'), 'index 缺 effects.js');
+  assert.ok(/css\/effects\.css\?v=[\d.]+/.test(index), 'index 缺 effects.css');
+  assert.ok(/js\/effects\.js\?v=[\d.]+/.test(index), 'index 缺 effects.js');
   assert.equal((index.match(/data-split/g) || []).length, 4, 'index 应有 4 个 data-split h2');
   assert.ok(index.includes('btn-start magnet'), 'index CTA 缺 magnet');
   const about = read('about.html');
-  assert.ok(about.includes('js/effects.js?v=2.5.1'), 'about 缺 effects.js');
+  assert.ok(/js\/effects\.js\?v=[\d.]+/.test(about), 'about 缺 effects.js');
   assert.ok(about.includes('data-js="rot"'), 'about 缺 RotatingText 容器');
   const contact = read('contact.html');
-  assert.ok(contact.includes('js/effects.js?v=2.5.1'), 'contact 缺 effects.js');
+  assert.ok(/js\/effects\.js\?v=[\d.]+/.test(contact), 'contact 缺 effects.js');
   assert.ok(contact.includes('form-submit magnet'), 'contact 提交按钮缺 magnet');
 });
 
@@ -924,4 +936,77 @@ test('v2.6 交叉引用：hero.js 用的 AKA.fx.* 在 effects.js 均有定义', 
   for (const ns of ['AKA.HERO_WORKS', 'AKA.i18n']) {
     assert.ok(fx.includes(ns), 'effects.js 应引用 ' + ns);
   }
+});
+
+/* ---------- v2.7-A 回归：右侧浮动功能按钮 + 跑马灯实心字 ---------- */
+test('v2.7：.float-controls 固定定位样式（桌面 44px / 移动 36px，z-index 150）', () => {
+  const css = read('css/layout.css');
+  assert.ok(css.includes('.float-controls'), '缺 .float-controls 样式');
+  assert.ok(/\.float-controls\s*\{[^}]*position:\s*fixed/.test(css), 'float-controls 不是 fixed');
+  assert.ok(css.includes('z-index: 150'), 'float-controls z-index 应为 150');
+  assert.ok(css.includes('width: 44px'), '桌面按钮应 44px');
+  assert.ok(css.includes('width: 36px'), '移动端按钮应 36px');
+  assert.ok(!/\.float-controls[^}]*border-radius:\s*[3-9]/.test(css), 'radius 只能 0/2/4px');
+});
+
+test('v2.7：header 内无切换按钮（4 页），桌面 nav 居中', () => {
+  const css = read('css/layout.css');
+  for (const p of PAGES) {
+    const html = read(p);
+    const header = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+    assert.ok(!header.includes('data-js="lang-toggle"'), p + ' header 残留 lang-toggle');
+    assert.ok(!header.includes('data-js="theme-toggle"'), p + ' header 残留 theme-toggle');
+  }
+  assert.ok(css.includes('.site-nav { margin-inline: auto; }'), '桌面 nav 居中规则缺失');
+});
+
+test('v2.7：跑马灯实心字（无描边、字号缩小）', () => {
+  const css = read('css/marquee.css');
+  assert.ok(!css.includes('-webkit-text-stroke'), 'marquee 仍有空心描边');
+  assert.ok(!css.includes('color: transparent'), 'marquee 仍有透明填充');
+  assert.ok(css.includes('font-size: clamp(24px, 3.4vw, 52px)'), '跑马灯字号未缩小到 clamp(24px, 3.4vw, 52px)');
+  assert.ok(/\.mq-zh,\s*\n\.mq-en\s*\{[^}]*color:\s*var\(--paper\)/.test(css), '跑马灯应为实心 var(--paper)');
+  assert.ok(css.includes('.marquee-lens'), 'difference 透镜不应被删');
+});
+
+test('v2.7：hero 箭头避让浮动按钮（对称内移）', () => {
+  const css = read('css/hero.css');
+  assert.ok(css.includes('.hero-arrow--next { right: clamp(74px, 9vw, 112px); }'), '右箭头未内移避让');
+  assert.ok(css.includes('.hero-arrow--prev { left: clamp(74px, 9vw, 112px); }'), '左箭头未对称内移');
+});
+
+/* ---------- v2.7-B：首屏轮播加入概念影像视频 ---------- */
+test('v2.7-B：video 条目第一位 + HERO_WORKS 含 video + 摄影网格仍只取 photo', () => {
+  const data = read('js/data.js');
+  assert.ok(data.indexOf("id: 'river-leviathan'") > -1, '缺 river-leviathan 条目');
+  assert.ok(data.indexOf("id: 'river-leviathan'") < data.indexOf("id: 'neon-city-nights'"),
+    'video 条目应在 WORKS 第一位（轮播开场即视频）');
+  assert.ok(/\['photo',\s*'video'\]/.test(data), 'HERO_WORKS filter 未包含 video');
+  const main = read('js/main.js');
+  assert.ok(/w\.kind === 'photo'/.test(main), 'main.js 摄影网格应仍只取 photo');
+  assert.ok(!/\['photo',\s*'video'\]/.test(main), 'main.js 不应包含 video（视频不进照片墙）');
+  const i18n = read('js/i18n.js');
+  assert.ok(/'FILM':\s*'概念影像'/.test(i18n), 'CAT_MAP 缺 FILM');
+  assert.ok(/'RIVERSIDE':\s*'江畔'/.test(i18n), 'CITY_MAP 缺 RIVERSIDE');
+  assert.ok(exists('assets/video/river-leviathan.mp4'), '缺视频文件');
+  assert.ok(exists('assets/video/river-leviathan-poster.jpg'), '缺 poster');
+});
+
+test('v2.7-B：hero.js 视频 slide 构建 + 播放控制', () => {
+  const js = read('js/hero.js');
+  const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+  assert.ok(/document\.createElement\('video'\)/.test(jsNoComment), '未建 video 元素');
+  assert.ok(/vid\.muted = true/.test(jsNoComment), 'video 缺 muted');
+  assert.ok(/vid\.loop = true/.test(jsNoComment), 'video 缺 loop');
+  assert.ok(/playsinline/.test(jsNoComment), 'video 缺 playsinline');
+  assert.ok(/vid\.poster = w\.poster/.test(jsNoComment), 'video 缺 poster');
+  assert.ok(/preload = 'metadata'/.test(jsNoComment), 'video preload 应为 metadata');
+  assert.ok(/videoSync/.test(jsNoComment), '缺 videoSync');
+  assert.ok(/\.play\(\)/.test(jsNoComment), '缺 play()');
+  assert.ok(/\.catch\(/.test(jsNoComment), 'play() promise 缺 catch');
+  assert.ok(/visibilitychange/.test(jsNoComment), '缺 visibilitychange 暂停');
+  assert.ok(/v\.pause\(\)/.test(jsNoComment), '缺 pause()');
+  assert.ok(/tagName !== 'IMG'/.test(jsNoComment), 'applyLang 缺 video alt 守卫');
+  const css = read('css/hero.css');
+  assert.ok(/\[data-layer="bg"\] video\s*\{[^}]*object-fit:\s*cover/.test(css), 'CSS 缺 video 全幅规则');
 });
