@@ -153,9 +153,11 @@ svg 占位图保持原样。
   每帧按 hook 取当前 grid，筛选重渲染不缓存死节点；IntersectionObserver 屏外停跑）。
 - **筛选栏**（v2.8-E）：`#photography` / `#design` 的 `.filter[role=tablist]` 打破 `.container`
   限宽，全视口通栏（`100vw` + `calc(50% - 50vw)`，按钮内侧 `padding-inline: max(20px,6vw)`），tab 样式不变。
+  **v2.8.1**：加全宽 hairline（`border-bottom: 1px solid var(--gray-300)` + `padding-bottom`），通栏视觉可辨。
 - **about-contact 合并模块**（v2.8-F，index.html）：`#about` + `#contact` 并成
   `<section id="about" class="about-contact">`，`.about-contact-grid` 两栏
   （桌面 `1.1fr 1fr`，移动堆叠）；左：`about-word` + bw-01 照片 + `about-long` 三段；
+  **v2.8.1**：index.html 补引 `css/pages.css`（两栏 grid 与表单样式原在 pages.css，index.html 未引入致堆叠/无样式）。
   右（`id="contact"` 锚点，`scroll-margin-top: 96px`）：留言表单（姓名/邮箱/留言三底线输入 +
   发送按钮，复用 contact.html 校验→mailto 逻辑）；导航 关于→`#about` / 联系→`#contact`
   （about.html / contact.html 独立页不动）。

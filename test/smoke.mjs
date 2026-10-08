@@ -1128,3 +1128,34 @@ test('v2.8-F：about-contact 两栏 CSS（桌面两栏/移动堆叠/#contact 锚
   assert.ok(/grid-template-columns: 1\.1fr 1fr/.test(css), '缺桌面两栏');
   assert.ok(/#contact\s*\{\s*scroll-margin-top/.test(css), '缺 #contact 锚点偏移');
 });
+
+/* ---------- v2.8.1：index.html 必须引入 pages.css（about-contact 两栏 + 表单样式） ---------- */
+test('v2.8.1：index.html 引入 pages.css（about-contact-grid/form 样式生效）', () => {
+  const html = read('index.html');
+  assert.ok(/href="css\/pages\.css\?v=/.test(html), 'index.html 未引入 pages.css，about-contact 两栏与表单样式失效');
+});
+
+/* ---------- v2.8.1：筛选栏通栏可见 hairline ---------- */
+test('v2.8.1：filter 通栏带全宽 hairline（视觉可辨）', () => {
+  const css = read('css/layout.css');
+  const m = css.match(/#photography \.filter,[\s\S]*?\{([\s\S]*?)\}/);
+  assert.ok(m, '缺 filter 通栏规则块');
+  assert.ok(/border-bottom:\s*1px solid/.test(m[1]), 'filter 通栏缺 hairline 边线');
+});
+
+/* ---------- v2.8.1：reduced-motion 下 visibility 不得误杀图片 slide ---------- */
+test('v2.8.1：motion.css reduced-motion 只隐藏 .hero-slide-txt（图片 slide 永不挂 .is-active）', () => {
+  const css = read('css/motion.css');
+  assert.ok(!/\.hero-slide:not\(\.is-active\)/.test(css), '仍有 .hero-slide:not(.is-active)，会隐藏全部图片 slide');
+  assert.ok(/\.hero-slide-txt:not\(\.is-active\)/.test(css), '缺 .hero-slide-txt:not(.is-active) 文字切换规则');
+  const js = read('js/hero.js');
+  assert.ok(/hero\.txtSlides[\s\S]{0,120}?classList\.toggle\('is-active'/.test(js), 'setActive 未给文字 slide 挂 .is-active');
+});
+
+/* ---------- v2.8.1：hero bg 层 opacity override 必须用 !important 压住基线 ---------- */
+test('v2.8.1：.hero-slide-img [data-layer="bg"] 用 !important 压住 opacity:0 基线', () => {
+  const css = read('css/hero.css');
+  const m = css.match(/\.hero-slide-img \[data-layer="bg"\][\s\S]*?\{([\s\S]*?)\}/);
+  assert.ok(m, '缺 hero bg override 规则');
+  assert.ok(/opacity:\s*1\s*!important/.test(m[1]), 'hero bg override 缺 !important，基线 opacity:0 可能压不住');
+});

@@ -285,6 +285,8 @@ html[data-theme="dark"] .brand-logo img { filter: invert(1); }
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   padding-inline: max(20px, 6vw);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--gray-300);
 }
 
 /* 分类 filter（§22 / §26） */

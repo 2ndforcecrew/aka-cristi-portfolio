@@ -54,7 +54,9 @@
     clip-path: inset(0 0 0 0) !important;
   }
   .hero-slide { clip-path: inset(0 0 0 0) !important; }
-  .hero-slide:not(.is-active) { visibility: hidden; }
+  /* v2.8.1：只隐藏非 active 的文字 slide；图片 slide 由 JS opacity 驱动且永不挂 .is-active，
+     沿用 .hero-slide 会误杀全部图片（全黑） */
+  .hero-slide-txt:not(.is-active) { visibility: hidden; }
   .scroll-indicator { animation: none !important; }
   /* hero 进度条：静态 */
   .hero-progress i { animation: none !important; }

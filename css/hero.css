@@ -35,12 +35,13 @@
   opacity: 0;
   pointer-events: none;
 }
-/* 覆盖 [data-layer="bg"] 的 .in 入场（project 页仍用 .in；首页由 JS 直接写 opacity） */
+/* 覆盖 [data-layer="bg"] 的 .in 入场（project 页仍用 .in；首页由 JS 直接写 opacity）
+   v2.8.1：加 !important——基线 opacity:0 曾因层叠失效致 hero 图片全黑，强制压住 */
 .hero-slide-img [data-layer="bg"],
 .hero-slide-img [data-layer="bg"].in {
-  opacity: 1;
-  transform: none;
-  transition: none;
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
 }
 /* v2.5：单个静态描边 A 水印（图片层之上、文字层之下） */
 .hero-a-fixed {
