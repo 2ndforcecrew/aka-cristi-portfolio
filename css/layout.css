@@ -49,7 +49,7 @@
   font-family: var(--font-display); /* v2.1：无衬线粗体 */
   font-weight: 700;
   font-size: 15px; /* v2.1：导航字号加大（原 12px label） */
-  letter-spacing: var(--label-tracking);
+  letter-spacing: .08em; /* v2.2：字间距收窄（原 --label-tracking 太宽） */
   text-transform: uppercase;
   color: var(--ink);
   padding-block: 4px;

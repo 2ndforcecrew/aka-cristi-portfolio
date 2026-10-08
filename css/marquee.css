@@ -1,0 +1,75 @@
+/* ============================================================
+ * AKA.CRISTI — 服务跑马灯（v2.3）
+ * 黑底横条，大字无限循环（中英对照），JS 驱动 rAF；
+ * hover：方形反色透镜跟随鼠标（mix-blend-mode: difference）
+ *       + 滚动加速。reduced-motion：静止。
+ * ============================================================ */
+.marquee {
+  position: relative;
+  background: var(--ink);
+  color: var(--paper);
+  overflow: hidden;
+  padding-block: clamp(56px, 9vh, 110px);
+  /* 上下 1px 分隔线，杂志感 */
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.marquee-seq {
+  display: flex;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+.mq-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 20px;
+  white-space: nowrap;
+}
+.mq-zh {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(46px, 7vw, 112px);
+  letter-spacing: .02em;
+  line-height: 1;
+}
+.mq-brand {
+  letter-spacing: .06em;
+}
+.mq-en {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  white-space: nowrap;
+}
+.mq-sep {
+  font-size: clamp(20px, 2.4vw, 34px);
+  color: var(--gray-600);
+  margin-inline: clamp(28px, 4vw, 64px);
+  user-select: none;
+}
+/* 反色透镜：方形，呼应站内方形光标；只在细指针设备出现 */
+.marquee-lens {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 170px;
+  height: 170px;
+  background: #fff;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 240ms linear;
+  z-index: 2;
+}
+.marquee-lens.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-lens { display: none; }
+}

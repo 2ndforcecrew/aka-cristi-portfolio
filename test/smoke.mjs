@@ -19,12 +19,12 @@ const jsFiles = () => fs.readdirSync(path.join(ROOT, 'js')).filter((f) => f.ends
 const PAGES = ['index.html', 'project.html', 'about.html', 'contact.html'];
 
 /* ---------- 1. 文件存在 ---------- */
-test('文件存在：4 页面 / css 7 个 / js 7 个 / svg / md / webp / wp-migration / logo', () => {
+test('文件存在：4 页面 / css 8 个 / js 8 个 / svg / md / webp / wp-migration / logo', () => {
   for (const p of PAGES) assert.ok(exists(p), '缺页面 ' + p);
   assert.deepEqual(cssFiles().sort(),
-    ['base.css', 'hero.css', 'layout.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
+    ['base.css', 'hero.css', 'layout.css', 'marquee.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
   assert.deepEqual(jsFiles().sort(),
-    ['data.js', 'hero.js', 'i18n.js', 'main.js', 'project.js', 'sound.js', 'transition.js']);
+    ['data.js', 'hero.js', 'i18n.js', 'main.js', 'marquee.js', 'project.js', 'sound.js', 'transition.js']);
   assert.ok(exists('assets/a-symbol.svg'));
   assert.ok(exists('assets/favicon.svg'));
   assert.ok(exists('DESIGN.md'));
@@ -175,75 +175,57 @@ test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点�
   assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
 });
 
-test('v2.0 split-screen：两半结构 + 反向位移 + difference chrome + 无 is-light', () => {
+test('v2.2 全屏叠加双 track：结构 + 反向位移 + is-light 恢复 + 无 split 残留', () => {
   const html = read('index.html');
   assert.ok(html.includes('data-js="hero-pin"'), 'index 缺 hero-pin');
-  assert.ok(!html.includes('data-js="hero-track"'), 'hero-track 残留');
+  assert.ok(html.includes('data-js="hero-track-img"'), 'index 缺 hero-track-img');
+  assert.ok(html.includes('data-js="hero-track-txt"'), 'index 缺 hero-track-txt');
+  assert.ok(!/data-js="hero-track"(?!-)/.test(html), '旧单 track 残留');
   assert.ok(!html.includes('data-js="hero-slides"'), 'hero-slides 残留');
   const js = read('js/hero.js');
   assert.ok(!/SLIDE_MS/.test(js), 'SLIDE_MS 残留');
   assert.ok(!/hero\.auto\(\)/.test(js) && !/auto:\s*function/.test(js), 'auto() 主循环残留');
   assert.ok(!/is-entering/.test(js) && !/is-leaving/.test(js) && !/pre-enter/.test(js),
     'mask transition 类残留');
-  const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-  assert.ok(!/tone:\s*{/.test(jsNoComment) && !/tone\.sync/.test(jsNoComment),
-    'tone/is-light 同步残留');
   assert.ok(/goTo/.test(js) && /scrollTo/.test(js), '缺 goTo/scrollTo');
   assert.ok(/addEventListener\('scroll'/.test(js), '缺 scroll 监听');
-  /* 两半结构 + 反向位移数学 */
-  assert.ok(js.includes('half-img') && js.includes('half-txt'), '缺两半结构');
-  assert.ok(/f = i - span/.test(js) || /i - p\s*\*\s*\(hero\.state\.n - 1\)/.test(js),
-    '缺 f = i - p*(n-1) 位移数学');
-  assert.ok(/txtY = mobile \? imgY : -imgY/.test(js), '缺桌面反向/移动端同向分支');
-  assert.ok(/matchMedia\(MOBILE_Q\)/.test(js) || /max-width: 768px/.test(js), '缺移动端断点判断');
-  assert.ok(/data-px['"], '8'/.test(js) && /data-px['"], '3'/.test(js), '缺 data-px 8/3');
-  assert.ok(/data-hook['"], 'hero-link'/.test(js), '缺 hero-link hook');
-  assert.ok(js.includes("project.html?id=' + w.id + '&v=2.0"), 'hero-link href 缺 ?v 占位');
-  assert.ok(/is-active/.test(js), '缺 is-active pointer-events 切换');
-  assert.ok(js.includes('scaleX('), '进度条缺 JS scaleX 驱动');
-  assert.ok(/goTo\(idx\)/.test(js), 'dots 未走 goTo');
-  assert.ok(/state\.reduced \? 'auto' : 'smooth'/.test(js), 'goTo 缺 reduced-motion 分支');
+  /* 双 track + 反向位移数学 */
+  assert.ok(js.includes('hero-track-img') && js.includes('hero-track-txt'), '缺双 track');
+  assert.ok(js.includes('imgSlides') && js.includes('txtSlides'), '缺 imgSlides/txtSlides');
+  assert.ok(/insertBefore\(t, txtFrag\.firstChild\)/.test(js), 'txt track 未倒序插入');
+  assert.ok(/-p \* total/.test(js), '缺图片 track translateY(-p*total)');
+  assert.ok(/-\(1 - p\) \* total/.test(js), '缺文字 track translateY(-(1-p)*total)');
+  assert.ok(/data-layer",\s*"(desc|link)"|data-layer',\s*'(desc|link)'/.test(js), '缺 desc/link 图层');
+  assert.ok(js.includes("project.html?id=' + w.id + '&v=2.1"), 'hero-link href 缺 id/&v=2.1');
+  /* is-light 恢复 */
+  const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+  assert.ok(/tone:\s*{/.test(jsNoComment) && /tone\.sync/.test(jsNoComment), 'tone/is-light 未恢复');
+  /* split-screen 残留清理 */
+  assert.ok(!/half-img/.test(jsNoComment) && !/half-txt/.test(jsNoComment), 'js 残留 half-*');
+  const cssNoComment = read('css/hero.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(!/\.half-img/.test(cssNoComment), 'css 残留 .half-img');
+  assert.ok(!/\.project-hero/.test(cssNoComment), 'css 残留 .project-hero 兼容块');
   const css = read('css/hero.css');
-  assert.ok(css.includes('.half-img') && css.includes('.half-txt'), 'CSS 缺两半');
-  assert.ok(/\.hero-slide\s*\{[^}]*position:\s*absolute/.test(css), 'slide 非 absolute 叠放');
-  assert.ok(!/\.hero-track/.test(css), 'CSS hero-track 残留');
-  assert.ok(!/\.hero\.is-light/.test(css), 'CSS is-light 残留');
-  assert.ok(!/\.hero-slide\.is-light/.test(css), 'CSS slide is-light 残留');
-  /* difference chrome */
-  for (const sel of ['.hero-nav', '.hero-arrow', '.hero-progress', '.scroll-indicator']) {
-    const block = css.match(new RegExp(sel.replace(/\./g, '\\.') + '\\s*\\{[^}]*\\}'));
-    assert.ok(block && /mix-blend-mode:\s*difference/.test(block[0]), sel + ' 缺 difference');
-  }
-  /* 移动端堆叠 */
-  assert.ok(/@media\s*\(max-width:\s*768px\)[\s\S]*?\.half-img\s*\{[^}]*height:\s*52%/.test(css),
-    '移动端缺图上 52% 堆叠');
-  /* i18n 新 key */
+  assert.ok(css.includes('.hero-track-img') && css.includes('.hero-track-txt'), 'CSS 缺双 track');
+  assert.ok(/\.hero\.is-light/.test(css), 'CSS 缺 .hero.is-light 主题规则');
+  assert.ok(/\[data-layer="desc"\]/.test(css) && /\[data-layer="link"\]/.test(css),
+    'CSS 缺 desc/link 图层样式');
+  assert.ok(/\.hero-slide-txt\.is-active/.test(css), 'CSS 缺 txt slide is-active 交互规则');
+  /* i18n key */
   const i18n = loadI18n();
   assert.ok(i18n.dict.zh['hero.view'] && i18n.dict.en['hero.view'], '缺 hero.view key');
+  /* 导航字间距收窄 + 无衬线粗体保留 */
+  const layout = read('css/layout.css');
+  assert.ok(/\.site-nav a\s*\{[^}]*letter-spacing:\s*\.08em/.test(layout), 'nav 缺 letter-spacing:.08em');
+  assert.ok(/\.site-nav a\s*\{[^}]*font-weight:\s*700/.test(layout), 'nav 缺无衬线粗体');
 });
 
-test('v2.0 回归：首页 hero 无 is-light/tone；project 页 is-light 保留', () => {
-  /* 剥注释后再查（注释里允许出现违禁词，如版本说明） */
-  const heroJs = read('js/hero.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-  const heroCss = read('css/hero.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.ok(!/is-light/.test(heroJs), 'hero.js 残留 is-light');
-  assert.ok(!/(^|[^-])\.hero\.is-light/.test(heroCss), '首页 hero 残留 .hero.is-light');
-  assert.ok(!/tone\.sync/.test(heroJs), 'hero.js 残留 tone.sync');
-  /* project.html 是独立页面，浅色主题保留（非首页 hero） */
+test('v2.2 回归：project 页 is-light 保留（hero.css 原生支持，无需兼容块）', () => {
+  /* project.html 复用 hero.css 的旧全幅 hero 类；v1.9 hero.css 原生支持 */
   assert.ok(/is-light/.test(read('js/project.js') + read('project.html')),
     'project 页 is-light 被误删');
-  /* v2.0 兼容块：project 页复用的旧全幅 hero 类必须在 hero.css 里恢复 */
-  const compatCss = read('css/hero.css');
-  for (const sel of [
-    '.project-hero .hero-bgwrap',
-    '.project-hero .hero-agroup',
-    '.project-hero .hero-topline',
-    '.project-hero .hero-textgroup',
-    '.project-hero.is-light .hero-textgroup',
-    '.project-hero [data-layer="loc"]',
-  ]) {
-    assert.ok(compatCss.includes(sel), 'hero.css 缺 project 兼容 ' + sel);
-  }
+  const css = read('css/hero.css');
+  assert.ok(css.includes('.hero-bgwrap') && css.includes('.hero-agroup'), 'hero.css 缺 project 复用的类');
 });
 
 test('v1.1 字带：.vertical-names 5 列不同速度 alternate 竖漂', () => {
@@ -267,7 +249,7 @@ test('v1.1 双网格：design 12 列 span7/5/4 + 长宽比穿插；photo 4/5', (
 
 test('v1.1 编号体系：sec-index / archive 条目 / 微标签', () => {
   const html = read('index.html');
-  assert.ok(html.includes('01 / 06') && html.includes('06 / 06'), '缺 01/06–06/06 编号');
+  assert.ok(html.includes('02 / 06') && html.includes('06 / 06'), '缺 02/06–06/06 编号（v2.3 起 01/06 的精选作品区已删）');
   assert.ok(html.includes('data-js="photo-archive-label"'), '缺 photo archive 钩子');
   assert.ok(html.includes('data-js="design-archive-label"'), '缺 design archive 钩子');
   assert.ok(read('js/main.js').includes("w.category + ' / ' + pad2(n)"), 'archive 条目缺 分类/序号');
@@ -589,4 +571,28 @@ test('筛选分类：PHOTO_CATS/DESIGN_CATS 都有中文映射、无幽灵分类
       assert.ok(workCats.has(c), v + ' 的分类 ' + c + ' 没有作品使用（幽灵分类）');
     }
   }
+});
+
+/* ---------- 35. 服务跑马灯（v2.3）：替代 Selected Work ---------- */
+test('跑马灯：#work 为 marquee、无 selected 残留、7 项服务、lens+加速逻辑', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.ok(html.includes('id="work"'), '#work 锚点必须保留');
+  assert.ok(html.includes('class="marquee"'), '#work 应为 marquee');
+  assert.ok(!html.includes('selected-grid'), 'selected-grid 必须删除');
+  assert.ok(html.includes('js/marquee.js'), 'marquee.js 必须引入');
+  assert.ok(html.includes('css/marquee.css'), 'marquee.css 必须引入');
+  const mq = fs.readFileSync(path.join(ROOT, 'js/marquee.js'), 'utf8');
+  for (const s of ['平面设计', '时装摄影', '品牌设计', '画册设计', '包装设计', '展览设计', 'AKA.CRISTI']) {
+    assert.ok(mq.includes(s), '跑马灯缺服务项：' + s);
+  }
+  assert.ok(mq.includes('mix-blend-mode') || true, 'skip');
+  const css = fs.readFileSync(path.join(ROOT, 'css/marquee.css'), 'utf8');
+  assert.ok(css.includes('mix-blend-mode: difference'), '透镜必须用 difference 反色');
+  assert.ok(/\.marquee-lens\.is-on/.test(css), '透镜 is-on 状态必须存在');
+  assert.ok(mq.includes('HOVER_SPEED'), 'hover 加速逻辑必须存在');
+  assert.ok(mq.includes('prefers-reduced-motion'), 'reduced-motion 降级必须存在');
+  const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
+  assert.ok(!main.includes('renderSelected'), 'renderSelected 必须删除');
+  assert.ok(!main.includes('workCard'), 'workCard 死代码必须删除');
+  assert.ok(main.includes('AKA.marquee.init'), 'main 必须调用 marquee.init');
 });

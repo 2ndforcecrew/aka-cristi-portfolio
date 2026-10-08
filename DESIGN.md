@@ -91,25 +91,31 @@ svg 占位图保持原样。
 - 圆角只有 0px（品牌默认）/ 2px（头像、小标签）/ 4px（一般 UI 上限）。**禁止 pill（999px）**。
 - **header**：72–80px（手机 60–64px），左 A 标（20px 高 img）+ AKA.CRISTI 字标，
   右 nav（**无衬线粗体** font-display 700 / 15px，hover 1px 下划线；v2.1 起含 HOME），
+  nav 字间距 v2.2 起收窄为 `.08em`，
   底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
-- **hero（v2.0：50/50 split-screen）**：左半图片（50%×100vh）/ 右半纸色文字面板
-  （50%×100vh）；滚轮驱动两半**反向运动**（图上 / 文下），过渡中每半都是一半一半；
-  移动端（≤768px）两半上下堆叠（图 52% / 文 48%），同向运动。
-  section 高 n*100vh，`.hero-pin` sticky 锁 100vh；slide 绝对叠放，
-  每半按 `f = i - p*(n-1)` 位移（`translateY(f*vh)` / 桌面文半 `-f*vh`）；
+- **hero（v2.2：全屏叠加 + 双 track 反向运动）**：全幅图片 + 文字信息叠加在图上；
+  section 高 n*100vh，`.hero-pin` sticky 锁 100vh；
+  `.hero-track-img`（图片 slide，顺序 [0..5]，含 bg + 描边 A）位移 `translateY(-p*total)`，
+  `.hero-track-txt`（文字 slide，倒序 [5..0]，透明，只含 topline + textgroup）位移
+  `translateY(-(1-p)*total)`；两半**反向运动**（图上 / 文下），过渡中每半都是一半一半；
   位移本身即过渡，**无 autoplay、无 mask 转场**。禁普通 fade / 标准左右 slide。
-  右半面板：顶部 mono 行 `N°01 / 06`、分类、Archivo 600 大标题
-  `clamp(40px,5.4vw,92px)/.92`（按 50vw 校准）、英文副标题、描述（38ch）、
-  年份—地点—分类 meta、`查看项目 →` 下划线链接；A 标退为面板水印
-  （描边版内联 a-symbol.svg 几何：paths `fill="none" stroke-width="6"`，
-  针尖/方点保留填充，几何不变）：`min(26vw,340px)`，`rgba(10,10,12,.09)`。
-  只有 active slide 可交互（`pointer-events`）。
-  chrome（dots / 箭头 / 2px 进度条 / scroll 指示器）全部
-  `mix-blend-mode: difference` 深浅自适应，**无 is-light 主题切换**。
+  文字叠加层：顶部 mono 行 `N°01 / 06` + 城市—年份、分类、Archivo 600 杂志封面巨标题
+  `clamp(58px,9.4vw,145px)/.82`、英文副标题、描述（两行 line-clamp）、
+  年份—客户—分类 meta、`查看项目 →` 下划线链接（只有 active 文字 slide 可交互，
+  `pointer-events`）；巨大描边 A 为构图锚点（描边版内联 a-symbol.svg 几何：
+  paths `fill="none" stroke-width="6"`，针尖/方点保留填充，几何不变）。
+  图层 stagger 入场在图片 slide（bg/A）与文字 slide（num/loc/cat/title/desc/meta/link）
+  上同时播。**is-light 恢复**：tone=light 的 slide 上前景（A / 文字 / dots / 进度条 /
+  scroll 指示器 / 箭头）全部转 ink。
   底部短横线 dots（34px→active 62px）+ 2px 进度条由 JS 按 scroll 进度 scaleX。
   Hero 图 `grayscale(.72) contrast(1.13)`；Ken Burns `scale 1.01→1.07` / 7s linear（单程）。
-- **work-card**：1px #D9D9D9 边框，无 shadow；hover 边框转 ink + 图 scale(1.03) / 400ms；
-  图默认 `grayscale(.7) contrast(1.1)`，hover 透至 `grayscale(.3)`（.5s）。
+- **服务跑马灯**（v2.3，替代 Selected Work，占 `#work` 锚点）：ink 黑底横条，
+  大字无限循环 `AKA.CRISTI ✦ 平面设计 GRAPHIC DESIGN ✦ 时装摄影 FASHION PHOTOGRAPHY ✦
+  品牌设计 BRAND DESIGN ✦ 画册设计 BROCHURE DESIGN ✦ 包装设计 PACKAGING DESIGN ✦
+  展览设计 EXHIBITION DESIGN`（中文 display 700 `clamp(46px,7vw,112px)` + 英文 mono 14px，
+  中英同时显示）；JS rAF 驱动（两组序列无缝循环，70px/s，常速）；
+  hover：方形反色透镜跟随鼠标（`mix-blend-mode: difference` 白方块 170px，lerp 缓动，
+  呼应站内方形光标）+ 加速至 210px/s；细指针限定，reduced-motion 静止。
 - **photo-grid**：均匀 3 列（tablet 2 / 手机 2→1），`aspect-ratio: 4/5`，gap 24/16px；
   条目 `分类 / 序号`（10px mono）+ 标题 + 年份；分类切换用 display:none（禁 fade filter）。
 - **design-grid**：12 列不对称（wide span7 / span5 / tall span4），长宽比 4/5、16/10、3/4 穿插，
@@ -143,18 +149,17 @@ svg 占位图保持原样。
 ## Motion
 
 - Easing 统一 `cubic-bezier(0.16, 1, 0.3, 1)`；快进 400–700ms / 停留 2–5s / 快退 300–500ms。
-- Hero timeline（§13）：0s 图 → 0.12s 编号 → 0.22s 分类 → 0.32s 标题 →
-  0.40s 英文副标题 → 0.48s 描述 → 0.56s meta → 0.64s 链接 → 0.60s A 水印；
-  每张 slide 进入视口时播一遍（右半面板为主）。
-- **Hero 滚轮驱动（v2.0 split-screen，替代 v1.9 track 位移）**：section 高 `n*100vh`；
-  `.hero-pin` sticky 锁 100vh；slide 绝对叠放（无 `.hero-track`）。
-  scroll 更新时对每张 slide `i` 计算 `f = i - p*(n-1)`：
-  `.half-img` → `translateY(f*vh)`，`.half-txt` → 桌面反向 `translateY(-f*vh)`、
-  移动端（`matchMedia('(max-width: 768px)')`）同向 `translateY(f*vh)`；
-  rAF 节流 + passive 监听。`idx=round(p*(n-1))` 变化时：
-  is-active（pointer-events）+ dots 同步 + timeline 重播 + breath 重开。
-  mouse parallax 保留（`data-px` 直接写像素：img 8 / txt 3，作用在 `.half-in` 上，
-  与 scroll 位移分层不冲突）；scroll 三层视差已删除。
+- Hero timeline（§13）：0s 图 → 0.15s 编号/城市 → 0.30s 分类 → 0.45s 标题 →
+  0.52s 描述 → 0.58s meta → 0.64s 链接 → 0.60s A 标；
+  每张 slide 进入视口时播一遍（图片 slide 播 bg/A，文字 slide 播 num/loc/cat/title/desc/meta/link）。
+- **Hero 滚轮驱动（v2.2 双 track 反向）**：section 高 `n*100vh`；
+  `.hero-pin` sticky 锁 100vh；`.hero-track-img`（图片 slide 顺序 [0..5]）
+  位移 `translateY(-p*total)`，`.hero-track-txt`（文字 slide 倒序 [5..0]）
+  位移 `translateY(-(1-p)*total)`，`total=(n-1)*100vh`；rAF 节流 + passive 监听。
+  `idx=round(p*(n-1))` 变化时：tone/is-light 同步 + 文字 slide is-active（pointer-events）
+  + dots 同步 + timeline 重播 + breath 重开。
+  mouse parallax 保留（`data-px` 直接写像素：bg 0.5×/a 1×/text 0.25×，基数 8px）；
+  scroll 三层视差已删除。
   底部 2px 进度条由 JS 按 scroll 进度 `scaleX(p)`；scroll 指示器滚开（p>0.03）即淡出。
   dots / 箭头 / 键盘 ←/→ 统一走 `goTo(i)` → `scrollTo({top: elTop+i*vh, smooth})`
   （reduced-motion 用 'auto'；键盘保留表单守卫，pin 在视口内才响应）。

@@ -1,7 +1,7 @@
 /* ============================================================
  * AKA.CRISTI — main.js
- * 渲染 selected / photography / design grids、分类切换、
- * 移动菜单、reveal、页脚年份；调用 AKA.hero.init()。
+ * 渲染 photography / design grids、分类切换、
+ * 移动菜单、reveal、页脚年份；调用 AKA.hero.init()、AKA.marquee.init()。
  * 全部挂 window.AKA；DOM 查询走 data-js 钩子；防御性编码。
  * ============================================================ */
 (function () {
@@ -36,41 +36,6 @@
   }
 
   /* ---------- 卡片（Phase 2：整卡即链接 → project.html?id=） ---------- */
-  function workCard(w, i) {
-    var card = document.createElement('a');
-    card.className = 'work-card';
-    card.href = 'project.html?id=' + encodeURIComponent(w.id);
-    card.setAttribute('data-id', w.id);
-
-    var num = document.createElement('span');
-    num.className = 'work-card-num';
-    num.textContent = 'N°' + pad2(i + 1);
-
-    var imgw = document.createElement('div');
-    imgw.className = 'work-card-img';
-    imgw.appendChild(AKA.picture(w.cover, altFor(w)));
-
-    var meta = document.createElement('div');
-    meta.className = 'work-card-meta';
-    var cat = document.createElement('p');
-    cat.className = 'work-card-cat';
-    cat.textContent = workCat(w.category);
-    var title = document.createElement('h3');
-    title.className = 'work-card-title';
-    title.textContent = workTitle(w);
-    var year = document.createElement('p');
-    year.className = 'work-card-year';
-    year.textContent = w.year;
-    meta.appendChild(cat);
-    meta.appendChild(title);
-    meta.appendChild(year);
-
-    card.appendChild(num);
-    card.appendChild(imgw);
-    card.appendChild(meta);
-    return card;
-  }
-
   function photoCell(w, n) {
     var cell = document.createElement('a');
     cell.className = 'photo-cell';
@@ -129,20 +94,6 @@
   }
 
   /* ---------- 渲染 ---------- */
-  function renderSelected() {
-    var grid = byHook('selected-grid');
-    if (!grid || !AKA.WORKS) return;
-    var picks = ['neon-city-nights', 'dreamweaver', 'street-brand-identity', 'editorial-covers'];
-    var frag = document.createDocumentFragment();
-    each(picks, function (id, i) {
-      var w = null;
-      each(AKA.WORKS, function (x) { if (x.id === id) w = x; });
-      if (w) frag.appendChild(workCard(w, i));
-    });
-    grid.innerHTML = '';
-    grid.appendChild(frag);
-  }
-
   function renderPhotoGrid(cat) {
     var grid = byHook('photo-grid');
     if (!grid || !AKA.WORKS) return;
@@ -270,7 +221,6 @@
 
   /* ---------- i18n：语言切换时重渲染全部动态内容 ---------- */
   function renderAll() {
-    renderSelected();
     initFilter('photo-filter', ['ALL'].concat(AKA.PHOTO_CATS || []), renderPhotoGrid, 'photo');
     initFilter('design-filter', ['ALL'].concat(AKA.DESIGN_CATS || []), renderDesignGrid, 'design');
     initArchiveLabels();
@@ -287,6 +237,7 @@
     initReveal();
     initYear();
     if (AKA.hero && typeof AKA.hero.init === 'function') AKA.hero.init();
+    if (AKA.marquee && typeof AKA.marquee.init === 'function') AKA.marquee.init();
   }
 
   if (document.readyState === 'loading') {
