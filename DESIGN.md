@@ -93,33 +93,34 @@ svg 占位图保持原样。
   右 nav（**无衬线粗体** font-display 700 / 15px，hover 1px 下划线；v2.1 起含 HOME），
   nav 字间距 v2.2 起收窄为 `.08em`，
   底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
-- **hero（v2.2：全屏叠加 + 双 track 反向运动）**：全幅图片 + 文字信息叠加在图上；
+- **hero（v2.4：图片固定 + 文字反向滚动）**：单张固定全屏图（works[0]，bg + 描边 A +
+  Ken Burns + mouse 视差，不随滚动切换）+ 文字信息叠加；
   section 高 n*100vh，`.hero-pin` sticky 锁 100vh；
-  `.hero-track-img`（图片 slide，顺序 [0..5]，含 bg + 描边 A）位移 `translateY(-p*total)`，
   `.hero-track-txt`（文字 slide，倒序 [5..0]，透明，只含 topline + textgroup）位移
-  `translateY(-(1-p)*total)`；两半**反向运动**（图上 / 文下），过渡中每半都是一半一半；
+  `translateY(-(1-p)*total)`，滚轮往下时文字往下走（反向），在固定视口位置一张张经过；
   位移本身即过渡，**无 autoplay、无 mask 转场**。禁普通 fade / 标准左右 slide。
   文字叠加层：顶部 mono 行 `N°01 / 06` + 城市—年份、分类、Archivo 600 杂志封面巨标题
   `clamp(58px,9.4vw,145px)/.82`、英文副标题、描述（两行 line-clamp）、
   年份—客户—分类 meta、`查看项目 →` 下划线链接（只有 active 文字 slide 可交互，
-  `pointer-events`）；巨大描边 A 为构图锚点（描边版内联 a-symbol.svg 几何：
+  `pointer-events`；带 `data-cursor="view"`）；巨大描边 A 为构图锚点（描边版内联 a-symbol.svg 几何：
   paths `fill="none" stroke-width="6"`，针尖/方点保留填充，几何不变）。
-  图层 stagger 入场在图片 slide（bg/A）与文字 slide（num/loc/cat/title/desc/meta/link）
-  上同时播。**is-light 恢复**：tone=light 的 slide 上前景（A / 文字 / dots / 进度条 /
-  scroll 指示器 / 箭头）全部转 ink。
+  图层 stagger：固定图播一次，文字 slide 每张进入时播。文字恒白（图片固定为深色）；
+  **is-light 在 hero 移除**（data.js tone 字段保留给 project 页）。
   底部短横线 dots（34px→active 62px）+ 2px 进度条由 JS 按 scroll 进度 scaleX。
   Hero 图 `grayscale(.72) contrast(1.13)`；Ken Burns `scale 1.01→1.07` / 7s linear（单程）。
 - **服务跑马灯**（v2.3，替代 Selected Work，占 `#work` 锚点）：ink 黑底横条，
   大字无限循环 `AKA.CRISTI ✦ 平面设计 GRAPHIC DESIGN ✦ 时装摄影 FASHION PHOTOGRAPHY ✦
   品牌设计 BRAND DESIGN ✦ 画册设计 BROCHURE DESIGN ✦ 包装设计 PACKAGING DESIGN ✦
-  展览设计 EXHIBITION DESIGN`（中文 display 700 `clamp(46px,7vw,112px)` + 英文 mono 14px，
-  中英同时显示）；JS rAF 驱动（两组序列无缝循环，70px/s，常速）；
+  展览设计 EXHIBITION DESIGN`（v2.4 起：中英同尺寸空心描边小字，
+  `clamp(28px,4vw,64px)` + `-webkit-text-stroke: 1.5px`）；JS rAF 驱动（两组序列无缝循环，70px/s，常速）；
   hover：方形反色透镜跟随鼠标（`mix-blend-mode: difference` 白方块 170px，lerp 缓动，
   呼应站内方形光标）+ 加速至 210px/s；细指针限定，reduced-motion 静止。
-- **photo-grid**：均匀 3 列（tablet 2 / 手机 2→1），`aspect-ratio: 4/5`，gap 24/16px；
+- **photo-grid**（v2.4：满屏密集）：突破 container 全宽（`100vw` + `calc(50% - 50vw)`），
+  `repeat(6, 1fr)` 一排 6 张，gap 2px，缩略图 `aspect-ratio: 3/4`；移动端 3 列；
   条目 `分类 / 序号`（10px mono）+ 标题 + 年份；分类切换用 display:none（禁 fade filter）。
-- **design-grid**：12 列不对称（wide span7 / span5 / tall span4），长宽比 4/5、16/10、3/4 穿插，
-  行对齐（7+5 / 4+4+4）；手机 2 列（wide 跨 2）→ 1 列。
+- **design-grid**（v2.4：横向滚动单排）：`display:flex; overflow-x:auto`（滚动条隐藏但可滚），
+  每项 `flex: 0 0 clamp(260px,32vw,420px)`（移动端 72vw），全宽条带，缩略图统一 `3/4`；
+  旧 span/ratio 类保留（JS 仍加，无害）。
 - **vertical-names**：版块间呼吸口。5 列描边 `AKA.CRISTI`（纸底 `-webkit-text-stroke: 1px #b7b7b7`，
   深色带 `rgba(255,255,255,.14)`），每列不同速度/负延迟竖向漂移（18/23/20/26/21s，alternate 往返），
   慢速不抢戏。statement 区用其做背景（opacity .55）。
@@ -182,9 +183,17 @@ svg 占位图保持原样。
   时不劫持，循环首尾）。
 - 轮播箭头：JS 生成 `←`/`→` 按钮，hero 两侧垂直居中；桌面 hover 显现（.6→1），触屏常显（.65）；
   `mix-blend-mode: difference` 深浅自适应；可聚焦 + aria-label。
-- 方形跟随光标（fine pointer 限定）：16px 方形描边（2px 圆角），`mix-blend-mode: difference`
-  深浅自适应；lerp 跟随；悬停 button/a 时放大到 30px；hero 区域隐藏原生光标；
-  `mouseleave` 隐藏；reduced-motion / 触屏不启用。
+- 自定义光标（v2.4，全站 `js/cursor.js`，旧站霓虹方案回归）：8px 霓虹绿点（`--neon: #D7FF00`）
+  即时跟随 + 36px 圆环（1px ink 描边）rAF lerp 跟随；悬停 `[data-cursor="view"]`
+  （作品 cell / VIEW PROJECT）时圆环扩到 84px、`mix-blend-mode: difference` 反差圈，
+  圆内显 `VIEW`（mono 10px），绿点隐藏；圆环是光标（非 UI 按钮），`border-radius:50%`
+  豁免 pill 禁令；全站 `html.has-cursor` 下隐藏原生光标；fine pointer 限定，
+  reduced-motion / 触屏不启用。
+- 黑白主题切换（v2.4）：`js/theme.js` + `localStorage['aka-theme']`（默认 light）；
+  `html[data-theme="dark"]` 覆盖 `--paper:#0A0A0A; --ink:#FAFAF8`，灰阶反转，
+  `--frost`/`--neon` 不变；header 语言切换旁加方形色块按钮（亮色黑块 / 暗色白块，
+  `data-js="theme-toggle"`，四页 header + 移动菜单都有）；各页 `<head>` 内联防闪烁脚本；
+  深色下笔触 LOGO `filter: invert(1)`；转场面板恒黑（`#0A0A0A`）；跑马灯自动反转为白条黑字。
 
 ## Brand（笔触 LOGO，2026-10-08 用户提供）
 

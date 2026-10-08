@@ -19,12 +19,12 @@ const jsFiles = () => fs.readdirSync(path.join(ROOT, 'js')).filter((f) => f.ends
 const PAGES = ['index.html', 'project.html', 'about.html', 'contact.html'];
 
 /* ---------- 1. 文件存在 ---------- */
-test('文件存在：4 页面 / css 8 个 / js 8 个 / svg / md / webp / wp-migration / logo', () => {
+test('文件存在：4 页面 / css 9 个 / js 10 个 / svg / md / webp / wp-migration / logo', () => {
   for (const p of PAGES) assert.ok(exists(p), '缺页面 ' + p);
   assert.deepEqual(cssFiles().sort(),
-    ['base.css', 'hero.css', 'layout.css', 'marquee.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
+    ['base.css', 'cursor.css', 'hero.css', 'layout.css', 'marquee.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
   assert.deepEqual(jsFiles().sort(),
-    ['data.js', 'hero.js', 'i18n.js', 'main.js', 'marquee.js', 'project.js', 'sound.js', 'transition.js']);
+    ['cursor.js', 'data.js', 'hero.js', 'i18n.js', 'main.js', 'marquee.js', 'project.js', 'sound.js', 'theme.js', 'transition.js']);
   assert.ok(exists('assets/a-symbol.svg'));
   assert.ok(exists('assets/favicon.svg'));
   assert.ok(exists('DESIGN.md'));
@@ -175,11 +175,12 @@ test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点�
   assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
 });
 
-test('v2.2 全屏叠加双 track：结构 + 反向位移 + is-light 恢复 + 无 split 残留', () => {
+test('v2.4 hero：图片固定 + 文字反向滚动 + 无 is-light 同步 + 无旧 cursor', () => {
   const html = read('index.html');
   assert.ok(html.includes('data-js="hero-pin"'), 'index 缺 hero-pin');
-  assert.ok(html.includes('data-js="hero-track-img"'), 'index 缺 hero-track-img');
+  assert.ok(html.includes('data-js="hero-fixed"'), 'index 缺 hero-fixed');
   assert.ok(html.includes('data-js="hero-track-txt"'), 'index 缺 hero-track-txt');
+  assert.ok(!html.includes('data-js="hero-track-img"'), 'hero-track-img 残留');
   assert.ok(!/data-js="hero-track"(?!-)/.test(html), '旧单 track 残留');
   assert.ok(!html.includes('data-js="hero-slides"'), 'hero-slides 残留');
   const js = read('js/hero.js');
@@ -189,25 +190,29 @@ test('v2.2 全屏叠加双 track：结构 + 反向位移 + is-light 恢复 + 无
     'mask transition 类残留');
   assert.ok(/goTo/.test(js) && /scrollTo/.test(js), '缺 goTo/scrollTo');
   assert.ok(/addEventListener\('scroll'/.test(js), '缺 scroll 监听');
-  /* 双 track + 反向位移数学 */
-  assert.ok(js.includes('hero-track-img') && js.includes('hero-track-txt'), '缺双 track');
-  assert.ok(js.includes('imgSlides') && js.includes('txtSlides'), '缺 imgSlides/txtSlides');
+  /* 固定图 + 文字反向位移数学 */
+  assert.ok(js.includes('hero-fixed') && js.includes('hero-track-txt'), '缺 fixed/txt hook');
+  assert.ok(/hero\.imgSlide\b/.test(js) && !/imgSlides/.test(js), 'imgSlides 数组残留，应为单 imgSlide');
   assert.ok(/insertBefore\(t, txtFrag\.firstChild\)/.test(js), 'txt track 未倒序插入');
-  assert.ok(/-p \* total/.test(js), '缺图片 track translateY(-p*total)');
+  assert.ok(!/-p \* total/.test(js.replace(/-\(1 - p\) \* total/g, '')), '图片 track 位移残留（图片应固定）');
   assert.ok(/-\(1 - p\) \* total/.test(js), '缺文字 track translateY(-(1-p)*total)');
-  assert.ok(/data-layer",\s*"(desc|link)"|data-layer',\s*'(desc|link)'/.test(js), '缺 desc/link 图层');
-  assert.ok(js.includes("project.html?id=' + w.id + '&v=2.1"), 'hero-link href 缺 id/&v=2.1');
-  /* is-light 恢复 */
+  assert.ok(js.includes('data-cursor') && js.includes("'view'"), 'VIEW PROJECT 缺 data-cursor="view"');
+  /* v2.4：hero 移除 tone/is-light 同步 */
   const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-  assert.ok(/tone:\s*{/.test(jsNoComment) && /tone\.sync/.test(jsNoComment), 'tone/is-light 未恢复');
+  assert.ok(!/tone\.sync/.test(jsNoComment), 'hero tone.sync 残留');
+  assert.ok(!/tone:\s*\{/.test(jsNoComment), 'hero tone 对象残留');
+  /* 旧 cursor 模块已搬走 */
+  assert.ok(!/hero\.cursor/.test(jsNoComment), 'hero.js 残留 cursor 模块');
+  assert.ok(!/hero-cursor/.test(jsNoComment), 'hero.js 残留 hero-cursor');
   /* split-screen 残留清理 */
   assert.ok(!/half-img/.test(jsNoComment) && !/half-txt/.test(jsNoComment), 'js 残留 half-*');
   const cssNoComment = read('css/hero.css').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.ok(!/\.half-img/.test(cssNoComment), 'css 残留 .half-img');
   assert.ok(!/\.project-hero/.test(cssNoComment), 'css 残留 .project-hero 兼容块');
+  assert.ok(!/\.hero-cursor/.test(cssNoComment), 'css 残留 .hero-cursor');
   const css = read('css/hero.css');
-  assert.ok(css.includes('.hero-track-img') && css.includes('.hero-track-txt'), 'CSS 缺双 track');
-  assert.ok(/\.hero\.is-light/.test(css), 'CSS 缺 .hero.is-light 主题规则');
+  assert.ok(css.includes('.hero-fixed') && css.includes('.hero-track-txt'), 'CSS 缺 fixed/txt');
+  assert.ok(/\.hero\.is-light/.test(css), 'CSS 缺 .hero.is-light 主题规则（project 页仍需）');
   assert.ok(/\[data-layer="desc"\]/.test(css) && /\[data-layer="link"\]/.test(css),
     'CSS 缺 desc/link 图层样式');
   assert.ok(/\.hero-slide-txt\.is-active/.test(css), 'CSS 缺 txt slide is-active 交互规则');
@@ -238,13 +243,11 @@ test('v1.1 字带：.vertical-names 5 列不同速度 alternate 竖漂', () => {
   assert.ok(css.includes('infinite alternate'), '字带非 alternate 往返');
 });
 
-test('v1.1 双网格：design 12 列 span7/5/4 + 长宽比穿插；photo 4/5', () => {
+test('v2.4 双网格替代：design 横滚（无 12 列）+ photo 密集（无 4/5）', () => {
   const css = read('css/layout.css');
-  assert.ok(css.includes('repeat(12, 1fr)'), 'design 缺 12 列');
-  assert.ok(css.includes('.span7') && css.includes('.span5') && css.includes('.span4'), '缺 span 分配');
-  assert.ok(css.includes('ratio-45') && css.includes('ratio-1610') && css.includes('ratio-34'), '缺长宽比穿插');
+  assert.ok(!/\.design-grid\s*\{[^}]*repeat\(12, 1fr\)/.test(css), 'design 仍是 12 列');
   assert.ok(!/(^|[{;])\s*columns\s*:\s*\d/.test(css), 'design 仍用 CSS columns masonry');
-  assert.ok(read('js/main.js').includes('DESIGN_PAT'), 'main.js 缺 DESIGN_PAT 分配表');
+  assert.ok(read('js/main.js').includes('DESIGN_PAT'), 'main.js 缺 DESIGN_PAT 分配表（类名保留）');
 });
 
 test('v1.1 编号体系：sec-index / archive 条目 / 微标签', () => {
@@ -432,7 +435,7 @@ test('站内 #锚点 都有对应 id；ABOUT/CONTACT 导航指向独立页面', 
 });
 
 /* ---------- 15. 轮播键盘 + 箭头 + 自定义光标 ---------- */
-test('轮播：键盘 ←/→（表单守卫）、箭头按钮、方形光标', () => {
+test('轮播：键盘 ←/→（表单守卫）、箭头按钮', () => {
   const js = read('js/hero.js');
   // 表单守卫：INPUT/TEXTAREA/SELECT + contentEditable
   assert.ok(/INPUT\|TEXTAREA\|SELECT/.test(js), 'hero.js 缺少键盘表单守卫');
@@ -444,12 +447,8 @@ test('轮播：键盘 ←/→（表单守卫）、箭头按钮、方形光标', 
   const css = read('css/hero.css');
   assert.ok(css.includes('.hero-arrow'), 'hero.css 缺少 .hero-arrow');
   assert.ok(css.includes('(hover: none)'), 'hero.css 箭头缺少触屏常显');
-  // 自定义光标
-  assert.ok(/cursor:\s*{/.test(js), 'hero.js 缺少 cursor 模块');
-  assert.ok(css.includes('.hero-cursor'), 'hero.css 缺少 .hero-cursor');
-  assert.ok(css.includes('mix-blend-mode: difference'), 'hero-cursor 缺少 difference 自适应');
-  assert.ok(css.includes('.hero.has-cursor'), 'hero.css 缺少原生光标隐藏');
-  assert.ok(/prefers-reduced-motion/.test(css), 'hero-cursor 缺少 reduced-motion 降级');
+  // 自定义光标（v2.4 起搬至 js/cursor.js 全站，见专项测试）
+  assert.ok(!/cursor:\s*{/.test(js), 'hero.js 残留 cursor 模块');
 });
 
 /* ---------- 16. 笔触 LOGO + 导航音效 ---------- */
@@ -591,8 +590,75 @@ test('跑马灯：#work 为 marquee、无 selected 残留、7 项服务、lens+�
   assert.ok(/\.marquee-lens\.is-on/.test(css), '透镜 is-on 状态必须存在');
   assert.ok(mq.includes('HOVER_SPEED'), 'hover 加速逻辑必须存在');
   assert.ok(mq.includes('prefers-reduced-motion'), 'reduced-motion 降级必须存在');
+  /* v2.4：中英同尺寸空心描边小字 */
+  assert.ok(css.includes('-webkit-text-stroke'), '跑马灯文字必须空心描边');
+  assert.ok(/\.mq-zh,\s*\.mq-en/.test(css), '中英必须同规则同尺寸');
   const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
   assert.ok(!main.includes('renderSelected'), 'renderSelected 必须删除');
   assert.ok(!main.includes('workCard'), 'workCard 死代码必须删除');
   assert.ok(main.includes('AKA.marquee.init'), 'main 必须调用 marquee.init');
+});
+
+/* ---------- 36. v2.4 光标：霓虹绿点 + 反差圈 VIEW ---------- */
+test('v2.4 光标：cursor.js/css 接入 + 霓虹绿 + data-cursor="view"', () => {
+  const tokens = read('css/tokens.css');
+  assert.ok(/--neon:\s*#D7FF00/.test(tokens), 'tokens 缺 --neon: #D7FF00');
+  const js = read('js/cursor.js');
+  assert.ok(/cursor-dot/.test(js) && /cursor-ring/.test(js), 'cursor.js 缺 dot/ring');
+  assert.ok(/is-view/.test(js), 'cursor.js 缺 is-view 态');
+  assert.ok(/data-cursor/.test(js) && /"view"/.test(js), 'cursor.js 未监听 [data-cursor="view"]');
+  assert.ok(/prefers-reduced-motion/.test(js), 'cursor.js 缺 reduced-motion 门控');
+  assert.ok(/pointer: fine/.test(js), 'cursor.js 缺 fine pointer 门控');
+  const css = read('css/cursor.css');
+  assert.ok(/\.cursor-ring\.is-view/.test(css), 'cursor.css 缺 is-view 态');
+  assert.ok(/mix-blend-mode:\s*difference/.test(css), 'cursor.css 反差圈缺 difference');
+  assert.ok(/\.cursor-ring::after/.test(css) && /VIEW/.test(css), 'cursor.css 缺 VIEW 字');
+  assert.ok(/border-radius:\s*50%/.test(css), 'cursor.css 圆环缺 50% 圆角');
+  assert.ok(/html\.has-cursor/.test(css), 'cursor.css 缺 has-cursor 原生光标隐藏');
+  for (const p of ['index.html', 'project.html', 'about.html', 'contact.html']) {
+    const h = read(p);
+    assert.ok(h.includes('js/cursor.js'), p + ' 未引入 cursor.js');
+    assert.ok(h.includes('css/cursor.css'), p + ' 未引入 cursor.css');
+  }
+  const main = read('js/main.js');
+  assert.ok(/data-cursor", "view"|data-cursor', 'view'/.test(main), 'main.js cell 缺 data-cursor="view"');
+});
+
+/* ---------- 37. v2.4 黑白主题切换 ---------- */
+test('v2.4 主题：dark 变量覆盖 + toggle 按钮 + localStorage + 防闪烁', () => {
+  const tokens = read('css/tokens.css');
+  assert.ok(/html\[data-theme="dark"\]/.test(tokens), 'tokens 缺 dark 覆盖');
+  assert.ok(/--paper:\s*#0A0A0A/.test(tokens), 'dark 下 --paper 未反转');
+  assert.ok(/--ink:\s*#FAFAF8/.test(tokens), 'dark 下 --ink 未反转');
+  const js = read('js/theme.js');
+  assert.ok(/aka-theme/.test(js), 'theme.js 缺 localStorage key');
+  assert.ok(/data-theme/.test(js), 'theme.js 未读写 data-theme');
+  assert.ok(/theme-toggle/.test(js), 'theme.js 未绑定 toggle 按钮');
+  const layout = read('css/layout.css');
+  assert.ok(/\.theme-toggle/.test(layout), 'layout.css 缺 theme-toggle 样式');
+  assert.ok(/html\[data-theme="dark"\]\s*\.brand-logo img/.test(layout), '深色下 LOGO 未反色');
+  for (const p of ['index.html', 'project.html', 'about.html', 'contact.html']) {
+    const h = read(p);
+    assert.ok(h.includes('js/theme.js'), p + ' 未引入 theme.js');
+    assert.ok(h.includes('data-js="theme-toggle"'), p + ' 缺 theme-toggle 按钮');
+    assert.ok(/localStorage\.getItem\('aka-theme'\)/.test(h), p + ' head 缺防闪烁脚本');
+  }
+  /* 转场面板恒黑（深色下 var(--ink) 会变白） */
+  assert.ok(/background:\s*#0A0A0A/.test(read('css/transition.css')), 'transition 面板未恒黑');
+});
+
+/* ---------- 38. v2.4 网格：photo 满屏 6 列 + design 横滚 ---------- */
+test('v2.4 网格：photo 6 列满屏 + design 横向滚动', () => {
+  const css = read('css/layout.css');
+  assert.ok(/\.photo-grid\s*\{[^}]*grid-template-columns:\s*repeat\(6,\s*1fr\)/.test(css),
+    'photo-grid 不是 6 列');
+  assert.ok(/\.photo-grid\s*\{[^}]*width:\s*100vw/.test(css), 'photo-grid 未突破全宽');
+  assert.ok(/\.photo-cell img\s*\{[^}]*aspect-ratio:\s*3\s*\/\s*4/.test(css), 'photo 缩略图不是 3/4');
+  assert.ok(/\.design-grid\s*\{[^}]*display:\s*flex/.test(css), 'design-grid 不是 flex');
+  assert.ok(/\.design-grid\s*\{[^}]*overflow-x:\s*auto/.test(css), 'design-grid 不可横滚');
+  assert.ok(/\.design-grid::-webkit-scrollbar/.test(css), 'design-grid 未隐藏滚动条');
+  assert.ok(/\.design-cell\s*\{[^}]*flex:\s*0 0 clamp\(260px,\s*32vw,\s*420px\)/.test(css),
+    'design-cell 缺 flex-basis clamp');
+  assert.ok(/max-width:\s*768px[\s\S]*?\.photo-grid\s*\{[^}]*repeat\(3,\s*1fr\)/.test(css),
+    '移动端 photo 不是 3 列');
 });

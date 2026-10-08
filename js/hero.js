@@ -1,11 +1,13 @@
 /* ============================================================
  * AKA.CRISTI — hero.js（AKA_HOME_HERO，spec §07–§19）
- * v2.2：全屏叠加 + 双 track 反向运动（v1.9 全幅版式回归）。
- *   section 高 n*100vh；.hero-pin sticky 锁 100vh；
- *   .hero-track-img（图片 slide，顺序 [0..5]）位移 translateY(-p*total)；
- *   .hero-track-txt（文字 slide，倒序 [5..0]）位移 translateY(-(1-p)*total)；
- *   两半反向运动，过渡中每半都是一半一半；位移本身即过渡，无 mask 切换。
- *   图层 stagger 入场 / Ken Burns / is-light 保留。
+ * v2.4：图片固定 + 文字反向滚动。section 高 n*100vh；.hero-pin sticky 锁 100vh；
+ *   .hero-fixed：一张固定全屏图片（works[0]，bg + 描边 A + Ken Burns + mouse 视差），
+ *     不随滚动切换；.hero-track-txt（文字 slide，倒序 [5..0]）
+ *     位移 translateY(-(1-p)*total)，滚轮往下时文字往下走（反向），
+ *     在固定视口位置一张张经过。位移本身即过渡，无 mask 切换。
+ *   图层 stagger 入场（图片播一次 / 文字每张进入播）；tone/is-light 在 hero 移除
+ *   （图片固定为深色，文字恒白；data.js tone 字段保留给 project 页）。
+ *   光标已移至 js/cursor.js（全站）。
  * JS 只调度、不直接写样式（样式全在 hero.css）。
  * 全部防御性：钩子缺失静默跳过，不抛错。
  * ============================================================ */
@@ -29,7 +31,7 @@
 
   var hero = (AKA.hero = {
     state: { i: 0, n: 0, timers: [], reduced: false, inited: false },
-    el: null, pinEl: null, imgSlides: [], txtSlides: [], rafId: 0,
+    el: null, pinEl: null, imgSlide: null, txtSlides: [], rafId: 0,
     progressBar: null,
     /* parallax 状态 */
     mx: 0, my: 0, tmx: 0, tmy: 0,
@@ -54,30 +56,26 @@
 
       hero.build(works);
       hero.nav.build();
-      hero.cursor.build();
       hero.a11y.bind();
       hero.parallax.bind();
 
       hero.scroll.measure();
       hero.scroll.bind();
 
-      /* 首张：跑 timeline；随后全由滚动驱动 */
+      /* 首张文字：跑 timeline；固定图片的图层播一次；随后全由滚动驱动 */
+      if (hero.imgSlide) {
+        if (hero.state.reduced) {
+          each(hero.imgSlide.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
+        } else {
+          hero.timeline.play(hero.imgSlide);
+        }
+      }
       hero.setActive(0);
       hero.scroll.update();
     },
 
-    /* ============ 主题：浅色 slide 时 section 切 is-light ============ */
-    /* dots / scroll-indicator 是 slide 的兄弟元素，主题必须挂在 section.hero 上 */
-    tone: {
-      sync: function (s) {
-        if (hero.el) {
-          hero.el.classList.toggle('is-light', !!(s && s.classList.contains('is-light')));
-        }
-      }
-    },
-
-    /* ============ 建 slide DOM（v2.2 双 track） ============ */
-    /* .hero-track-img：图片 slide，顺序 [0..5]（bg + 描边 A）
+    /* ============ 建 slide DOM（v2.4：单张固定图 + 文字 track） ============ */
+    /* .hero-fixed：works[0] 的全幅 bg + 描边 A，不随滚动切换
        .hero-track-txt：文字 slide，倒序 [5..0]（topline + textgroup + desc + link）
        描边 A：内联 a-symbol.svg 几何（§10 P1）。
        paths 改 fill="none" stroke-width="6"；针尖/方点保留填充；
@@ -103,23 +101,19 @@
     },
 
     build: function (works) {
-      var imgWrap = byHook('hero-track-img', hero.el);
+      var fixedWrap = byHook('hero-fixed', hero.el);
       var txtWrap = byHook('hero-track-txt', hero.el);
-      if (!imgWrap || !txtWrap) return;
-      var imgFrag = document.createDocumentFragment();
-      var txtFrag = document.createDocumentFragment();
-      hero.imgSlides = [];
+      if (!txtWrap) return;
       hero.txtSlides = [];
-      each(works, function (w, i) {
-        /* ---- 图片 slide：全幅 bg + 描边 A ---- */
+
+      /* ---- 固定图片：works[0]，全幅 bg + 描边 A，不随滚动切换 ---- */
+      if (fixedWrap) {
+        var w0 = works[0];
         var s = document.createElement('article');
-        s.className = 'hero-slide hero-slide-img';
-        /* 浅色照片：前景全部转 ink（描边 A / 文字 / dots / 进度条） */
-        if (w.tone === 'light') s.classList.add('is-light');
-        s.setAttribute('data-js', 'hero-slide-img');
-        s.setAttribute('aria-hidden', 'true'); /* 文字 slide 承担无障碍标签 */
-        s._work = w;
-        s._idx = i;
+        s.className = 'hero-slide hero-slide-fixed';
+        s.setAttribute('data-js', 'hero-slide-fixed');
+        s.setAttribute('aria-hidden', 'true');
+        s._work = w0;
 
         /* layer 01：背景 */
         var bgw = document.createElement('div');
@@ -128,11 +122,12 @@
         var bg = document.createElement('div');
         bg.setAttribute('data-layer', 'bg');
         /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback */
-        var pic = AKA.picture(w.hero || w.cover,
-          'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category,
-          { eager: i === 0 });
+        var pic = AKA.picture(w0.hero || w0.cover,
+          'AKA.CRISTI — ' + w0.titleEn + ' — ' + w0.category,
+          { eager: true });
         var heroImg = (pic.tagName === 'PICTURE') ? pic.querySelector('img') : pic;
         heroImg.setAttribute('data-breath', '1');
+        heroImg.setAttribute('alt', 'AKA.CRISTI — ' + w0.title + ' — ' + w0.category);
         bg.appendChild(pic);
         bgw.appendChild(bg);
         s.appendChild(bgw);
@@ -144,14 +139,18 @@
         var awrap = document.createElement('div');
         awrap.setAttribute('data-layer', 'a');
         awrap.setAttribute('aria-hidden', 'true');
-        awrap.innerHTML = hero.aOutlineSVG(i);
+        awrap.innerHTML = hero.aOutlineSVG(0);
         ag.appendChild(awrap);
         s.appendChild(ag);
 
-        imgFrag.appendChild(s);
-        hero.imgSlides.push(s);
+        fixedWrap.innerHTML = '';
+        fixedWrap.appendChild(s);
+        hero.imgSlide = s;
+      }
 
-        /* ---- 文字 slide：透明叠加（topline + textgroup + desc + link）---- */
+      /* ---- 文字 slide：透明叠加（topline + textgroup + desc + link），倒序 ---- */
+      var txtFrag = document.createDocumentFragment();
+      each(works, function (w, i) {
         var t = document.createElement('article');
         t.className = 'hero-slide hero-slide-txt';
         t.setAttribute('data-js', 'hero-slide-txt');
@@ -192,7 +191,8 @@
         meta.textContent = w.location + ' — ' + w.year + ' — ' + w.category;
         var link = document.createElement('a');
         link.setAttribute('data-layer', 'link');
-        link.href = 'project.html?id=' + w.id + '&v=2.1';
+        link.setAttribute('data-cursor', 'view');
+        link.href = 'project.html?id=' + w.id + '&v=2.4';
         link.textContent = 'VIEW PROJECT →';
         tg.appendChild(cat);
         tg.appendChild(title);
@@ -201,12 +201,10 @@
         tg.appendChild(link);
         t.appendChild(tg);
 
-        /* 倒序插入：txt track 最上方是 slide5 */
+        /* 倒序插入：txt track 最上方是最后一个 */
         txtFrag.insertBefore(t, txtFrag.firstChild);
         hero.txtSlides[i] = t;
       });
-      imgWrap.innerHTML = '';
-      imgWrap.appendChild(imgFrag);
       txtWrap.innerHTML = '';
       txtWrap.appendChild(txtFrag);
       hero.applyLang(); /* 按当前语言刷一遍文字层 */
@@ -247,10 +245,10 @@
       var elLink = q('link');
       if (elLink) elLink.textContent = view;
       t.setAttribute('aria-label', (i + 1) + ' / ' + n + ' — ' + title);
-      /* 图片 slide 的 alt 同步（无障碍） */
-      var imgS = hero.imgSlides[i];
+      /* 固定图片 slide 的 alt 同步（无障碍） */
+      var imgS = hero.imgSlide;
       var img = imgS && imgS.querySelector('[data-breath]');
-      if (img) img.setAttribute('alt', 'AKA.CRISTI — ' + title + ' — ' + cat);
+      if (img && i === 0) img.setAttribute('alt', 'AKA.CRISTI — ' + title + ' — ' + cat);
     },
     applyLang: function () {
       each(hero.txtSlides, function (t) {
@@ -259,7 +257,7 @@
     },
 
     /* ============ timeline（§13）：slide 进入时播一遍图层 stagger ============ */
-    /* v2.2：同时播图片 slide（bg/A）与文字 slide（num/loc/cat/title/desc/meta/link） */
+    /* v2.4：图片图层只播一次（init），文字 slide 每张进入时播 */
     timeline: {
       clear: function () {
         each(hero.state.timers, function (t) { clearTimeout(t); });
@@ -285,23 +283,21 @@
       }
     },
 
-    /* ============ 当前 slide：主题 + dots + 入场 + 呼吸 ============ */
+    /* ============ 当前文字 slide：dots + 入场 + 呼吸 ============ */
+    /* v2.4：图片固定只播一次（init），setActive 只处理文字 slide */
     setActive: function (idx) {
-      var img = hero.imgSlides[idx];
       var txt = hero.txtSlides[idx];
-      if (!img || !txt) return;
+      if (!txt) return;
       hero.state.i = idx;
-      hero.tone.sync(img);
       hero.nav.sync();
       /* 只有当前文字 slide 可交互（VIEW PROJECT 只在当前张可点） */
       each(hero.txtSlides, function (t, k) {
         if (t) t.classList.toggle('is-active', k === idx);
       });
       if (hero.state.reduced) {
-        each(img.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
         each(txt.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
       } else {
-        hero.timeline.play(img, txt);
+        hero.timeline.play(txt);
       }
       hero.breath.restart();
     },
@@ -322,9 +318,7 @@
         var y = window.scrollY || window.pageYOffset || 0;
         var p = total > 0 ? (y - hero.scroll.elTop) / total : 0;
         p = Math.max(0, Math.min(1, p));
-        /* 双 track 反向位移：图片上 / 文字下；位移本身即过渡 */
-        var trackImg = byHook('hero-track-img', hero.el);
-        if (trackImg) trackImg.style.transform = 'translateY(' + (-p * total).toFixed(1) + 'px)';
+        /* 文字 track 反向位移：滚轮往下时文字往下走；位移本身即过渡 */
         var trackTxt = byHook('hero-track-txt', hero.el);
         if (trackTxt) trackTxt.style.transform = 'translateY(' + (-(1 - p) * total).toFixed(1) + 'px)';
         /* 进度条：JS 直接 scaleX */
@@ -370,7 +364,7 @@
       restart: function () { hero.breathT0 = performance.now(); },
       tick: function (now) {
         if (hero.state.reduced) return;
-        var slide = hero.imgSlides[hero.state.i];
+        var slide = hero.imgSlide;
         if (!slide) return;
         var img = slide.querySelector('[data-breath]');
         if (!img) return;
@@ -399,11 +393,10 @@
             hero.tmx = 0; hero.tmy = 0;
           });
         }
-        /* breath + cursor 共用一个 rAF */
+        /* breath 共用 rAF（光标已移至 js/cursor.js） */
         var raf = function (now) {
           hero.parallax.frame(now);
           hero.breath.tick(now);
-          hero.cursor.tick();
           hero.rafId = requestAnimationFrame(raf);
         };
         hero.rafId = requestAnimationFrame(raf);
@@ -421,45 +414,6 @@
           var y = hero.my * 8 * depth;
           g.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px)';
         });
-      }
-    },
-
-    /* ============ cursor：方形跟随光标（fine pointer 限定） ============ */
-    /* mix-blend-mode: difference 实现深浅自适应，无需 is-light 切换 */
-    cursor: {
-      el: null, x: 0, y: 0, tx: 0, ty: 0,
-      build: function () {
-        if (hero.state.reduced || !hero.el) return;
-        var mq = window.matchMedia;
-        var fine = mq && mq('(hover: hover) and (pointer: fine)').matches;
-        if (!fine) return;
-        var zone = hero.pinEl || hero.el;
-        var c = document.createElement('div');
-        c.className = 'hero-cursor';
-        c.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(c);
-        hero.cursor.el = c;
-        hero.el.classList.add('has-cursor');
-        zone.addEventListener('mousemove', function (ev) {
-          hero.cursor.tx = ev.clientX;
-          hero.cursor.ty = ev.clientY;
-          c.classList.add('is-on');
-        });
-        zone.addEventListener('mouseleave', function () {
-          c.classList.remove('is-on', 'is-hover');
-        });
-        /* 悬停可交互元素时放大 */
-        zone.addEventListener('mouseover', function (ev) {
-          var t = ev.target && ev.target.closest ? ev.target.closest('button, a') : null;
-          c.classList.toggle('is-hover', !!t);
-        });
-      },
-      tick: function () {
-        var cu = hero.cursor;
-        if (!cu.el) return;
-        cu.x += (cu.tx - cu.x) * 0.22;
-        cu.y += (cu.ty - cu.y) * 0.22;
-        cu.el.style.transform = 'translate(' + cu.x.toFixed(1) + 'px,' + cu.y.toFixed(1) + 'px)';
       }
     },
 

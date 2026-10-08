@@ -26,33 +26,29 @@
 }
 .mq-item {
   display: inline-flex;
-  align-items: baseline;
-  gap: 20px;
+  align-items: center;
+  gap: 22px;
   white-space: nowrap;
 }
-.mq-zh {
+/* v2.4：中英同尺寸、空心描边、小字 */
+.mq-zh,
+.mq-en {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(46px, 7vw, 112px);
-  letter-spacing: .02em;
+  font-size: clamp(28px, 4vw, 64px);
+  letter-spacing: .04em;
   line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--paper);
+  white-space: nowrap;
 }
 .mq-brand {
   letter-spacing: .06em;
 }
-.mq-en {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 14px;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--gray-400);
-  white-space: nowrap;
-}
 .mq-sep {
-  font-size: clamp(20px, 2.4vw, 34px);
-  color: var(--gray-600);
-  margin-inline: clamp(28px, 4vw, 64px);
+  font-size: clamp(16px, 1.8vw, 26px);
+  color: var(--paper);
+  margin-inline: clamp(24px, 3.5vw, 56px);
   user-select: none;
 }
 /* 反色透镜：方形，呼应站内方形光标；只在细指针设备出现 */

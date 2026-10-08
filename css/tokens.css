@@ -15,6 +15,8 @@
   --gray-100: #EFEFEB;
   /* Frost：全站 <5%，只用于 hover / 链接，永不进 Logo */
   --frost: #A8C5D6;
+  /* 霓虹绿：自定义光标专用（旧站回归），永不进 Logo/正文 */
+  --neon: #D7FF00;
   --success: #2E7D4F;
   --warning: #B7791F;
   --error: #C23B2E;
@@ -67,4 +69,17 @@
   --bp-desktop: 1280px;
   --bp-tablet: 768px;
   --bp-mobile: 480px;
+}
+
+/* ---------- 深色主题（v2.4）：html[data-theme="dark"] 覆盖 ----------
+ * 黑白切换：paper↔ink 对调，灰阶反转；--frost/--neon 不变。
+ * 跑马灯用 var(--ink)/var(--paper)，自动反转为白条黑字。 */
+html[data-theme="dark"] {
+  --ink: #FAFAF8;
+  --paper: #0A0A0A;
+  --gray-900: #E8E8E2;
+  --gray-700: #B5B5AE;
+  --gray-500: #8A8A8A;
+  --gray-300: #33332E;
+  --gray-100: #171716;
 }

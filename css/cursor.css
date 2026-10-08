@@ -1,0 +1,68 @@
+/* ============================================================
+ * AKA.CRISTI — cursor.css（全站自定义光标，v2.4）
+ * 旧站方案：8px 霓虹绿点 + 36px 圆环（1px ink 描边）；
+ * [data-cursor="view"] 悬停：圆环扩 84px + difference 反差圈 + VIEW。
+ * 圆环是光标（非 UI 按钮），border-radius:50% 豁免 pill 禁令。
+ * ============================================================ */
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10001;
+}
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: var(--neon);
+  transition: opacity .2s linear;
+  z-index: 10002;
+}
+.cursor-ring {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 尺寸走 width/height/margin，不碰 transform（JS 用 transform 做 lerp 位移） */
+  transition: opacity .25s linear, width .25s var(--ease-out),
+              height .25s var(--ease-out), margin .25s var(--ease-out),
+              background-color .25s var(--ease-out), border-color .25s var(--ease-out);
+}
+.cursor-ring::after {
+  content: "VIEW";
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-indent: .2em;
+  color: #0A0A0A;
+  opacity: 0;
+  transition: opacity .2s linear;
+  white-space: nowrap;
+}
+/* 光标就绪：原生光标熄灭（全站） */
+html.has-cursor .cursor-dot,
+html.has-cursor .cursor-ring { opacity: 1; }
+html.has-cursor,
+html.has-cursor *,
+html.has-cursor *::before,
+html.has-cursor *::after { cursor: none !important; }
+/* VIEW 态：84px 反差圈，绿点熄灭 */
+.cursor-ring.is-view {
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  background: #fff;
+  border-color: #fff;
+  mix-blend-mode: difference; /* 图片上的反差圈 */
+}
+.cursor-ring.is-view::after { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .cursor-dot, .cursor-ring { display: none; }
+}

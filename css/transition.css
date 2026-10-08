@@ -9,7 +9,7 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--ink);
+  background: #0A0A0A; /* v2.4：转场面板恒黑（深色主题下 var(--ink) 会变白） */
   transform: translateY(100%);
   pointer-events: none;
 }

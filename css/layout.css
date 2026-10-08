@@ -81,6 +81,29 @@
 .mobile-lang { padding: 24px; border-top: 1px solid var(--gray-300); }
 .mobile-lang .lang-toggle { font-size: 14px; }
 
+/* 主题切换（v2.4）：方形小色块；亮色模式黑块 / 暗色模式白块（= 当前 --ink） */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.theme-toggle i {
+  display: block;
+  width: 14px;
+  height: 14px;
+  background: var(--ink);
+  transition: background-color .25s var(--ease-out);
+}
+.theme-toggle:hover i { background: var(--frost); }
+/* 深色模式：笔触 LOGO 反色（黑版↔白版），转场面板恒黑不需要动 */
+html[data-theme="dark"] .brand-logo img { filter: invert(1); }
+
 /* 汉堡按钮：桌面隐藏 */
 .menu-toggle {
   display: none;
@@ -304,11 +327,16 @@ a.work-card, a.photo-cell, a.design-cell {
   margin-top: 4px;
 }
 
-/* ================= photography grid（spec §23 + §10 P4：均匀 3 列，4/5 档案感） ================= */
+/* ================= photography grid（v2.4：满屏密集 6 列，3/4 缩略图） ================= */
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  /* 突破 container，全宽满屏（body overflow-x:hidden 兜底） */
+  width: 100vw;
+  max-width: none;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 }
 .photo-cell {
   display: block;
@@ -318,7 +346,7 @@ a.work-card, a.photo-cell, a.design-cell {
 }
 .photo-cell img {
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 4;
   object-fit: cover;
   filter: grayscale(.7) contrast(1.1); /* §10 P2 */
   transition: transform 400ms var(--ease-out), filter 500ms var(--ease-out);
@@ -331,19 +359,28 @@ a.work-card, a.photo-cell, a.design-cell {
 .photo-meta .micro { color: var(--gray-500); }
 .photo-meta .work-card-title { margin: 6px 0 4px; }
 
-/* ================= design grid：12 列不对称（spec §26 + §10 P4） ================= */
+/* ================= design：横向滚动单排（v2.4） ================= */
 .design-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 24px;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox 隐藏滚动条但可滚 */
+  gap: 2px;
+  /* 突破 container，全宽条带 */
+  width: 100vw;
+  max-width: none;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-bottom: 4px;
   align-items: start;
 }
+.design-grid::-webkit-scrollbar { display: none; }
 .design-cell {
   display: block;
+  flex: 0 0 clamp(260px, 32vw, 420px);
   border: 1px solid var(--gray-300);
   background: var(--paper);
   text-align: left;
-  /* 无阴影；边界对齐靠 grid */
+  /* 无阴影 */
 }
 .design-cell.span7 { grid-column: span 7; }
 .design-cell.span5 { grid-column: span 5; }
@@ -355,7 +392,9 @@ a.work-card, a.photo-cell, a.design-cell {
   filter: grayscale(.7) contrast(1.1); /* §10 P2：SVG 占位与真图统一 */
   transition: transform 400ms var(--ease-out), filter 500ms var(--ease-out);
 }
-/* 长宽比穿插：4/5、16/10、3/4 */
+/* 横滚条带：统一 3/4 缩略图（覆盖旧 ratio 穿插类） */
+.design-grid .design-cell .design-imgwrap img { aspect-ratio: 3 / 4; }
+/* 长宽比穿插（v2.4 横滚下不再使用，保留类名防 JS 残留报错） */
 .design-cell.ratio-45 img { aspect-ratio: 4 / 5; }
 .design-cell.ratio-1610 img { aspect-ratio: 16 / 10; }
 .design-cell.ratio-34 img { aspect-ratio: 3 / 4; }
@@ -545,8 +584,7 @@ a.work-card, a.photo-cell, a.design-cell {
 
 /* ================= 断点 ================= */
 @media (max-width: 1279px) {
-  /* tablet：8 列概念，gutter 保持 24；photo 2 列；design 保持 12 列不对称 */
-  .photo-grid { grid-template-columns: repeat(2, 1fr); }
+  /* tablet：photo 保持 6 列密集；design 横滚不变 */
 }
 
 @media (max-width: 768px) {
@@ -554,11 +592,8 @@ a.work-card, a.photo-cell, a.design-cell {
   .site-header { height: 62px; }
   .site-nav { display: none; }          /* 汉堡接管 */
   .menu-toggle { display: block; }
-  .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } /* §10 P4 */
-  .design-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } /* §10 P4 */
-  .design-cell.span7 { grid-column: span 2; } /* wide 跨 2 */
-  .design-cell.span5,
-  .design-cell.span4 { grid-column: span 1; }
+  .photo-grid { grid-template-columns: repeat(3, 1fr); gap: 2px; } /* v2.4：移动端 3 列密集 */
+  .design-cell { flex-basis: 72vw; } /* v2.4：移动端横滚项 72vw */
   .selected-grid { grid-template-columns: 1fr; }
   .about-screen2 { grid-template-columns: 1fr; }
   .container { padding-inline: var(--space-3); }
@@ -572,11 +607,7 @@ a.work-card, a.photo-cell, a.design-cell {
 @media (max-width: 480px) {
   .brand-logo { height: 24px; }   /* ≤480px 缩小继续显示，不隐藏 */
   .site-header { height: 60px; }
-  .photo-grid { grid-template-columns: 1fr; } /* §10 P4：2→1 */
-  .design-grid { grid-template-columns: 1fr; } /* §10 P4：→1 列 */
-  .design-cell.span7,
-  .design-cell.span5,
-  .design-cell.span4 { grid-column: span 1; }
+  /* v2.4：沿用 768px 的 3 列密集 + 横滚，不再单列 */
 }
 
 /* reduced-motion：笔触载入动画直接给终态 */

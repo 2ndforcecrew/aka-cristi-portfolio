@@ -41,6 +41,7 @@
     cell.className = 'photo-cell';
     cell.href = 'project.html?id=' + encodeURIComponent(w.id);
     cell.setAttribute('data-id', w.id);
+    cell.setAttribute('data-cursor', 'view');
     cell.appendChild(AKA.picture(w.cover, altFor(w)));
     /* §10 P3：archive 条目 = 分类 / 序号 + 年份（10px mono 微标签） */
     var meta = document.createElement('div');
@@ -75,6 +76,7 @@
     cell.className = 'design-cell ' + pat[0] + ' ' + pat[1];
     cell.href = 'project.html?id=' + encodeURIComponent(w.id);
     cell.setAttribute('data-id', w.id);
+    cell.setAttribute('data-cursor', 'view');
     var imgw = document.createElement('div');
     imgw.className = 'design-imgwrap';
     imgw.appendChild(AKA.picture(w.cover, altFor(w)));
