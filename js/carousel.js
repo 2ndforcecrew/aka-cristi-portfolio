@@ -33,7 +33,11 @@
           var b = document.createElement('button');
           b.type = 'button';
           b.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
-          b.addEventListener('click', function () { go(idx); restart(); });
+          b.addEventListener('click', function () {
+            var dir = idx > i ? 1 : -1;
+            go(idx, dir);
+            restart();
+          });
           li.appendChild(b);
           dotsWrap.appendChild(li);
           dots.push(b);
@@ -43,7 +47,6 @@
 
     function render() {
       for (var k = 0; k < n; k++) {
-        slides[k].classList.toggle('is-active', k === i);
         if (dots[k]) dots[k].classList.toggle('is-active', k === i);
       }
       if (countEl) {
@@ -62,13 +65,40 @@
       }
     }
 
-    function go(idx) {
-      i = ((idx % n) + n) % n;
+    /* v2.9.2 覆蓋滑入：dir=1 下一張從右蓋入，dir=-1 上一張從左蓋入 */
+    function go(idx, dir) {
+      var target = ((idx % n) + n) % n;
+      if (target === i) { render(); return; }
+      var prevIdx = i;
+      i = target;
+      dir = dir || 1;
+
+      /* 舊 slide 留在下層不動 */
+      slides[prevIdx].classList.remove('is-active');
+      slides[prevIdx].classList.add('is-under');
+
+      /* 新 slide 從側邊待命 */
+      var incoming = slides[i];
+      incoming.classList.remove('is-under', 'no-anim');
+      if (dir < 0) incoming.classList.add('from-left');
+      /* 強制 reflow 讓瀏覽器認得起始位置 */
+      void incoming.offsetWidth;
+      incoming.classList.add('is-active');
+
+      /* 動畫結束後把舊 slide 瞬間移回待命區（無動畫） */
+      setTimeout(function () {
+        var old = slides[prevIdx];
+        old.classList.add('no-anim');
+        old.classList.remove('is-under', 'from-left');
+        void old.offsetWidth;
+        old.classList.remove('no-anim');
+      }, 720);
+
       render();
     }
 
-    function next() { go(i + 1); }
-    function prev() { go(i - 1); }
+    function next() { go(i + 1, 1); }
+    function prev() { go(i - 1, -1); }
 
     function stop() {
       if (timer) { clearInterval(timer); timer = null; }
@@ -112,6 +142,10 @@
     }, { passive: true });
 
     render();
+    /* 初始：第一張直接顯示（無動畫） */
+    slides[0].classList.add('no-anim', 'is-active');
+    void slides[0].offsetWidth;
+    slides[0].classList.remove('no-anim');
     start();
   }
 

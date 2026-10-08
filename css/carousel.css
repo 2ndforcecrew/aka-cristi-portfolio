@@ -12,7 +12,7 @@
   background: var(--paper);
 }
 
-/* slides 疊放 */
+/* slides 疊放：覆蓋滑入（v2.9.2） */
 .carousel-slides {
   position: absolute;
   inset: 0;
@@ -24,16 +24,36 @@
 .carousel-slide {
   position: absolute;
   inset: 0;
-  opacity: 0;
+  transform: translateX(100%); /* 預設在右側待命 */
   visibility: hidden;
-  transition: opacity 800ms ease, visibility 0s linear 800ms;
+  z-index: 0;
+  transition: transform 700ms var(--ease-out), visibility 0s linear 700ms;
 }
 
+/* 從左側進入（上一張） */
+.carousel-slide.from-left {
+  transform: translateX(-100%);
+}
+
+/* 作用中：滑到 0 蓋住下層 */
 .carousel-slide.is-active {
-  opacity: 1;
+  transform: translateX(0);
   visibility: visible;
-  transition: opacity 800ms ease, visibility 0s linear 0s;
+  z-index: 2;
+  transition: transform 700ms var(--ease-out), visibility 0s linear 0s;
+}
+
+/* 被蓋住的舊 slide：原地不動在下層 */
+.carousel-slide.is-under {
+  transform: translateX(0);
+  visibility: visible;
   z-index: 1;
+  transition: none;
+}
+
+/* 瞬間重置用（無動畫） */
+.carousel-slide.no-anim {
+  transition: none !important;
 }
 
 /* 圖片/視頻 */
@@ -161,12 +181,11 @@
   letter-spacing: 0.18em;
 }
 
-/* reduced motion：直接切換無淡入 */
+/* reduced motion：直接切換無滑動 */
 @media (prefers-reduced-motion: reduce) {
-  .carousel-slide {
-    transition: none;
-  }
-  .carousel-slide.is-active {
+  .carousel-slide,
+  .carousel-slide.is-active,
+  .carousel-slide.is-under {
     transition: none;
   }
 }
