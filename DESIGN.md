@@ -92,12 +92,13 @@ svg 占位图保持原样。
 - **header**：72–80px（手机 60–64px），左 A 标（20px 高 img）+ AKA.CRISTI 字标，
   右 nav（mono label，hover 1px 下划线），底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
 - **hero**：100vw×100vh，7 层 layer（背景图 / 巨大 A 标 / 顶部 mono 行 / 分类 / 标题 / 元数据 / scroll 指示器），
-  editorial mask 转场（clip-path inset，RIGHT→LEFT），禁普通 fade / 标准左右 slide。
+  v1.9 起为滚轮驱动（section 高 n*100vh，pin sticky，track 位移；无 autoplay、无 mask 转场），
+  禁普通 fade / 标准左右 slide。
   顶部 mono 行：`N°01 / 06` + `城市 — 年份`（取 data.js location/year）。
   标题 Archivo 600 `clamp(58px,9.4vw,145px)/.82`，`-.065em` 紧排。
   A 标为描边版（内联 a-symbol.svg 几何：paths `fill="none" stroke-width="6"`，针尖/方点保留填充，
   几何不变）：`min(63vw,850px)`，`rgba(255,255,255,.82)`，稳定态 opacity .7。
-  底部短横线 dots（34px→active 62px 白）+ 2px 进度条与 6.5s 轮播同步（linear）。
+  底部短横线 dots（34px→active 62px 白）+ 2px 进度条由 JS 按 scroll 进度 scaleX。
   Hero 图 `grayscale(.72) contrast(1.13)`；Ken Burns `scale 1.01→1.07` / 7s linear（单程）。
 - **work-card**：1px #D9D9D9 边框，无 shadow；hover 边框转 ink + 图 scale(1.03) / 400ms；
   图默认 `grayscale(.7) contrast(1.1)`，hover 透至 `grayscale(.3)`（.5s）。
@@ -135,17 +136,24 @@ svg 占位图保持原样。
 
 - Easing 统一 `cubic-bezier(0.16, 1, 0.3, 1)`；快进 400–700ms / 停留 2–5s / 快退 300–500ms。
 - Hero timeline（§13）：0s 图 → 0.15s 编号/城市年份 → 0.30s 分类 → 0.45s 标题 → 0.60s A 标 →
-  0.80s 稳定；6.5s/张；5.5–6.5s mask transition。
+  0.80s 稳定；每张 slide 进入视口时播一遍。
+- **Hero 滚轮驱动（v1.9，替代 autoplay）**：section 高 `n*100vh`；`.hero-pin` sticky 锁 100vh；
+  `.hero-track` 随 scroll 位移（`translateY(-p*(elH-vh))`，rAF 节流 + passive 监听），
+  过渡中一半一半；位移本身即过渡，**无 mask 切换、无自动轮播**。`idx=round(p*(n-1))` 变化时：
+  主题同步（is-light）+ dots 同步 + timeline 重播 + breath 重开。
+  底部 2px 进度条由 JS 按 scroll 进度 `scaleX(p)`；scroll 指示器滚开（p>0.03）即淡出。
+  dots / 箭头 / 键盘 ←/→ 统一走 `goTo(i)` → `scrollTo({top: elTop+i*vh, smooth})`
+  （reduced-motion 用 'auto'；键盘保留表单守卫，pin 在视口内才响应）。
 - Ken Burns（§10 P1，覆盖 §15）：scale 1.01→1.07，7000ms linear，单程（每张 slide 播一次）。
   弱到"让图片呼吸，而不是让观众注意到动画"。
 - A 标（§16）：进场 opacity 0→1、x +30→0、clip 80%→0、700ms；退场 x 0→-20、opacity→0、450ms。
   禁旋转 / 弹跳 / 辉光 / 3D。
-- 视差（§17）：mouse ±8px（lerp）；scroll 三层 translateY：A ±20px / 图 ±8px / 文 ±3px；
-  手机关 mouse parallax。
+- 视差（§17）：mouse ±8px（lerp，pin 区间）；v1.9 起删除 scroll 三层视差
+  （sticky 时 section rect.top 恒 ~0，已无意义）；手机关 mouse parallax。
 - Hover 必须冷静：border 色、underline、scale 1.03、位移 4–8px、frost。
   禁 glow / shadow / bounce / gradient / blur / neon。
-- 所有动效过两道门：`prefers-reduced-motion` 直接给终态（hero 停 autoplay/timeline/parallax/breath，
-  slide 静态切换）；移动端简化。
+- 所有动效过两道门：`prefers-reduced-motion` 直接给终态（hero 无 timeline 动画/parallax/breath，
+  goTo 用 'auto' 跳转）；移动端简化。
 - 页面转场（§40）：站内 4 页（index / project / about / contact）跳转时，ink 面板从底部 wipe 进入
   （translateY 100%→0，350ms）→ 中央白版笔触 LOGO 闪现（`assets/logo/aka-cristi-white.png`，
   ~200px，~200ms）→ 跳转；新页面若 `document.referrer` 同源，面板从顶部 wipe 退出（0→-100%，350ms）。

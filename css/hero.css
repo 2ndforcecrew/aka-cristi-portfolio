@@ -1,46 +1,37 @@
 /* ============================================================
  * AKA.CRISTI — hero.css（AKA_HOME_HERO，spec §07–§19）
- * 100vw×100vh editorial fullscreen motion system。
+ * v1.9：滚轮驱动轮播。section 高 n*100vh；.hero-pin sticky 锁 100vh；
+ * .hero-track 随滚动位移（一半一半）；位移本身即过渡，无 mask 切换。
  * 7 层 layer：bg / A / num / cat / title / meta / scroll。
- * 转场：editorial mask（clip-path inset，RIGHT→LEFT），禁普通 fade。
  * Easing 统一 var(--ease-out)。
  * ============================================================ */
 
 .hero {
   position: relative;
-  height: 100svh;
+  background: var(--paper);
+  /* 高度由 JS 设为 n*100vh（scroll-driven 滚动区） */
+}
+/* sticky 视口：锁 100vh，track 在内部位移 */
+.hero-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   min-height: 560px;
   overflow: hidden;
-  background: var(--paper);
 }
-.hero-slides {
-  position: absolute;
-  inset: 0;
+.hero-track {
+  position: relative;
+  will-change: transform;
 }
 
-/* ---------- slide 骨架 ---------- */
+/* ---------- slide 骨架：正常流纵向排布，每张 100vh ---------- */
 .hero-slide {
-  position: absolute;
-  inset: 0;
-  visibility: hidden;
-  clip-path: inset(0 0 0 0);
+  position: relative;
+  height: 100vh;
+  min-height: 560px;
+  overflow: hidden;
 }
-.hero-slide.is-active {
-  visibility: visible;
-  z-index: 1;
-}
-/* editorial mask 进场：从右侧展开（RIGHT→LEFT，§14） */
-.hero-slide.pre-enter { clip-path: inset(0 0 0 100%); }
-.hero-slide.is-entering {
-  transition: clip-path 900ms var(--ease-out);
-  clip-path: inset(0 0 0 0);
-}
-/* 退场：clip 向左收起 + x -20px / 450ms */
-.hero-slide.is-leaving {
-  transition: clip-path 450ms var(--ease-out), transform 450ms var(--ease-out);
-  clip-path: inset(0 100% 0 0);
-  transform: translateX(-20px);
-}
+/* v1.9：位移本身即过渡，mask 切换（is-active/is-entering/is-leaving/pre-enter）已删除 */
 
 /* ---------- layer 01：背景图 ---------- */
 .hero-bgwrap {
@@ -194,13 +185,14 @@
   text-align: right;
   line-height: 1.9;
   animation: scroll-nudge 2.6s ease-in-out infinite alternate; /* 上下 8px，禁 bounce */
+  transition: opacity .3s var(--ease-out); /* 滚开即淡出（JS 写 opacity） */
 }
 @keyframes scroll-nudge {
   from { transform: translateY(-4px); }
   to { transform: translateY(4px); }
 }
 
-/* ---------- hero 导航（§10 P1：短横线 dots + 2px 进度条，6.5s linear 同步） ---------- */
+/* ---------- hero 导航（§10 P1：短横线 dots + 2px 进度条，scroll 驱动） ---------- */
 .hero-nav {
   position: absolute;
   left: clamp(24px, 6vw, 96px);
@@ -226,7 +218,7 @@
   background-color: #FAFAF8;
   background-clip: content-box;
 }
-/* 底部 2px 进度条：与 6.5s 轮播同步（linear），slide 切换自动重播 */
+/* 底部 2px 进度条：v1.9 起由 JS 按 scroll 进度直接 scaleX（无 keyframes） */
 .hero-progress {
   position: absolute;
   left: 0;
@@ -242,12 +234,6 @@
   background: #FAFAF8;
   transform: scaleX(0);
   transform-origin: 0 50%;
-}
-.hero-slide.is-active .hero-progress i {
-  animation: hero-progress 6.5s linear forwards;
-}
-@keyframes hero-progress {
-  to { transform: scaleX(1); }
 }
 
 /* ---------- 断点 ---------- */

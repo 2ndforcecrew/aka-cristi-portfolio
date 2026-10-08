@@ -1,7 +1,9 @@
 /* ============================================================
  * AKA.CRISTI — hero.js（AKA_HOME_HERO，spec §07–§19）
+ * v1.9：滚轮驱动轮播（scroll-driven carousel）。
+ *   section 高 n*100vh；.hero-pin sticky 锁 100vh；track 随滚动位移。
+ *   位移本身即过渡，无 mask 切换；图层 stagger 入场 / Ken Burns 保留。
  * JS 只调度、不直接写样式（样式全在 hero.css）。
- * 6 子模块：state / timeline / transition / breath / parallax / nav / a11y。
  * 全部防御性：钩子缺失静默跳过，不抛错。
  * ============================================================ */
 (function () {
@@ -11,7 +13,6 @@
 
   /* spec §13 timeline 延迟（s） */
   var TL = { bg: 0, num: 0.15, loc: 0.15, cat: 0.30, title: 0.45, meta: 0.55, a: 0.60 };
-  var SLIDE_MS = 6500;          /* §13：6–8s，取 6.5s */
   var BREATH_MS = 7000;         /* §10 P1：Ken Burns 7s linear（参考参数，覆盖 §15） */
   var EASE = 'cubic-bezier(0.16,1,0.3,1)'; /* 仅文档用，样式在 CSS */
 
@@ -25,7 +26,8 @@
 
   var hero = (AKA.hero = {
     state: { i: 0, n: 0, timers: [], reduced: false, inited: false },
-    el: null, slides: [], rafId: 0,
+    el: null, pinEl: null, slides: [], rafId: 0,
+    progressBar: null,
     /* parallax 状态 */
     mx: 0, my: 0, tmx: 0, tmy: 0,
     breathT0: 0,
@@ -42,6 +44,10 @@
       hero.state.reduced =
         !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
       hero.state.n = works.length;
+      hero.pinEl = byHook('hero-pin', el);
+
+      /* 滚动区：n 张 × 100vh */
+      el.style.height = (works.length * 100) + 'vh';
 
       hero.build(works);
       hero.nav.build();
@@ -49,23 +55,12 @@
       hero.a11y.bind();
       hero.parallax.bind();
 
-      /* 首张：直接呈现 + 跑 timeline；随后进主循环 */
-      var s0 = hero.slides[0];
-      if (s0) {
-        s0.classList.add('is-active');
-        s0.setAttribute('aria-hidden', 'false');
-        hero.tone.sync(s0);
-        if (hero.state.reduced) {
-          each(s0.querySelectorAll('[data-layer]'), function (l) {
-            l.classList.add('in');
-          });
-        } else {
-          hero.timeline.play(s0);
-          hero.breath.restart();
-        }
-      }
-      hero.nav.sync();
-      if (!hero.state.reduced) hero.auto();
+      hero.scroll.measure();
+      hero.scroll.bind();
+
+      /* 首张：跑 timeline；随后全由滚动驱动 */
+      hero.setActive(0);
+      hero.scroll.update();
     },
 
     /* ============ 主题：浅色 slide 时 section 切 is-light ============ */
@@ -78,7 +73,7 @@
       }
     },
 
-    /* ============ 建 slide DOM ============ */
+    /* ============ 建 slide DOM（目标：hero-track，正常流纵向排布） ============ */
     /* 描边 A：内联 a-symbol.svg 几何（§10 P1）。
        paths 改 fill="none" stroke-width="6"；针尖/方点保留填充；
        几何不变，不算重画。clipPath id 按 slide 加后缀防冲突。 */
@@ -103,7 +98,7 @@
     },
 
     build: function (works) {
-      var wrap = byHook('hero-slides', hero.el);
+      var wrap = byHook('hero-track', hero.el);
       if (!wrap) return;
       var frag = document.createDocumentFragment();
       hero.slides = [];
@@ -115,7 +110,6 @@
         s.setAttribute('data-js', 'hero-slide');
         s.setAttribute('aria-roledescription', 'slide');
         s.setAttribute('aria-label', (i + 1) + ' / ' + works.length + ' — ' + w.titleEn);
-        s.setAttribute('aria-hidden', 'true');
         s._work = w;   /* i18n：applyLang 用 */
         s._idx = i;
 
@@ -178,19 +172,21 @@
         tg.appendChild(meta);
         s.appendChild(tg);
 
-        /* 底部 2px 进度条（§10 P1：与 6.5s 轮播同步，CSS animation 驱动） */
-        var prog = document.createElement('div');
-        prog.className = 'hero-progress';
-        prog.setAttribute('aria-hidden', 'true');
-        prog.innerHTML = '<i></i>';
-        s.appendChild(prog);
-
         frag.appendChild(s);
         hero.slides.push(s);
       });
       wrap.innerHTML = '';
       wrap.appendChild(frag);
       hero.applyLang(); /* 按当前语言刷一遍文字层 */
+
+      /* 进度条：pin 级单条，scroll 驱动 scaleX（v1.9 起不再是 6.5s keyframes） */
+      var pin = hero.pinEl || hero.el;
+      var prog = document.createElement('div');
+      prog.className = 'hero-progress';
+      prog.setAttribute('aria-hidden', 'true');
+      prog.innerHTML = '<i></i>';
+      pin.appendChild(prog);
+      hero.progressBar = prog.querySelector('i');
     },
 
     /* ============ i18n：按当前语言重刷 slide 文字层 ============ */
@@ -222,15 +218,11 @@
       });
     },
 
-    /* ============ timeline（§13） ============ */
+    /* ============ timeline（§13）：slide 进入时播一遍图层 stagger ============ */
     timeline: {
       clear: function () {
         each(hero.state.timers, function (t) { clearTimeout(t); });
         hero.state.timers = [];
-        if (hero.state.autoId) {
-          clearTimeout(hero.state.autoId);
-          hero.state.autoId = 0;
-        }
       },
       play: function (slide) {
         hero.timeline.clear();
@@ -248,73 +240,76 @@
       }
     },
 
-    /* ============ transition（§14 editorial mask） ============ */
-    transition: {
-      to: function (n, instant) {
-        var st = hero.state;
-        var cur = hero.slides[st.i];
-        var nxt = hero.slides[n];
-        if (!nxt || nxt === cur) return;
-        hero.timeline.clear();
-        /* 快速连点：先强制收尾上一轮未完成的转场 */
-        each(hero.slides, function (s) {
-          if (s !== nxt) {
-            s.classList.remove('is-active', 'is-entering', 'is-leaving', 'pre-enter');
-            s.setAttribute('aria-hidden', 'true');
-          }
+    /* ============ 当前 slide：主题 + dots + 入场 + 呼吸 ============ */
+    setActive: function (idx) {
+      var slide = hero.slides[idx];
+      if (!slide) return;
+      hero.state.i = idx;
+      hero.tone.sync(slide);
+      hero.nav.sync();
+      if (hero.state.reduced) {
+        each(slide.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
+      } else {
+        hero.timeline.play(slide);
+      }
+      hero.breath.restart();
+    },
+
+    /* ============ scroll 驱动（v1.9） ============ */
+    scroll: {
+      elTop: 0, elH: 0,
+      measure: function () {
+        if (!hero.el) return;
+        var r = hero.el.getBoundingClientRect();
+        hero.scroll.elTop = r.top + (window.scrollY || window.pageYOffset || 0);
+        hero.scroll.elH = hero.el.offsetHeight;
+      },
+      update: function () {
+        if (!hero.el || !hero.state.n) return;
+        var vh = window.innerHeight || 1;
+        var total = hero.scroll.elH - vh;
+        var y = window.scrollY || window.pageYOffset || 0;
+        var p = total > 0 ? (y - hero.scroll.elTop) / total : 0;
+        p = Math.max(0, Math.min(1, p));
+        /* track 位移：位移本身即过渡 */
+        var track = byHook('hero-track', hero.el);
+        if (track) track.style.transform = 'translateY(' + (-p * total).toFixed(1) + 'px)';
+        /* 进度条：JS 直接 scaleX */
+        if (hero.progressBar) hero.progressBar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+        /* scroll 指示器：滚开即淡出 */
+        var cue = hero.el.querySelector('.scroll-indicator');
+        if (cue) cue.style.opacity = p > 0.03 ? '0' : '';
+        /* 当前 slide */
+        var idx = Math.round(p * (hero.state.n - 1));
+        if (idx !== hero.state.i) hero.setActive(idx);
+      },
+      bind: function () {
+        var ticking = false;
+        window.addEventListener('scroll', function () {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(function () {
+            ticking = false;
+            hero.scroll.update();
+          });
+        }, { passive: true });
+        window.addEventListener('resize', function () {
+          hero.scroll.measure();
+          hero.scroll.update();
         });
-
-        if (instant || st.reduced) {
-          /* reduced-motion：静态切换（a11y） */
-          if (cur) {
-            cur.classList.remove('is-active', 'is-entering', 'is-leaving', 'pre-enter');
-            cur.setAttribute('aria-hidden', 'true');
-          }
-          each(nxt.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
-          nxt.classList.add('is-active');
-          nxt.setAttribute('aria-hidden', 'false');
-          hero.tone.sync(nxt);
-          st.i = n;
-          hero.nav.sync();
-          return;
-        }
-
-        /* 退场：clip 向左收起 + x -20px / 450ms */
-        if (cur) {
-          cur.classList.add('is-leaving');
-          cur.setAttribute('aria-hidden', 'true');
-        }
-        /* 进场：mask 从右侧展开（RIGHT→LEFT） */
-        nxt.classList.add('is-active', 'pre-enter');
-        nxt.setAttribute('aria-hidden', 'false');
-        hero.tone.sync(nxt);
-        void nxt.offsetWidth; /* 回流，确保 pre-enter 生效 */
-        nxt.classList.remove('pre-enter');
-        nxt.classList.add('is-entering');
-
-        hero.timeline.play(nxt);
-        hero.breath.restart();
-
-        st.timers.push(setTimeout(function () {
-          if (cur) cur.classList.remove('is-active', 'is-leaving');
-          nxt.classList.remove('is-entering');
-        }, 950)); /* transitionend 双保险：超时兜底 */
-        st.i = n;
-        hero.nav.sync();
       }
     },
 
-    /* ============ 主循环 ============ */
-    auto: function () {
-      if (hero.state.reduced) return;
-      if (hero.state.autoId) clearTimeout(hero.state.autoId);
-      hero.state.autoId = setTimeout(function () {
-        hero.state.autoId = 0;
-        if (!document.hidden) {
-          hero.transition.to((hero.state.i + 1) % hero.state.n);
-        }
-        hero.auto();
-      }, SLIDE_MS);
+    /* ============ 跳到第 i 张（dots / 箭头 / 键盘统一走 scroll） ============ */
+    goTo: function (i) {
+      var n = hero.state.n;
+      if (!n) return;
+      i = Math.max(0, Math.min(n - 1, i));
+      var vh = window.innerHeight || 1;
+      window.scrollTo({
+        top: hero.scroll.elTop + i * vh,
+        behavior: hero.state.reduced ? 'auto' : 'smooth'
+      });
     },
 
     /* ============ breath（§10 P1）：scale 1.01→1.07 / 7000ms linear ============ */
@@ -333,23 +328,25 @@
       }
     },
 
-    /* ============ parallax（§17） ============ */
+    /* ============ parallax（§17）：只保留 mouse 分支 ============ */
+    /* v1.9：sticky 时 section rect.top 恒 ~0，旧 scroll 三层视差已无意义，删除 */
     parallax: {
       bind: function () {
         if (hero.state.reduced || !hero.el) return;
+        var zone = hero.pinEl || hero.el;
         var fine = window.matchMedia && window.matchMedia('(hover: hover)').matches;
         if (fine) {
           /* mouse ±8px；手机（hover:none）关闭 mouse 分支 */
-          hero.el.addEventListener('mousemove', function (ev) {
-            var r = hero.el.getBoundingClientRect();
+          zone.addEventListener('mousemove', function (ev) {
+            var r = zone.getBoundingClientRect();
             hero.tmx = ((ev.clientX - r.left) / r.width - 0.5) * 2;   /* -1..1 */
             hero.tmy = ((ev.clientY - r.top) / r.height - 0.5) * 2;
           });
-          hero.el.addEventListener('mouseleave', function () {
+          zone.addEventListener('mouseleave', function () {
             hero.tmx = 0; hero.tmy = 0;
           });
         }
-        /* scroll + breath + cursor 共用一个 rAF */
+        /* breath + cursor 共用一个 rAF */
         var raf = function (now) {
           hero.parallax.frame(now);
           hero.breath.tick(now);
@@ -363,17 +360,12 @@
         /* lerp 平滑 mouse */
         hero.mx += (hero.tmx - hero.mx) * 0.08;
         hero.my += (hero.tmy - hero.my) * 0.08;
-        /* scroll 进度：A ±20 / 图 ±8 / 文 ±3 */
-        var r = hero.el.getBoundingClientRect();
-        var vh = window.innerHeight || 1;
-        var p = Math.max(0, Math.min(1, -r.top / vh));
         var groups = hero.el.querySelectorAll('[data-px]');
         each(groups, function (g) {
           var k = g.getAttribute('data-px');
           var depth = k === 'a' ? 1 : k === 'bg' ? 0.5 : 0.25;
-          var srange = k === 'a' ? 20 : k === 'bg' ? 8 : 3;
           var x = hero.mx * 8 * depth;
-          var y = hero.my * 8 * depth + (p - 0.5) * 2 * srange;
+          var y = hero.my * 8 * depth;
           g.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px)';
         });
       }
@@ -388,22 +380,23 @@
         var mq = window.matchMedia;
         var fine = mq && mq('(hover: hover) and (pointer: fine)').matches;
         if (!fine) return;
+        var zone = hero.pinEl || hero.el;
         var c = document.createElement('div');
         c.className = 'hero-cursor';
         c.setAttribute('aria-hidden', 'true');
         document.body.appendChild(c);
         hero.cursor.el = c;
         hero.el.classList.add('has-cursor');
-        hero.el.addEventListener('mousemove', function (ev) {
+        zone.addEventListener('mousemove', function (ev) {
           hero.cursor.tx = ev.clientX;
           hero.cursor.ty = ev.clientY;
           c.classList.add('is-on');
         });
-        hero.el.addEventListener('mouseleave', function () {
+        zone.addEventListener('mouseleave', function () {
           c.classList.remove('is-on', 'is-hover');
         });
         /* 悬停可交互元素时放大 */
-        hero.el.addEventListener('mouseover', function (ev) {
+        zone.addEventListener('mouseover', function (ev) {
           var t = ev.target && ev.target.closest ? ev.target.closest('button, a') : null;
           c.classList.toggle('is-hover', !!t);
         });
@@ -417,7 +410,7 @@
       }
     },
 
-    /* ============ nav（§10 P1：短横线 dots；顶部已有 N°01/06，不再重复计数） ============ */
+    /* ============ nav：短横线 dots（点击走 scrollTo） ============ */
     nav: {
       build: function () {
         var nav = byHook('hero-nav', hero.el);
@@ -432,22 +425,19 @@
             b.type = 'button';
             b.setAttribute('role', 'tab');
             b.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
-            b.addEventListener('click', function () {
-              hero.timeline.clear();
-              hero.transition.to(idx);
-              hero.auto();
-            });
+            b.addEventListener('click', function () { hero.goTo(idx); });
             dots.appendChild(b);
           })(i);
         }
         nav.innerHTML = '';
         nav.appendChild(dots);
         hero.nav.sync();
-        /* 左右箭头：挂在 section.hero 上（CSS 绝对定位两侧），JS 生成 */
+        /* 左右箭头：挂在 hero-pin 上（CSS 绝对定位两侧），JS 生成 */
         hero.nav.buildArrows();
       },
       buildArrows: function () {
-        if (!hero.el) return;
+        var host = hero.pinEl || hero.el;
+        if (!host) return;
         var mk = function (dir) {
           var b = document.createElement('button');
           b.type = 'button';
@@ -455,14 +445,12 @@
           b.setAttribute('aria-label', dir < 0 ? 'Previous slide' : 'Next slide');
           b.innerHTML = '<span aria-hidden="true">' + (dir < 0 ? '←' : '→') + '</span>';
           b.addEventListener('click', function () {
-            hero.timeline.clear();
-            hero.transition.to((hero.state.i + dir + hero.state.n) % hero.state.n);
-            hero.auto();
+            hero.goTo(hero.state.i + dir);
           });
           return b;
         };
-        hero.el.appendChild(mk(-1));
-        hero.el.appendChild(mk(1));
+        host.appendChild(mk(-1));
+        host.appendChild(mk(1));
       },
       sync: function () {
         var nav = byHook('hero-nav', hero.el);
@@ -479,26 +467,23 @@
     a11y: {
       bind: function () {
         if (!hero.el) return;
-        /* 键盘 ←/→（仅 hero 在视口内；表单输入时不劫持） */
+        /* 键盘 ←/→：pin 区间在视口内时走 scroll；表单输入时不劫持 */
         document.addEventListener('keydown', function (ev) {
           var t = ev.target;
           var tag = t && t.tagName;
           if (tag && /^(INPUT|TEXTAREA|SELECT)$/.test(tag)) return;
           if (t && t.isContentEditable) return;
-          var r = hero.el.getBoundingClientRect();
+          var zone = hero.pinEl || hero.el;
+          var r = zone.getBoundingClientRect();
           var inView = r.bottom > 0 && r.top < window.innerHeight;
           if (!inView) return;
           if (ev.key === 'ArrowRight') {
-            hero.timeline.clear();
-            hero.transition.to((hero.state.i + 1) % hero.state.n);
-            hero.auto();
+            hero.goTo(hero.state.i + 1);
           } else if (ev.key === 'ArrowLeft') {
-            hero.timeline.clear();
-            hero.transition.to((hero.state.i - 1 + hero.state.n) % hero.state.n);
-            hero.auto();
+            hero.goTo(hero.state.i - 1);
           }
         });
-        /* visibilitychange：暂停计时（rAF 由浏览器自动节流） */
+        /* visibilitychange：rAF 由浏览器自动节流；回来后重开呼吸避免跳变 */
         document.addEventListener('visibilitychange', function () {
           if (!document.hidden && !hero.state.reduced) {
             hero.breath.restart();

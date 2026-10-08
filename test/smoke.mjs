@@ -175,12 +175,30 @@ test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点�
   assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
 });
 
-test('v1.1 mask 转场无 fade 回归：clip-path inset 进场，无 fade 关键帧', () => {
-  const heroCss = read('css/hero.css');
-  assert.ok(heroCss.includes('inset(0 0 0 100%)'), '缺 mask 进场 inset(0 0 0 100%)');
-  assert.ok(!/@keyframes\s+[\w-]*fade/i.test(heroCss), 'hero 含 fade 关键帧（§14 禁止）');
-  assert.ok(heroCss.includes('@keyframes hero-progress'), '缺 2px 进度条 hero-progress');
-  assert.ok(heroCss.includes('6.5s linear'), '进度条未与 6.5s 轮播同步');
+test('v1.9 scroll-driven 轮播：hero-pin/track 结构 + scroll 驱动 + 无 autoplay 残留', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('data-js="hero-pin"'), 'index 缺 hero-pin');
+  assert.ok(html.includes('data-js="hero-track"'), 'index 缺 hero-track');
+  assert.ok(!html.includes('data-js="hero-slides"'), 'hero-slides 残留');
+  const js = read('js/hero.js');
+  assert.ok(!/SLIDE_MS/.test(js), 'SLIDE_MS 残留');
+  assert.ok(!/hero\.auto\(\)/.test(js) && !/auto:\s*function/.test(js), 'auto() 主循环残留');
+  assert.ok(!/is-entering/.test(js) && !/is-leaving/.test(js) && !/pre-enter/.test(js),
+    'mask transition 类残留');
+  assert.ok(!/transition:\s*\{/.test(js), 'transition.to 残留');
+  assert.ok(/goTo/.test(js) && /scrollTo/.test(js), '缺 goTo/scrollTo');
+  assert.ok(/addEventListener\('scroll'/.test(js), '缺 scroll 监听');
+  assert.ok(js.includes("translateY(' + (-p * total)"), '缺 track 位移');
+  assert.ok(js.includes('scaleX('), '进度条缺 JS scaleX 驱动');
+  assert.ok(/goTo\(idx\)/.test(js), 'dots 未走 goTo');
+  assert.ok(/state\.reduced \? 'auto' : 'smooth'/.test(js), 'goTo 缺 reduced-motion 分支');
+  const css = read('css/hero.css');
+  assert.ok(css.includes('.hero-pin'), 'CSS 缺 .hero-pin');
+  assert.ok(/\.hero-pin\s*\{[^}]*position:\s*sticky/.test(css), 'hero-pin 非 sticky');
+  assert.ok(css.includes('.hero-track'), 'CSS 缺 .hero-track');
+  assert.ok(!/@keyframes hero-progress/.test(css), 'hero-progress keyframes 残留');
+  assert.ok(!/@keyframes\s+[\w-]*fade/i.test(css), 'hero 含 fade 关键帧（§14 禁止）');
+  assert.ok(!/\.hero-slide\s*\{[^}]*position:\s*absolute/.test(css), 'slide 仍 absolute');
 });
 
 test('v1.1 字带：.vertical-names 5 列不同速度 alternate 竖漂', () => {
