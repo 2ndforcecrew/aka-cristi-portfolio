@@ -106,30 +106,26 @@
   max-width: 420px;
 }
 
-/* 箭頭：極簡線條 */
+/* 箭頭：只要尖嘴，不要方框（v2.9.4） */
 .carousel-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   z-index: 3;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: transparent;
-  border: 1px solid rgba(250, 250, 248, 0.4);
-  color: #FAFAF8;
+  border: none;
+  color: rgba(250, 250, 248, 0.85);
   cursor: pointer;
-  font-size: 20px;
+  font-size: 44px;
+  font-weight: 300;
   line-height: 1;
-  padding: 0;
-  transition: background 200ms ease, border-color 200ms ease;
+  padding: 12px;
+  transition: color 200ms ease, transform 200ms ease;
 }
 
 .carousel-arrow:hover {
-  background: rgba(250, 250, 248, 0.12);
-  border-color: rgba(250, 250, 248, 0.8);
+  color: #FAFAF8;
+  transform: translateY(-50%) scale(1.15);
 }
 
 .carousel-arrow.prev { left: var(--space-4); }

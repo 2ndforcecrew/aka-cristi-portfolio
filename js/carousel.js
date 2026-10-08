@@ -120,12 +120,27 @@
     root.addEventListener('mouseenter', stop);
     root.addEventListener('mouseleave', start);
 
-    /* 鍵盤左右鍵 */
-    root.setAttribute('tabindex', '0');
-    root.addEventListener('keydown', function (e) {
+    /* 鍵盤左右鍵：輪播在視口內時全局生效（v2.9.4，不需先聚焦） */
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      var r = root.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) return;
       if (e.key === 'ArrowLeft') { prev(); restart(); }
       if (e.key === 'ArrowRight') { next(); restart(); }
     });
+
+    /* 鼠標滾輪控制（v2.9.4）：在輪播上滾動切換，帶冷卻防連發 */
+    var wheelCool = false;
+    root.addEventListener('wheel', function (e) {
+      if (wheelCool) return;
+      var r = root.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) return;
+      e.preventDefault();
+      wheelCool = true;
+      if (e.deltaY > 0) next(); else prev();
+      restart();
+      setTimeout(function () { wheelCool = false; }, 900);
+    }, { passive: false });
 
     /* 觸控滑動 */
     var tx0 = null;
