@@ -97,7 +97,9 @@ svg 占位图保持原样。
   `.hero-slide-img`（顺序 [0..6]）absolute 叠在同一固定位置；滚轮驱动**交叉淡入**
   （JS 按帧直接写，无 CSS transition）：`f = p*(n-1)`，每张
   `opacity = 1-|i-f|`，内层图 `scale = 1.06-0.06*opacity`（进入时收敛）；
-  描边 A 为 pin 内**单个静态**水印 `.hero-a-fixed`（图片层之上、文字层之下，faint 白）；
+  **v2.8.2**：描边 A 水印已按用户要求删除；文字层不再反向滚动，
+  改为叠放飞入（`.hero-slide-txt` absolute 叠放，仅 `.is-active` 可见；
+  各 layer 从右侧 `translateX(90px)` 飞入，stagger 由 timeline 驱动）；
   **v2.7-B**：首位为概念影像 `river-leviathan`（`kind: 'video'`，10s h264 720p，
   `<video muted loop playsinline preload="metadata" poster>`），参与同一套 crossfade；
   active 时 `play()`（promise catch）、其余 `pause()`、`document.hidden` 全停、

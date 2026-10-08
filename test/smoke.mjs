@@ -182,7 +182,7 @@ test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点�
   assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
 });
 
-test('v2.5 hero：6 张图固定位置交叉淡入 + 文字反向滚动 + is-light 恢复', () => {
+test('v2.5 hero：6 张图固定位置交叉淡入 + 文字飞入 + is-light 恢复（v2.8.2 文字改飞入/A 删除）', () => {
   const html = read('index.html');
   assert.ok(html.includes('data-js="hero-pin"'), 'index 缺 hero-pin');
   assert.ok(html.includes('data-js="hero-fixed"'), 'index 缺 hero-fixed');
@@ -204,13 +204,13 @@ test('v2.5 hero：6 张图固定位置交叉淡入 + 文字反向滚动 + is-lig
   /* crossfade 数学：opacity = 1-|i-f|，scale = 1.06-0.06*o，JS 直接驱动 */
   assert.ok(/1 - Math\.abs\(i - f\)/.test(js), '缺 crossfade opacity = 1-|i-f|');
   assert.ok(/1\.06 - 0\.06 \* o/.test(js), '缺 crossfade scale = 1.06-0.06*o');
-  /* 文字 track 反向位移保留 */
-  assert.ok(/insertBefore\(t, txtFrag\.firstChild\)/.test(js), 'txt track 未倒序插入');
-  assert.ok(/-\(1 - p\) \* total/.test(js), '缺文字 track translateY(-(1-p)*total)');
-  assert.ok(!/-p \* total/.test(js.replace(/-\(1 - p\) \* total/g, '')), '图片 track 位移残留（图片应固定叠放）');
-  /* 单个静态 A 水印（非每张 slide 一个） */
-  assert.ok(/hero-a-fixed/.test(js), '缺 .hero-a-fixed 静态水印');
-  assert.ok(!/hero-agroup/.test(js), 'hero.js 不应再建 hero-agroup（A 已独立）');
+  /* v2.8.2：文字不再反向滚动，改为叠放飞入（translateX 从右侧飞入） */
+  assert.ok(!/-\(1 - p\) \* total/.test(js), '文字 track 反向位移应已删除（v2.8.2 改飞入）');
+  const heroCss = read('css/hero.css');
+  assert.ok(/\.hero-slide-txt\s*\{[^}]*position:\s*absolute/.test(heroCss), '文字 slide 应为叠放 absolute（v2.8.2）');
+  assert.ok(/translateX\(90px\)/.test(heroCss), '文字层应从右侧飞入 translateX(90px)（v2.8.2）');
+  /* v2.8.2：A 水印已删除 */
+  assert.ok(!/hero-a-fixed/.test(js.replace(/\/\*[\s\S]*?\*\//g, '')), 'hero.js 不应再建 .hero-a-fixed（v2.8.2 已删除）');
   /* is-light 恢复：按 tone 切 section 类 */
   const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
   assert.ok(/classList\.toggle\('is-light'/.test(jsNoComment), '缺 is-light toggle（浅色图）');
@@ -709,8 +709,9 @@ test('hero 图片层：交叉淡入由 scroll 按帧驱动，不走 timeline', (
   const src = fs.readFileSync(path.join(ROOT, 'js/hero.js'), 'utf8');
   assert.ok(!src.includes('timeline.play(hero.imgSlide'),
     '图片入场禁止走 timeline.play（timer 会被 setActive 清掉导致图片永不显示）');
-  assert.ok(/window\.setTimeout\(function \(\) \{ awrap\.classList\.add\('in'\); \}, 60\)/.test(src),
-    'A 水印应用独立 setTimeout 点亮（不进 timeline 状态池）');
+  /* v2.8.2：A 水印已按用户要求从首页轮播删除，不再点亮 */
+  assert.ok(!/awrap\.classList\.add\('in'\)/.test(src),
+    '首页不应再有点亮 A 水印的代码（v2.8.2 已删除）');
 });
 
 /* ---------- 40. v2.5.1 回归：深色主题下 is-light 仍用固定墨色 ---------- */

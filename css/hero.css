@@ -62,7 +62,7 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  will-change: transform;
+  /* v2.8.2：文字不再反向滚动，改为叠放飞入；track 本体不再位移 */
 }
 
 /* ---------- slide 骨架：track 内正常流纵向排布，每张 100vh ---------- */
@@ -74,8 +74,17 @@
 }
 /* v1.9：位移本身即过渡，mask 切换（is-active/is-entering/is-leaving/pre-enter）已删除 */
 /* v2.2：文字 track 透明，只有 active 的那张可交互（VIEW PROJECT 只在当前张可点） */
-.hero-slide-txt { pointer-events: none; }
-.hero-slide-txt.is-active { pointer-events: auto; }
+/* v2.8.2：文字 slide 改为叠放（不再纵向 track 反向滚动）；只有 .is-active 可见 */
+.hero-slide-txt {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.hero-slide-txt.is-active {
+  visibility: visible;
+  pointer-events: auto;
+}
 
 /* ---------- layer 01：背景图 ---------- */
 .hero-bgwrap {
@@ -191,7 +200,7 @@ html[data-theme="dark"] .hero.is-light .hero-progress i { background: #0A0A0A; }
   pointer-events: none;
 }
 
-/* layer 03–08：timeline 入场（§13） */
+/* layer 03–08：timeline 入场（§13）；v2.8.2：改为从右侧飞入（不再是 translateY 微升） */
 [data-layer="num"],
 [data-layer="loc"],
 [data-layer="cat"],
@@ -200,8 +209,8 @@ html[data-theme="dark"] .hero.is-light .hero-progress i { background: #0A0A0A; }
 [data-layer="meta"],
 [data-layer="link"] {
   opacity: 0;
-  transform: translateY(26px);
-  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  transform: translateX(90px);
+  transition: opacity 550ms var(--ease-out), transform 650ms var(--ease-out);
 }
 [data-layer="num"].in,
 [data-layer="loc"].in,
@@ -211,7 +220,7 @@ html[data-theme="dark"] .hero.is-light .hero-progress i { background: #0A0A0A; }
 [data-layer="meta"].in,
 [data-layer="link"].in {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0);
 }
 [data-layer="num"],
 [data-layer="loc"],

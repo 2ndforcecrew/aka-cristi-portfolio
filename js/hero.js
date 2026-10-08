@@ -157,22 +157,7 @@
         fixedWrap.appendChild(imgFrag);
       }
 
-      /* ---- 描边 A：单个静态水印（图片层之上、文字层之下） ---- */
-      var pin = hero.pinEl || hero.el;
-      if (pin && !byHook('hero-a-fixed', pin)) {
-        var aFixed = document.createElement('div');
-        aFixed.className = 'hero-a-fixed';
-        aFixed.setAttribute('data-js', 'hero-a-fixed');
-        aFixed.setAttribute('aria-hidden', 'true');
-        var awrap = document.createElement('div');
-        awrap.setAttribute('data-layer', 'a');
-        awrap.innerHTML = hero.aOutlineSVG(0);
-        aFixed.appendChild(awrap);
-        /* 插在 hero-fixed 之后（z 顺序由 CSS 保证） */
-        pin.insertBefore(aFixed, txtWrap);
-        /* 入场：独立 timer 点亮，不进 timeline 状态池 */
-        window.setTimeout(function () { awrap.classList.add('in'); }, 60);
-      }
+      /* ---- 描边 A 水印：v2.8.2 起按用户要求删除（首页轮播不再显示右侧 A 字笔画） ---- */
 
       /* ---- 文字 slide：透明叠加（topline + textgroup + desc + link），倒序 ---- */
       var txtFrag = document.createDocumentFragment();
@@ -389,9 +374,8 @@
         var y = window.scrollY || window.pageYOffset || 0;
         var p = total > 0 ? (y - hero.scroll.elTop) / total : 0;
         p = Math.max(0, Math.min(1, p));
-        /* 文字 track 反向位移：滚轮往下时文字往下走；位移本身即过渡 */
-        var trackTxt = byHook('hero-track-txt', hero.el);
-        if (trackTxt) trackTxt.style.transform = 'translateY(' + (-(1 - p) * total).toFixed(1) + 'px)';
+        /* v2.8.2：文字不再反向滚动（track 位移已删除）；文字 slide 为叠放，
+           由 setActive 切换 .is-active + timeline 飞入 */
         /* 图片交叉淡入：JS 直接驱动（无 CSS transition）。
            f 为连续值；opacity = 1-|i-f|，内层图 scale = 1.06-0.06*opacity */
         var f = p * (hero.state.n - 1);
