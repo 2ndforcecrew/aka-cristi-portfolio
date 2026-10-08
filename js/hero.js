@@ -377,14 +377,13 @@
         /* v2.8.2：文字不再反向滚动（track 位移已删除）；文字 slide 为叠放，
            由 setActive 切换 .is-active + timeline 飞入 */
         /* 图片交叉淡入：JS 直接驱动（无 CSS transition）。
-           f 为连续值；opacity = 1-|i-f|，内层图 scale = 1.06-0.06*opacity */
+           f 为连续值；opacity = 1-|i-f|
+           v2.8.4：移除 scale（排查合成层黑屏问题） */
         var f = p * (hero.state.n - 1);
         each(hero.imgSlides, function (s, i) {
           if (!s) return;
           var o = Math.max(0, Math.min(1, 1 - Math.abs(i - f)));
           s.style.opacity = o.toFixed(4);
-          var img = s._img;
-          if (img) img.style.transform = 'scale(' + (1.06 - 0.06 * o).toFixed(4) + ')';
         });
         /* 进度条：JS 直接 scaleX */
         if (hero.progressBar) hero.progressBar.style.transform = 'scaleX(' + p.toFixed(4) + ')';

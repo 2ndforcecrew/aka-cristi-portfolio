@@ -111,19 +111,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 30%; /* 臉部偏上，避開左下標題與右側 A 標（§10 P1） */
-  /* §10 P2：hero 灰階優先 */
-  filter: grayscale(.72) contrast(1.13);
-  will-change: transform; /* v2.5 crossfade：scale 由 JS 按帧写（1.06→1.0 收敛） */
+  object-position: 50% 30%; /* 臉部偏上，避開左下標題（§10 P1） */
+  display: block;
+  /* v2.8.4：移除 filter/will-change——排查黑屏，确认是否为合成层问题 */
 }
-/* v2.7-B：视频 slide——与 img 同尺寸/灰階，crossfade scale 同样写在 video 上 */
+/* v2.7-B：视频 slide——与 img 同尺寸；v2.8.4：移除 filter/will-change（排查黑屏） */
 [data-layer="bg"] video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: 50% 30%;
-  filter: grayscale(.72) contrast(1.13);
-  will-change: transform;
   display: block;
 }
 
