@@ -113,7 +113,7 @@
 }
 
 .carousel-arrow.prev { left: var(--space-4); }
-.carousel-arrow.next { right: var(--space-4); }
+.carousel-arrow.next { right: calc(var(--space-4) + 56px); } /* 避開右側浮動按鈕 */
 
 /* 圓點 */
 .carousel-dots {
