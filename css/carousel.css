@@ -6,19 +6,13 @@
 
 .carousel {
   position: relative;
-  height: 400vh; /* v2.9.7: 4 張 slide，每張 100vh 的滾動行程 */
+  height: 100vh; /* v2.9.9：改回單屏覆蓋滑入，不再 scroll 驅動 */
+  min-height: 560px;
+  overflow: hidden;
   background: var(--paper);
 }
 
-.carousel-pin {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  min-height: 560px;
-  overflow: hidden;
-}
-
-/* slides 疊放：scroll 驅動（v2.9.7 parallax + 文字反向） */
+/* slides 疊放：覆蓋滑入（v2.9.9：無放大、無 parallax） */
 .carousel-slides {
   position: absolute;
   inset: 0;
@@ -30,23 +24,38 @@
 .carousel-slide {
   position: absolute;
   inset: 0;
-  opacity: 0;
+  transform: translateX(100%);
   visibility: hidden;
   z-index: 0;
-  /* opacity 由 JS 按 scroll 直接寫，無 CSS transition */
+  transition: transform 700ms var(--ease-out), visibility 0s linear 700ms;
+}
+
+.carousel-slide.from-left {
+  transform: translateX(-100%);
 }
 
 .carousel-slide.is-active {
-  opacity: 1;
+  transform: translateX(0);
   visibility: visible;
-  z-index: 1;
+  z-index: 2;
+  transition: transform 700ms var(--ease-out), visibility 0s linear 0s;
 }
 
-/* parallax 內層：圖片/視頻由 JS 寫 translateY */
+.carousel-slide.is-under {
+  transform: translateX(0);
+  visibility: visible;
+  z-index: 1;
+  transition: none;
+}
+
+.carousel-slide.no-anim {
+  transition: none !important;
+}
+
+/* 媒體：無放大，原尺寸 cover */
 .carousel-media {
   position: absolute;
-  inset: -6% 0; /* v2.9.8：上下各多 6%（原 10% 太大顯得放大），給 parallax 位移空間 */
-  will-change: transform;
+  inset: 0;
 }
 
 .carousel-media img,
@@ -180,7 +189,21 @@
   letter-spacing: 0.18em;
 }
 
-/* v2.9.7：文字反向滾動由 JS 直接寫 transform，移除飛入 stagger */
+/* 標題飛入逐子顯示 */
+.carousel-caption > * {
+  opacity: 0;
+  transform: translateX(90px);
+  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+}
+
+.carousel-slide.is-active .carousel-caption > *:nth-child(1) { transition-delay: 150ms; }
+.carousel-slide.is-active .carousel-caption > *:nth-child(2) { transition-delay: 230ms; }
+.carousel-slide.is-active .carousel-caption > *:nth-child(3) { transition-delay: 310ms; }
+
+.carousel-slide.is-active .carousel-caption > * {
+  opacity: 1;
+  transform: translateX(0);
+}
 
 /* reduced motion：直接切換無滑動 */
 @media (prefers-reduced-motion: reduce) {
