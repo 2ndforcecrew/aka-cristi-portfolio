@@ -181,6 +181,28 @@
   letter-spacing: 0.18em;
 }
 
+/* 標題飛入逐子顯示（v2.9.3：沿用 v2.8.2 demo 的右側飛入 + stagger） */
+.carousel-caption > * {
+  opacity: 0;
+  transform: translateX(90px);
+  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+}
+
+.carousel-slide.is-active .carousel-caption > *:nth-child(1) {
+  transition-delay: 150ms;
+}
+.carousel-slide.is-active .carousel-caption > *:nth-child(2) {
+  transition-delay: 230ms;
+}
+.carousel-slide.is-active .carousel-caption > *:nth-child(3) {
+  transition-delay: 310ms;
+}
+
+.carousel-slide.is-active .carousel-caption > * {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 /* reduced motion：直接切換無滑動 */
 @media (prefers-reduced-motion: reduce) {
   .carousel-slide,
