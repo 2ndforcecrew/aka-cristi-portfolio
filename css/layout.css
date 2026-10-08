@@ -61,6 +61,26 @@
 }
 .site-nav a.is-active { border-bottom-color: var(--ink); }
 
+/* 语言切换：mono 小字「中 / EN」，当前语言高亮（无 pill） */
+.lang-toggle {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lang-toggle .off { opacity: .35; }
+.lang-toggle .on { opacity: 1; border-bottom: 1px solid var(--ink); }
+.lang-toggle:hover .off { opacity: .7; }
+.mobile-lang { padding: 24px; border-top: 1px solid var(--gray-300); }
+.mobile-lang .lang-toggle { font-size: 14px; }
+
 /* 汉堡按钮：桌面隐藏 */
 .menu-toggle {
   display: none;

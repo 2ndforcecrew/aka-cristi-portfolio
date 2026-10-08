@@ -22,7 +22,8 @@
       client: 'ATELIER NOIR', location: 'SHANGHAI',
       cover: 'assets/img/photo-01.jpg', hero: 'assets/img/photo-01.jpg',
       gallery: ['assets/img/photo-01.jpg'],
-      description: '霓虹与丝绸的城市夜曲。',
+      description: '城市霓虹下的高定时装大片，以胶片颗粒还原夜晚的迷离质感。',
+      descEn: 'A haute couture editorial under city neon, with film grain restoring the haze of the night.',
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     {
@@ -31,7 +32,8 @@
       client: '—', location: 'TAIPEI',
       cover: 'assets/img/photo-02.jpg', hero: 'assets/img/photo-02.jpg',
       gallery: ['assets/img/photo-02.jpg'],
-      description: '一个人在城市里的安静时刻。',
+      description: '黑白街头系列，用硬光与阴影讲述都市人的内心独白。',
+      descEn: 'A black-and-white street series — hard light and shadow telling the inner monologue of city dwellers.',
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     {
@@ -40,7 +42,8 @@
       client: 'VELVET MAGAZINE', location: 'PARIS',
       cover: 'assets/img/photo-03.jpg', hero: 'assets/img/photo-03.jpg',
       gallery: ['assets/img/photo-03.jpg'],
-      description: '为 VELVET 拍摄的时装大片。',
+      description: '棚内概念大片，流动的纱幔与高饱和色彩编织出一场梦境。',
+      descEn: 'A studio concept editorial where flowing veils and saturated colors weave a dream.',
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     {
@@ -49,7 +52,8 @@
       client: 'LUMIÈRE BEAUTY', location: 'HONG KONG',
       cover: 'assets/img/photo-04.jpg', hero: 'assets/img/photo-04.jpg',
       gallery: ['assets/img/photo-04.jpg'],
-      description: '光在皮肤上的折射实验。',
+      description: '棱镜折射实验系列，探索光影在面部妆容上的二次创作。',
+      descEn: 'A prism-refraction experiment series exploring a second creation of light and shadow on makeup.',
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     {
@@ -58,7 +62,8 @@
       client: 'MAISON BRUME', location: 'MILAN',
       cover: 'assets/img/bw-01.jpg', hero: 'assets/img/bw-01.jpg',
       gallery: ['assets/img/bw-01.jpg'],
-      description: '黑白、高对比、硬光。Campaign 占位系列。',
+      description: '清晨薄雾中的外景时装，自然光下的克制与高级感。',
+      descEn: 'An outdoor fashion story in morning mist — restraint and sophistication in natural light.',
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     {
@@ -67,7 +72,8 @@
       client: 'PERSONAL', location: 'LONDON',
       cover: 'assets/img/bw-02.jpg', hero: 'assets/img/bw-02.jpg',
       gallery: ['assets/img/bw-02.jpg'],
-      description: '个人创作：硬光下的人像雕塑。',
+      description: '极简剪影系列，以轮廓线条致敬高定时装的建筑感。',
+      descEn: 'A minimalist silhouette series saluting the architectural quality of haute couture through contour lines.',
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
     /* ---------------- GRAPHIC DESIGN ---------------- */
@@ -77,7 +83,8 @@
       client: 'CONCRETE SUPPLY', location: 'SHENZHEN',
       cover: 'assets/img/design-01.svg', hero: 'assets/img/design-01.svg',
       gallery: ['assets/img/design-01.svg'],
-      description: '潮牌全套视觉识别占位。',
+      description: '街头潮牌完整视觉系统：Logo、辅助图形与全套应用延展。',
+      descEn: 'A complete visual identity for a streetwear label: logo, graphic system and full applications.',
       credits: 'ART DIRECTION — AKA.CRISTI'
     },
     {
@@ -86,7 +93,8 @@
       client: 'PULSE WEEKLY', location: 'GUANGZHOU',
       cover: 'assets/img/design-02.svg', hero: 'assets/img/design-02.svg',
       gallery: ['assets/img/design-02.svg'],
-      description: '杂志封面系列占位。',
+      description: '时尚杂志封面系列，大胆的网格排版与字体对比。',
+      descEn: 'A fashion magazine cover series with bold grid layouts and typographic contrast.',
       credits: 'DESIGN — AKA.CRISTI'
     },
     {
@@ -95,7 +103,8 @@
       client: 'VOLT FEST', location: 'SHANGHAI',
       cover: 'assets/img/design-03.svg', hero: 'assets/img/design-03.svg',
       gallery: ['assets/img/design-03.svg'],
-      description: '音乐节海报系列占位。',
+      description: '电子音乐节主视觉海报，迷幻色彩与故障艺术的碰撞。',
+      descEn: 'Key visuals for an electronic music festival — psychedelic color meets glitch art.',
       credits: 'DESIGN — AKA.CRISTI'
     },
     {
@@ -104,7 +113,8 @@
       client: 'PERSONAL', location: '—',
       cover: 'assets/img/design-04.svg', hero: 'assets/img/design-04.svg',
       gallery: ['assets/img/design-04.svg'],
-      description: '排印实验占位。',
+      description: '中文排印实验，以解构字形探索文字的视觉张力。',
+      descEn: 'Chinese typography experiments exploring the visual tension of deconstructed letterforms.',
       credits: 'DESIGN — AKA.CRISTI'
     },
     {
@@ -113,7 +123,8 @@
       client: 'GRAY BOX GALLERY', location: 'BEIJING',
       cover: 'assets/img/design-05.svg', hero: 'assets/img/design-05.svg',
       gallery: ['assets/img/design-05.svg'],
-      description: '展览视觉系统占位。',
+      description: '摄影展主视觉与空间导视系统设计。',
+      descEn: 'Key visual and spatial wayfinding for a photography exhibition.',
       credits: 'ART DIRECTION — AKA.CRISTI'
     },
     {
@@ -122,7 +133,8 @@
       client: 'APEX MOTORS', location: 'DONGGUAN',
       cover: 'assets/img/design-06.svg', hero: 'assets/img/design-06.svg',
       gallery: ['assets/img/design-06.svg'],
-      description: '汽车品牌包装占位（GTR34 式全案在第二阶段展开）。',
+      description: '小众香氛品牌包装设计，极简主义下的材质实验。',
+      descEn: 'Packaging for a niche fragrance brand — material experiments under minimalism.',
       credits: 'DESIGN — AKA.CRISTI'
     }
   ];

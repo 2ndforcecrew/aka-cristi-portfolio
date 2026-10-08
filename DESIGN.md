@@ -172,6 +172,23 @@ svg 占位图保持原样。
   gain .05，click 440→880Hz / 90ms / gain .07；仅 `(pointer: fine)` 启用；AudioContext 懒初始化；
   footer 设 `SOUND ON/OFF` 开关（`localStorage aka-sound`，默认开）。
 
+## i18n（中英切换，中文为主）
+
+- `js/i18n.js`（`data.js` 之后引入）：`AKA.i18n = { lang, dict, t, cat, city, setLang, applyStatic, onChange }`。
+  默认 `lang='zh'`，`localStorage 'aka-lang'` 持久化；`setLang` 更新 `<html lang>`（zh-CN/en）。
+- 静态文本：`[data-i18n="key"]`（innerHTML）/ `[data-i18n-ph]`（placeholder），key 点分隔命名
+  （`nav.*` / `sec.*` / `about.*` / `cta.*` / `contact.*` / `proj.*` / `filter.all`）。
+  dict zh/en key 必须完全对应（smoke 校验）；`t()` 缺 key 时回退英文再回退 key 本身。
+- 动态内容订阅 `onChange`：`hero.applyLang()`（slide 存 `s._work`/`s._idx` 引用重刷文字层）、
+  `AKA.renderAll()`（main.js：卡片/网格/筛选器/馆藏标签，先清空再渲染）、project.js 按当前 id 重渲染。
+  各模块防御：`AKA.i18n` 缺失时退回英文原文。
+- `cat()`/`city()` 映射分类与城市（未知值原样返回）；作品 `title`（中）/`titleEn`（英）、
+  `description`（中）/`descEn`（英）按语言选用。
+- 切换按钮：header 与移动菜单各一个 `<button class="lang-toggle" data-js="lang-toggle">`，
+  显示 `中 / EN`（当前高亮），mono 小字无 pill；JS 统一绑定。
+- 中文字体：系统 fallback（`--font-body` 已含 PingFang TC / Noto Sans TC / Microsoft JhengHei），
+  不引入外部字体。HTML 静态默认英文（无 JS 时完整可读），`applyStatic` 在 DOMContentLoaded 即转中文。
+
 ## Don'ts
 
 - 不要引入 Google Fonts 或任何外部 URL（svg xmlns 除外）；不要用 pill / shadow / glassmorphism /

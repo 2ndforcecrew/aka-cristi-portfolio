@@ -116,6 +116,8 @@
         s.setAttribute('aria-roledescription', 'slide');
         s.setAttribute('aria-label', (i + 1) + ' / ' + works.length + ' — ' + w.titleEn);
         s.setAttribute('aria-hidden', 'true');
+        s._work = w;   /* i18n：applyLang 用 */
+        s._idx = i;
 
         /* layer 01：背景 */
         var bgw = document.createElement('div');
@@ -188,6 +190,36 @@
       });
       wrap.innerHTML = '';
       wrap.appendChild(frag);
+      hero.applyLang(); /* 按当前语言刷一遍文字层 */
+    },
+
+    /* ============ i18n：按当前语言重刷 slide 文字层 ============ */
+    /* build 与 onChange 共用；timeline/转场/键盘/光标逻辑不动 */
+    paintSlide: function (s, w, i, n) {
+      var I = AKA.i18n;
+      var zh = !I || I.lang !== 'en';
+      var cat = I ? I.cat(w.category) : w.category;
+      var loc = I ? I.city(w.location) : w.location;
+      var title = zh ? w.title : w.titleEn;
+      function q(k) { return s.querySelector('[data-layer="' + k + '"]'); }
+      var elNum = q('num');
+      if (elNum) elNum.textContent = 'N°' + pad2(i + 1) + ' / ' + pad2(n);
+      var elLoc = q('loc');
+      if (elLoc) elLoc.textContent = loc + ' — ' + w.year;
+      var elCat = q('cat');
+      if (elCat) elCat.textContent = cat;
+      var elTitle = q('title');
+      if (elTitle) elTitle.textContent = title;
+      var elMeta = q('meta');
+      if (elMeta) elMeta.textContent = w.year + ' — ' + w.client + ' — ' + cat;
+      s.setAttribute('aria-label', (i + 1) + ' / ' + n + ' — ' + title);
+      var img = s.querySelector('[data-breath]');
+      if (img) img.setAttribute('alt', 'AKA.CRISTI — ' + title + ' — ' + cat);
+    },
+    applyLang: function () {
+      each(hero.slides, function (s) {
+        if (s._work) hero.paintSlide(s, s._work, s._idx, hero.state.n);
+      });
     },
 
     /* ============ timeline（§13） ============ */
@@ -475,4 +507,11 @@
       }
     }
   });
+
+  /* i18n 订阅：语言切换时重刷 slide 文字层（hero 不存在时静默跳过） */
+  if (AKA.i18n && AKA.i18n.onChange) {
+    AKA.i18n.onChange.push(function () {
+      if (hero.el) hero.applyLang();
+    });
+  }
 })();

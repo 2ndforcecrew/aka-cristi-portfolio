@@ -19,12 +19,12 @@ const jsFiles = () => fs.readdirSync(path.join(ROOT, 'js')).filter((f) => f.ends
 const PAGES = ['index.html', 'project.html', 'about.html', 'contact.html'];
 
 /* ---------- 1. 文件存在 ---------- */
-test('文件存在：4 页面 / css 7 个 / js 6 个 / svg / md / webp / wp-migration / logo', () => {
+test('文件存在：4 页面 / css 7 个 / js 7 个 / svg / md / webp / wp-migration / logo', () => {
   for (const p of PAGES) assert.ok(exists(p), '缺页面 ' + p);
   assert.deepEqual(cssFiles().sort(),
     ['base.css', 'hero.css', 'layout.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
   assert.deepEqual(jsFiles().sort(),
-    ['data.js', 'hero.js', 'main.js', 'project.js', 'sound.js', 'transition.js']);
+    ['data.js', 'hero.js', 'i18n.js', 'main.js', 'project.js', 'sound.js', 'transition.js']);
   assert.ok(exists('assets/a-symbol.svg'));
   assert.ok(exists('assets/favicon.svg'));
   assert.ok(exists('DESIGN.md'));
@@ -452,4 +452,80 @@ test('笔触 LOGO 全站接线：黑白版分场景、favicon、转场白版、�
   assert.ok(/aka-sound/.test(snd), 'sound.js 缺 localStorage 开关');
   // LOGO 载入笔触动画
   assert.ok(read('css/layout.css').includes('brand-paint'), 'layout.css 缺 LOGO 笔触动画');
+});
+
+/* ---------- i18n ---------- */
+function loadI18n() {
+  const src = read('js/i18n.js');
+  const sandbox = { window: {} };
+  new Function('window', src)(sandbox.window);
+  return sandbox.window.AKA.i18n;
+}
+
+test('i18n：dict zh/en key 完全对应', () => {
+  const i18n = loadI18n();
+  const zhKeys = Object.keys(i18n.dict.zh).sort();
+  const enKeys = Object.keys(i18n.dict.en).sort();
+  assert.deepEqual(zhKeys, enKeys, 'zh/en key 不对应');
+  assert.ok(zhKeys.length >= 40, 'dict key 太少：' + zhKeys.length);
+  for (const k of zhKeys) {
+    assert.ok(i18n.dict.zh[k] !== '', 'zh 空值：' + k);
+    assert.ok(i18n.dict.en[k] !== '', 'en 空值：' + k);
+  }
+});
+
+test('i18n：4 页所有 [data-i18n] 的 key 都在 dict 里', () => {
+  const i18n = loadI18n();
+  const keys = new Set(Object.keys(i18n.dict.zh));
+  for (const p of PAGES) {
+    const html = read(p);
+    for (const m of html.matchAll(/data-i18n="([^"]+)"/g)) {
+      assert.ok(keys.has(m[1]), p + ' 的 key 不在 dict：' + m[1]);
+    }
+  }
+});
+
+test('i18n：12 件作品都有 title/titleEn/description/descEn', () => {
+  const works = loadWorks();
+  assert.equal(works.length, 12);
+  for (const w of works) {
+    for (const f of ['title', 'titleEn', 'description', 'descEn']) {
+      assert.ok(w[f] !== undefined && w[f] !== '', w.id + ' 缺 ' + f);
+    }
+  }
+  /* 中文描述来自映射表（非旧占位） */
+  const byId = {};
+  works.forEach((w) => { byId[w.id] = w; });
+  assert.ok(byId['neon-city-nights'].description.includes('胶片颗粒'), 'neon 描述未更新');
+  assert.ok(byId['type-experiments'].description.includes('解构字形'), 'type 描述未更新');
+  assert.ok(byId['packaging-design'].descEn.includes('fragrance'), 'packaging descEn 异常');
+});
+
+test('i18n：4 页都有 lang-toggle（header+移动菜单）且 i18n.js 在 data.js 之后引入', () => {
+  for (const p of PAGES) {
+    const html = read(p);
+    const toggles = [...html.matchAll(/data-js="lang-toggle"/g)].length;
+    assert.ok(toggles >= 2, p + ' lang-toggle 不足 2 个：' + toggles);
+    const di = html.indexOf('js/data.js');
+    const ii = html.indexOf('js/i18n.js');
+    assert.ok(di !== -1 && ii !== -1 && ii > di, p + ' i18n.js 未在 data.js 之后引入');
+    assert.ok(html.includes('<html lang="zh-CN">'), p + ' html lang 不是 zh-CN');
+  }
+});
+
+test('i18n：cat/city 映射 + 未知值原样返回', () => {
+  const i18n = loadI18n();
+  assert.equal(i18n.cat('FASHION'), '时装');
+  assert.equal(i18n.cat('ART DIRECTION'), '艺术指导');
+  assert.equal(i18n.cat('EXPERIMENTAL'), 'EXPERIMENTAL');
+  assert.equal(i18n.city('SHANGHAI'), '上海');
+  assert.equal(i18n.city('HONG KONG'), '香港');
+  assert.equal(i18n.city('—'), '—');
+  i18n.setLang('en');
+  assert.equal(i18n.cat('FASHION'), 'FASHION');
+  assert.equal(i18n.city('SHANGHAI'), 'SHANGHAI');
+  assert.equal(i18n.t('nav.work'), 'Work');
+  i18n.setLang('zh');
+  assert.equal(i18n.t('nav.work'), '作品');
+  assert.equal(i18n.t('no.such.key'), 'no.such.key');
 });

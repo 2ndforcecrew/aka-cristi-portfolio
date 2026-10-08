@@ -21,7 +21,18 @@
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
   function altFor(w) {
-    return 'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category;
+    return 'AKA.CRISTI — ' + workTitle(w) + ' — ' + workCat(w.category);
+  }
+
+  /* ---------- i18n 小工具（AKA.i18n 缺失时退回英文原文） ---------- */
+  function workTitle(w) {
+    return (AKA.i18n && AKA.i18n.lang === 'en') ? w.titleEn : w.title;
+  }
+  function workCat(c) {
+    return (AKA.i18n && AKA.i18n.cat) ? AKA.i18n.cat(c) : c;
+  }
+  function T(key) {
+    return (AKA.i18n && AKA.i18n.t) ? AKA.i18n.t(key) : key;
   }
 
   /* ---------- 卡片（Phase 2：整卡即链接 → project.html?id=） ---------- */
@@ -43,10 +54,10 @@
     meta.className = 'work-card-meta';
     var cat = document.createElement('p');
     cat.className = 'work-card-cat';
-    cat.textContent = w.category;
+    cat.textContent = workCat(w.category);
     var title = document.createElement('h3');
     title.className = 'work-card-title';
-    title.textContent = w.titleEn;
+    title.textContent = workTitle(w);
     var year = document.createElement('p');
     year.className = 'work-card-year';
     year.textContent = w.year;
@@ -71,10 +82,11 @@
     meta.className = 'photo-meta';
     var idx = document.createElement('p');
     idx.className = 'micro';
-    idx.textContent = w.category + ' / ' + pad2(n);
+    /* archive 条目格式：w.category + ' / ' + pad2(n)（分类经 i18n 映射，smoke 校验格式） */
+    idx.textContent = workCat(w.category) + ' / ' + pad2(n);
     var title = document.createElement('h3');
     title.className = 'work-card-title';
-    title.textContent = w.titleEn;
+    title.textContent = workTitle(w);
     var year = document.createElement('p');
     year.className = 'micro';
     year.textContent = w.year;
@@ -105,10 +117,10 @@
     meta.className = 'work-card-meta';
     var cat = document.createElement('p');
     cat.className = 'work-card-cat';
-    cat.textContent = w.category;
+    cat.textContent = workCat(w.category);
     var title = document.createElement('h3');
     title.className = 'work-card-title';
-    title.textContent = w.titleEn;
+    title.textContent = workTitle(w);
     meta.appendChild(cat);
     meta.appendChild(title);
     cell.appendChild(imgw);
@@ -160,29 +172,32 @@
     grid.appendChild(frag);
   }
 
-  /* ---------- 分类切换（§22：非 fade，直接切换） ---------- */
-  function initFilter(hook, cats, render) {
+  /* ---------- 分类切换（§22：非 fade，直接切换；语言切换时保持选中态） ---------- */
+  var filterState = { photo: 'ALL', design: 'ALL' };
+  function initFilter(hook, cats, render, key) {
     var bar = byHook(hook);
     if (!bar) return;
+    var active = filterState[key] || 'ALL';
     var frag = document.createDocumentFragment();
-    each(cats, function (c, i) {
+    each(cats, function (c) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.textContent = c;
+      b.textContent = (c === 'ALL') ? T('filter.all') : workCat(c);
       b.setAttribute('data-cat', c);
-      if (i === 0) b.classList.add('is-active');
+      if (c === active) b.classList.add('is-active');
       b.addEventListener('click', function () {
         each(bar.querySelectorAll('button'), function (x) {
           x.classList.remove('is-active');
         });
         b.classList.add('is-active');
+        filterState[key] = c;
         render(c); /* 直接重渲染，无残留 */
       });
       frag.appendChild(b);
     });
     bar.innerHTML = '';
     bar.appendChild(frag);
-    render('ALL');
+    render(active);
   }
 
   /* ---------- 移动菜单 ---------- */
@@ -243,22 +258,31 @@
       .filter(function (y) { return !isNaN(y); });
     var pl = byHook('photo-archive-label');
     if (pl && years.length) {
-      pl.textContent = 'ARCHIVE / ' + Math.min.apply(null, years) +
+      pl.textContent = T('sec.archive') + ' / ' + Math.min.apply(null, years) +
         '—' + Math.max.apply(null, years);
     }
     var designs = works.filter(function (w) { return w.kind === 'design'; });
     var dl = byHook('design-archive-label');
     if (dl) {
-      dl.textContent = 'ARCHIVE / ' + pad2(designs.length) + ' PROJECTS';
+      dl.textContent = T('sec.archive') + ' / ' + pad2(designs.length) + ' ' + T('sec.projects');
     }
+  }
+
+  /* ---------- i18n：语言切换时重渲染全部动态内容 ---------- */
+  function renderAll() {
+    renderSelected();
+    initFilter('photo-filter', ['ALL'].concat(AKA.PHOTO_CATS || []), renderPhotoGrid, 'photo');
+    initFilter('design-filter', ['ALL'].concat(AKA.DESIGN_CATS || []), renderDesignGrid, 'design');
+    initArchiveLabels();
+  }
+  AKA.renderAll = renderAll;
+  if (AKA.i18n && AKA.i18n.onChange) {
+    AKA.i18n.onChange.push(function () { renderAll(); });
   }
 
   /* ---------- 启动 ---------- */
   function init() {
-    renderSelected();
-    initFilter('photo-filter', ['ALL'].concat(AKA.PHOTO_CATS || []), renderPhotoGrid);
-    initFilter('design-filter', ['ALL'].concat(AKA.DESIGN_CATS || []), renderDesignGrid);
-    initArchiveLabels();
+    renderAll();
     initMenu();
     initReveal();
     initYear();
