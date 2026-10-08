@@ -1,0 +1,88 @@
+/* ============================================================
+ * AKA.CRISTI — effects.css（v2.6：React Bits 原生重写）
+ * 黑白杂志风：无渐变/发光/阴影；radius 只 0/2/4px。
+ * ============================================================ */
+
+/* ---------- 1. SplitText：逐字 stagger ---------- */
+.fx-split .ch {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(.5em);
+  transition: opacity .5s cubic-bezier(.2,.7,.2,1),
+              transform .5s cubic-bezier(.2,.7,.2,1);
+}
+.fx-split.play .ch {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* hero 标题：ch 动画替代整块 [data-layer="title"] 的 .in（其余图层不动） */
+.hero-slide-txt [data-layer="title"].fx-split,
+.hero-slide-txt [data-layer="title"].fx-split.in {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* ---------- 3. Magnet：磁吸（位移由 JS 写 transform） ---------- */
+.magnet {
+  will-change: transform;
+}
+
+/* ---------- 4. RotatingText：about 宣言区 ---------- */
+.about-rot {
+  font-size: clamp(30px, 4.5vw, 58px);
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: .01em;
+  margin-bottom: 48px;
+}
+.about-rot .rot-pre {
+  color: var(--ink);
+}
+.rot-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  height: 1.5em;
+}
+.rot-word .rw {
+  display: block;
+  transition: transform .42s cubic-bezier(.2,.7,.2,1),
+              opacity .42s cubic-bezier(.2,.7,.2,1);
+}
+.rot-word .rw.out {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+.rot-word .rw.in {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+/* ---------- 5. ImageTrail：摄影区照片残影 ---------- */
+/* z-index 5：在内容之上、cursor（10001+）之下；pointer-events none 不干扰 hover */
+#photography {
+  position: relative;
+}
+.trail-img {
+  position: absolute;
+  width: 150px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  pointer-events: none;
+  opacity: 0;
+  filter: grayscale(1) contrast(1.1);
+  z-index: 5;
+}
+
+/* ---------- reduced-motion：静止降级 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .fx-split .ch {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .rot-word .rw {
+    transition: none;
+  }
+}

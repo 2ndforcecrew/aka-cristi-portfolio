@@ -1,8 +1,9 @@
 /* ============================================================
- * AKA.CRISTI — 服务跑马灯（v2.3）
+ * AKA.CRISTI — 服务跑马灯（v2.6 ScrollVelocity）
  * 黑底横条，大字无限循环（中英对照），JS rAF 驱动；
- * hover：方形反色透镜跟随鼠标 + 滚动加速；
- * reduced-motion / 粗指针：静止无透镜。
+ * 速度 = base(70px/s) + 滚动速度，lerp 平滑；上滚反转；轻微 skew 随速度；
+ * 反色透镜跟随鼠标（保留）；reduced-motion / 粗指针：静止无透镜。
+ * 纯函数 speedFor(base, vel) 供 smoke 测试。
  * ============================================================ */
 (function () {
   'use strict';
@@ -21,7 +22,7 @@
   ];
 
   var BASE_SPEED = 70;    /* px/s，常速 */
-  var HOVER_SPEED = 210;  /* px/s，hover 加速 */
+  var VEL_GAIN = 4;       /* 滚动速度增益：speed = base + vel*GAIN（vel 为平滑后的 px/frame） */
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -31,6 +32,11 @@
   }
 
   var marquee = {
+    /* 纯函数：给定 base 与平滑滚动速度 vel，求目标速度（px/s） */
+    speedFor: function (base, vel) {
+      return base + vel * VEL_GAIN;
+    },
+
     init: function () {
       var sec = document.querySelector('[data-js="marquee"]');
       if (!sec) return;
@@ -70,21 +76,25 @@
       measure();
       window.addEventListener('resize', measure);
 
-      /* rAF 驱动：无缝循环 + hover 加速 */
-      var offset = 0, speed = BASE_SPEED, targetSpeed = BASE_SPEED, last = 0;
-      var hovering = false;
+      /* rAF 驱动：ScrollVelocity 无缝循环（v2.6：hover 加速已删，与速度模型冲突） */
+      var offset = 0, last = 0, lastY = window.scrollY || 0, vel = 0;
       if (!reduced) {
-        sec.addEventListener('mouseenter', function () { hovering = true; });
-        sec.addEventListener('mouseleave', function () { hovering = false; });
         (function frame(t) {
           if (!last) last = t;
           var dt = Math.min((t - last) / 1000, 0.1);
           last = t;
-          targetSpeed = hovering ? HOVER_SPEED : BASE_SPEED;
-          speed += (targetSpeed - speed) * Math.min(dt * 6, 1);
+          /* 滚动速度：px/frame，平滑 lerp；上滚为负 → 方向反转 */
+          var y = window.scrollY || 0;
+          var dy = y - lastY;
+          lastY = y;
+          vel += ((dy * 0.9) - vel) * 0.08;
+          var speed = marquee.speedFor(BASE_SPEED, vel);
           offset -= speed * dt;
           if (offset <= -seqW) offset += seqW;
-          track.style.transform = 'translate3d(' + offset.toFixed(1) + 'px,0,0)';
+          if (offset > 0) offset -= seqW;
+          var skew = Math.max(-8, Math.min(8, -vel * 0.12));
+          track.style.transform = 'translate3d(' + offset.toFixed(1) + 'px,0,0)' +
+            ' skewX(' + skew.toFixed(2) + 'deg)';
           requestAnimationFrame(frame);
         })(performance.now());
       }

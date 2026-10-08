@@ -196,6 +196,7 @@
         var link = document.createElement('a');
         link.setAttribute('data-layer', 'link');
         link.setAttribute('data-cursor', 'view');
+        link.className = 'magnet'; /* v2.6：磁吸（js/effects.js，与 cursor 独立） */
         link.href = 'project.html?id=' + w.id + '&v=2.4';
         link.textContent = 'VIEW PROJECT →';
         tg.appendChild(cat);
@@ -212,6 +213,14 @@
       txtWrap.innerHTML = '';
       txtWrap.appendChild(txtFrag);
       hero.applyLang(); /* 按当前语言刷一遍文字层 */
+
+      /* v2.6 SplitText：标题逐字 stagger（ch 动画替代整块 .in，见 css/effects.css） */
+      each(hero.txtSlides, function (t) {
+        var tel = t.querySelector('[data-layer="title"]');
+        if (AKA.fx && tel) AKA.fx.split(tel);
+      });
+      /* v2.6 Magnet：VIEW PROJECT 链接在 build 时才创建，这里补挂载 */
+      if (AKA.fx && AKA.fx.magnetize) AKA.fx.magnetize();
 
       /* 进度条：pin 级单条，scroll 驱动 scaleX（v1.9 起不再是 6.5s keyframes） */
       var pin = hero.pinEl || hero.el;
@@ -241,7 +250,11 @@
       var elCat = q('cat');
       if (elCat) elCat.textContent = cat;
       var elTitle = q('title');
-      if (elTitle) elTitle.textContent = title;
+      if (elTitle) {
+        elTitle.textContent = title;
+        /* v2.6：语言切换后重建逐字 split，并立即 replay（否则标题隐形） */
+        if (AKA.fx) { AKA.fx.split(elTitle, true); AKA.fx.replay(elTitle, 0); }
+      }
       var elDesc = q('desc');
       if (elDesc) elDesc.textContent = desc;
       var elMeta = q('meta');
@@ -313,6 +326,9 @@
       } else {
         hero.timeline.play(txt);
       }
+      /* v2.6：标题 ch stagger replay（与图层入场同节奏，TL.title 0.45s） */
+      var tel = txt.querySelector('[data-layer="title"]');
+      if (AKA.fx && tel) AKA.fx.replay(tel, hero.state.reduced ? 0 : 450);
     },
 
     /* ============ scroll 驱动（v1.9） ============ */

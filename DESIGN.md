@@ -112,13 +112,29 @@ svg 占位图保持原样。
   Ken Burns（breath）已删除（与 crossfade scale 公式冲突）。
   底部短横线 dots（34px→active 62px）+ 2px 进度条由 JS 按 scroll 进度 scaleX。
   Hero 图 `grayscale(.72) contrast(1.13)`。
-- **服务跑马灯**（v2.3，替代 Selected Work，占 `#work` 锚点）：ink 黑底横条，
-  大字无限循环 `AKA.CRISTI ✦ 平面设计 GRAPHIC DESIGN ✦ 时装摄影 FASHION PHOTOGRAPHY ✦
+  **v2.6 SplitText**：hero 大标题 `[data-layer="title"]` 按字拆 `span.ch`
+  （`transition-delay = i*45ms`），ch stagger **替代**标题整块 `.in` 动画
+  （其余图层不动；`css/effects.css` 中和标题块级 transition）；
+  `setActive` 后 `AKA.fx.replay(title, 450)`（与 TL.title 0.45s 同节奏）；
+  `paintSlide`（语言切换）后 force 重建；各 section 标题加 `data-split`
+ （进入视口播一次，语言切换重建）。reduced-motion 直接显示整句。
+- **服务跑马灯**（v2.3，替代 Selected Work，占 `#work` 锚点；**v2.6 改 ScrollVelocity**）：
+  ink 黑底横条，大字无限循环 `AKA.CRISTI ✦ 平面设计 GRAPHIC DESIGN ✦ 时装摄影 FASHION PHOTOGRAPHY ✦
   品牌设计 BRAND DESIGN ✦ 画册设计 BROCHURE DESIGN ✦ 包装设计 PACKAGING DESIGN ✦
   展览设计 EXHIBITION DESIGN`（v2.4 起：中英同尺寸空心描边小字，
-  `clamp(28px,4vw,64px)` + `-webkit-text-stroke: 1.5px`）；JS rAF 驱动（两组序列无缝循环，70px/s，常速）；
-  hover：方形反色透镜跟随鼠标（`mix-blend-mode: difference` 白方块 170px，lerp 缓动，
-  呼应站内方形光标）+ 加速至 210px/s；细指针限定，reduced-motion 静止。
+  `clamp(28px,4vw,64px)` + `-webkit-text-stroke: 1.5px`）；JS rAF 驱动（两组序列无缝循环）；
+  速度 = `70px/s + 平滑滚动速度*4`（lerp 0.08，上滚反转方向，轻微 `skewX` 随速度 ±8°）；
+  hover 210px/s 加速已删（与速度模型冲突）；方形反色透镜保留
+  （`mix-blend-mode: difference` 白方块 170px，lerp 缓动）；细指针限定，reduced-motion 静止。
+- **v2.6 Magnet**：`.magnet`（hero VIEW PROJECT 链接、index CTA、contact 提交按钮）
+  鼠标靠近按 0.35 系数吸附，lerp 0.18，mouseleave 弹回；与 `data-cursor="view"` 独立共存；
+  触屏/reduced-motion 跳过。
+- **v2.6 RotatingText**：about 宣言区 `data-js="rot"`，「我是」+ 翻转词
+  [平面設計師/時裝攝影師/品牌設計師/展覽設計師]（中英硬编码 pairs，按 `documentElement.lang` 取，
+  不碰 i18n.js），`translateY` 翻转，2.4s 间隔，`document.hidden` 暂停。
+- **v2.6 ImageTrail**：`#photography` 区 mousemove（节流 70ms）生成 150px 灰度照片残影
+  （循环 works webp，900ms 上浮淡出，上限 14 张，`pointer-events:none`，
+  `z-index:5` 在 cursor 之下）；触屏/reduced-motion 跳过。
 - **photo-grid**（v2.4：满屏密集）：突破 container 全宽（`100vw` + `calc(50% - 50vw)`），
   `repeat(6, 1fr)` 一排 6 张，gap 2px，缩略图 `aspect-ratio: 3/4`；移动端 3 列；
   条目 `分类 / 序号`（10px mono）+ 标题 + 年份；分类切换用 display:none（禁 fade filter）。

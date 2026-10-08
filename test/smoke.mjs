@@ -19,12 +19,12 @@ const jsFiles = () => fs.readdirSync(path.join(ROOT, 'js')).filter((f) => f.ends
 const PAGES = ['index.html', 'project.html', 'about.html', 'contact.html'];
 
 /* ---------- 1. 文件存在 ---------- */
-test('文件存在：4 页面 / css 9 个 / js 10 个 / svg / md / webp / wp-migration / logo', () => {
+test('文件存在：4 页面 / css 10 个 / js 11 个 / svg / md / webp / wp-migration / logo', () => {
   for (const p of PAGES) assert.ok(exists(p), '缺页面 ' + p);
   assert.deepEqual(cssFiles().sort(),
-    ['base.css', 'cursor.css', 'hero.css', 'layout.css', 'marquee.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
+    ['base.css', 'cursor.css', 'effects.css', 'hero.css', 'layout.css', 'marquee.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
   assert.deepEqual(jsFiles().sort(),
-    ['cursor.js', 'data.js', 'hero.js', 'i18n.js', 'main.js', 'marquee.js', 'project.js', 'sound.js', 'theme.js', 'transition.js']);
+    ['cursor.js', 'data.js', 'effects.js', 'hero.js', 'i18n.js', 'main.js', 'marquee.js', 'project.js', 'sound.js', 'theme.js', 'transition.js']);
   assert.ok(exists('assets/a-symbol.svg'));
   assert.ok(exists('assets/favicon.svg'));
   assert.ok(exists('DESIGN.md'));
@@ -588,7 +588,7 @@ test('筛选分类：PHOTO_CATS/DESIGN_CATS 都有中文映射、无幽灵分类
 });
 
 /* ---------- 35. 服务跑马灯（v2.3）：替代 Selected Work ---------- */
-test('跑马灯：#work 为 marquee、无 selected 残留、7 项服务、lens+加速逻辑', () => {
+test('跑马灯：#work 为 marquee、无 selected 残留、7 项服务、lens+ScrollVelocity', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert.ok(html.includes('id="work"'), '#work 锚点必须保留');
   assert.ok(html.includes('class="marquee"'), '#work 应为 marquee');
@@ -603,7 +603,9 @@ test('跑马灯：#work 为 marquee、无 selected 残留、7 项服务、lens+�
   const css = fs.readFileSync(path.join(ROOT, 'css/marquee.css'), 'utf8');
   assert.ok(css.includes('mix-blend-mode: difference'), '透镜必须用 difference 反色');
   assert.ok(/\.marquee-lens\.is-on/.test(css), '透镜 is-on 状态必须存在');
-  assert.ok(mq.includes('HOVER_SPEED'), 'hover 加速逻辑必须存在');
+  /* v2.6：hover 210px/s 已删（与速度模型冲突），改为 ScrollVelocity */
+  assert.ok(!mq.includes('HOVER_SPEED'), 'HOVER_SPEED 应删除');
+  assert.ok(mq.includes('speedFor'), '缺 ScrollVelocity 速度函数 speedFor');
   assert.ok(mq.includes('prefers-reduced-motion'), 'reduced-motion 降级必须存在');
   /* v2.4：中英同尺寸空心描边小字 */
   assert.ok(css.includes('-webkit-text-stroke'), '跑马灯文字必须空心描边');
@@ -694,4 +696,232 @@ test('深色主题 is-light：文字/dots/进度条钉死 #0A0A0A（不跟随 --
   const css = fs.readFileSync(path.join(ROOT, 'css/hero.css'), 'utf8');
   assert.ok(css.includes('html[data-theme="dark"] .hero.is-light'),
     '缺深色主题 is-light 覆盖规则（浅色照片上白字不可读）');
+});
+
+/* ============================================================
+ * v2.6：5 个 React Bits 效果（原生重写）回归测试
+ * DOM-stub：最小 document/window，真实跑 effects.js / marquee.js 逻辑
+ * ============================================================ */
+import vm from 'node:vm';
+
+function makeText(v) {
+  return { nodeType: 3, nodeName: '#text', nodeValue: v, get textContent() { return this.nodeValue; } };
+}
+function makeEl(tag) {
+  const el = {
+    tagName: String(tag || 'div').toUpperCase(),
+    nodeName: String(tag || 'div').toUpperCase(),
+    nodeType: 1,
+    childNodes: [],
+    parentNode: null,
+    _cls: new Set(),
+    style: {},
+    _fxSplit: false,
+    _fxMagnet: false,
+    classList: null, // below
+    get className() { return [...this._cls].join(' '); },
+    set className(v) { this._cls = new Set(String(v).split(/\s+/).filter(Boolean)); },
+    get textContent() {
+      return this.childNodes.map((n) =>
+        n.nodeType === 3 ? n.nodeValue : (n.nodeName === 'BR' ? '\n' : n.textContent)).join('');
+    },
+    set textContent(v) {
+      this.childNodes = v ? [makeText(String(v))] : [];
+    },
+    get innerHTML() { return ''; },
+    set innerHTML(v) { this.childNodes = []; },
+    appendChild(n) { this.childNodes.push(n); n.parentNode = this; return n; },
+    remove() {
+      if (!this.parentNode) return;
+      const i = this.parentNode.childNodes.indexOf(this);
+      if (i >= 0) this.parentNode.childNodes.splice(i, 1);
+    },
+    setAttribute() {}, getAttribute() { return null; },
+    addEventListener() {},
+    get offsetWidth() { return 100; },
+  };
+  el.classList = {
+    add(...c) { c.forEach((x) => el._cls.add(x)); },
+    remove(...c) { c.forEach((x) => el._cls.delete(x)); },
+    contains(x) { return el._cls.has(x); },
+    toggle(x, f) {
+      if (f === undefined) f = !el._cls.has(x);
+      if (f) el._cls.add(x); else el._cls.delete(x);
+      return f;
+    },
+  };
+  el.querySelectorAll = function (sel) {
+    const out = [];
+    const want = sel[0] === '.' ? sel.slice(1) : null;
+    (function walk(n) {
+      (n.childNodes || []).forEach((c) => {
+        if (c.nodeType !== 1) return;
+        if (want && c._cls && c._cls.has(want)) out.push(c);
+        walk(c);
+      });
+    })(el);
+    return out;
+  };
+  el.querySelector = function (sel) { return this.querySelectorAll(sel)[0] || null; };
+  return el;
+}
+function makeSandbox() {
+  const els = [];
+  const document = {
+    readyState: 'complete',
+    documentElement: { lang: 'zh-CN' },
+    hidden: false,
+    createElement: (t) => { const e = makeEl(t); els.push(e); return e; },
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    getElementById: () => null,
+    addEventListener: () => {},
+  };
+  const window = {
+    AKA: {},
+    matchMedia: () => ({ matches: false }),
+    setTimeout: (fn, ms) => setTimeout(fn, ms),
+    clearTimeout: (id) => clearTimeout(id),
+    setInterval: (fn, ms) => setInterval(fn, ms),
+    clearInterval: (id) => clearInterval(id),
+    requestAnimationFrame: (fn) => setTimeout(() => fn(Date.now()), 0),
+    performance: { now: () => Date.now() },
+    scrollY: 0, innerHeight: 800,
+    addEventListener: () => {},
+  };
+  const sandbox = { window, document, performance: window.performance,
+    requestAnimationFrame: window.requestAnimationFrame,
+    setTimeout, clearTimeout, setInterval, clearInterval };
+  sandbox.globalThis = sandbox;
+  return { sandbox, window, document };
+}
+function loadJs(name) {
+  const { sandbox, window } = makeSandbox();
+  vm.runInNewContext(read('js/' + name), sandbox, { filename: name });
+  return window.AKA;
+}
+
+/* ---------- 41. SplitText：按字拆分数量 + <br> 保留 ---------- */
+test('v2.6 SplitText：按字拆 span.ch，空格不塌陷，<br> 保留', () => {
+  const AKA = loadJs('effects.js');
+  assert.ok(AKA.fx && typeof AKA.fx.split === 'function', '缺 AKA.fx.split');
+  const { document } = makeSandbox();
+  const el = document.createElement('h2');
+  el.textContent = '設計是有脾氣的';
+  AKA.fx.split(el);
+  assert.equal(el.querySelectorAll('.ch').length, 7, '应拆出 7 个 .ch');
+  assert.ok(el.classList.contains('fx-split'), '缺 .fx-split 类');
+  /* 空格转 nbsp 不塌陷 */
+  const el2 = document.createElement('h2');
+  el2.textContent = 'A B';
+  AKA.fx.split(el2);
+  const chs = el2.querySelectorAll('.ch');
+  assert.equal(chs.length, 3);
+  assert.equal(chs[1].textContent.charCodeAt(0), 0xa0, '空格应转 U+00A0');
+  /* <br> 保留换行 */
+  const el3 = document.createElement('h2');
+  el3.appendChild(makeText('A'));
+  const br = document.createElement('br'); br.nodeName = 'BR'; br.tagName = 'BR';
+  el3.appendChild(br);
+  el3.appendChild(makeText('B'));
+  AKA.fx.split(el3);
+  assert.equal(el3.querySelectorAll('.ch').length, 2);
+  assert.ok(el3.childNodes.some((n) => n.nodeName === 'BR'), '<br> 丢失');
+});
+
+/* ---------- 42. SplitText replay：hero setActive 流程 ---------- */
+/* 模拟 hero.js paintSlide→split(force)→setActive→replay(450) 的调用序列 */
+test('v2.6 SplitText replay：重建后 .ch 数量正确，replay 加 .play', async () => {
+  const AKA = loadJs('effects.js');
+  const { document } = makeSandbox();
+  const el = document.createElement('h2');
+  /* paintSlide：textContent 赋值后 force 重建 */
+  el.textContent = '霓裳之夜';
+  el._fxSplit = false;
+  AKA.fx.split(el, true);
+  assert.equal(el.querySelectorAll('.ch').length, 4);
+  /* setActive：replay(450) */
+  AKA.fx.replay(el, 450);
+  assert.ok(!el.classList.contains('play'), 'replay 不应同步加 .play');
+  await new Promise((r) => setTimeout(r, 520));
+  assert.ok(el.classList.contains('play'), '450ms 后应加 .play');
+  /* 语言切换：新文本 force 重建 */
+  el.textContent = 'Neon Night';
+  el._fxSplit = false;
+  AKA.fx.split(el, true);
+  assert.equal(el.querySelectorAll('.ch').length, 10, '英文应按字拆 10 个');
+});
+
+/* ---------- 43. ScrollVelocity：速度纯函数 ---------- */
+test('v2.6 ScrollVelocity：speedFor(base, vel) = base + vel*4，可反转', () => {
+  const AKA = loadJs('marquee.js');
+  assert.ok(typeof AKA.marquee.speedFor === 'function', '缺 AKA.marquee.speedFor');
+  assert.equal(AKA.marquee.speedFor(70, 0), 70, '静止应为 base 70px/s');
+  assert.equal(AKA.marquee.speedFor(70, 25), 170, '下滚加速');
+  assert.ok(AKA.marquee.speedFor(70, -25) < 0, '上滚应反转方向');
+  const src = read('js/marquee.js');
+  assert.ok(!src.includes('HOVER_SPEED'), 'hover 210px/s 应删除（与速度模型冲突）');
+  assert.ok(/skewX/.test(src), '缺随速度 skew');
+  assert.ok(/marquee-lens/.test(src), '反色透镜 lens 应保留');
+});
+
+/* ---------- 44. Magnet 系数 + RotatingText 词表 + Trail 上限 ---------- */
+test('v2.6 Magnet/Rotating/Trail：系数与词表', () => {
+  const AKA = loadJs('effects.js');
+  assert.equal(AKA.fx.conf.magnetPull, 0.35, '磁吸系数应为 0.35');
+  assert.equal(AKA.fx.conf.magnetLerp, 0.18, '磁吸 lerp 应为 0.18');
+  assert.equal(AKA.fx.conf.trailMax, 14, '残影上限应为 14');
+  assert.equal(AKA.fx.conf.trailThrottle, 70, '残影节流应为 70ms');
+  assert.equal(AKA.fx.rotPairs.length, 4, '翻转词应为 4 项');
+  AKA.fx.rotPairs.forEach((p, i) => {
+    assert.ok(p.zh && p.en, '第 ' + i + ' 项缺中英');
+  });
+  const css = read('css/effects.css');
+  assert.ok(/\.trail-img[^}]*z-index:\s*5/.test(css), '残影 z-index 应为 5（cursor 之下）');
+  assert.ok(/\.trail-img[^}]*pointer-events:\s*none/.test(css), '残影应 pointer-events:none');
+  assert.ok(!/gradient|box-shadow|blur\(/.test(css), 'effects.css 禁渐变/阴影/模糊');
+});
+
+/* ---------- 45. hero.js 接入：split/replay/magnet 调用点 ---------- */
+test('v2.6 hero 接入：build 分词 / paintSlide 重建 / setActive replay / link magnet', () => {
+  const src = read('js/hero.js');
+  assert.ok(/AKA\.fx\.split\(tel\)/.test(src), 'build 缺 AKA.fx.split(tel)');
+  assert.ok(/AKA\.fx\.split\(elTitle, true\)/.test(src), 'paintSlide 缺 force 重建');
+  assert.ok(/AKA\.fx\.replay\(tel, hero\.state\.reduced \? 0 : 450\)/.test(src),
+    'setActive 缺 replay(tel, 450)');
+  assert.ok(/link\.className = 'magnet'/.test(src), 'VIEW PROJECT 缺 magnet 类');
+  assert.ok(/AKA\.fx\.magnetize\(\)/.test(src), 'build 后缺 magnetize 补挂载（时序：effects.init 先于 hero.build）');
+  /* 时间轴回归：标题仍走 timeline.play(txt)（整块 .in 由 CSS 中和，ch 接管） */
+  assert.ok(/hero\.timeline\.play\(txt\)/.test(src), '文字 slide 仍应走 timeline.play');
+});
+
+/* ---------- 46. HTML 接入：引用 / data-split / magnet / rot 容器 ---------- */
+test('v2.6 HTML 接入：effects 引用与钩子', () => {
+  const index = read('index.html');
+  assert.ok(index.includes('css/effects.css?v=2.5.1'), 'index 缺 effects.css');
+  assert.ok(index.includes('js/effects.js?v=2.5.1'), 'index 缺 effects.js');
+  assert.equal((index.match(/data-split/g) || []).length, 4, 'index 应有 4 个 data-split h2');
+  assert.ok(index.includes('btn-start magnet'), 'index CTA 缺 magnet');
+  const about = read('about.html');
+  assert.ok(about.includes('js/effects.js?v=2.5.1'), 'about 缺 effects.js');
+  assert.ok(about.includes('data-js="rot"'), 'about 缺 RotatingText 容器');
+  const contact = read('contact.html');
+  assert.ok(contact.includes('js/effects.js?v=2.5.1'), 'contact 缺 effects.js');
+  assert.ok(contact.includes('form-submit magnet'), 'contact 提交按钮缺 magnet');
+});
+
+/* ---------- 47. v2.6 交叉引用：hero.js 调用的 AKA.fx 方法必须全部存在 ---------- */
+test('v2.6 交叉引用：hero.js 用的 AKA.fx.* 在 effects.js 均有定义', () => {
+  const hero = read('js/hero.js');
+  const fx = read('js/effects.js');
+  const used = [...new Set([...hero.matchAll(/AKA\.fx\.(\w+)/g)].map((m) => m[1]))];
+  assert.ok(used.length > 0, 'hero.js 应调用 AKA.fx');
+  for (const m of used) {
+    assert.ok(new RegExp('\\b' + m + '\\s*[:,(]').test(fx) || fx.includes(m + ':'),
+      'AKA.fx 缺方法: ' + m);
+  }
+  /* effects.js 不得引用不存在的 AKA 命名空间（防拼写错误） */
+  for (const ns of ['AKA.HERO_WORKS', 'AKA.i18n']) {
+    assert.ok(fx.includes(ns), 'effects.js 应引用 ' + ns);
+  }
 });
