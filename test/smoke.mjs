@@ -29,9 +29,9 @@ test('文件存在：4 页面 / css 10 个 / js 11 个 / svg / md / webp / wp-mi
   assert.ok(exists('assets/favicon.svg'));
   assert.ok(exists('DESIGN.md'));
   assert.ok(exists('README.md'));
-  /* §43 WebP：6 张 jpg 皆有 .webp */
+  /* §43 WebP：jpg 皆有 .webp（v2.8.5 起 10 张：6 原图 + 4 新 hero 图） */
   const jpgs = fs.readdirSync(path.join(ROOT, 'assets/img')).filter((f) => f.endsWith('.jpg'));
-  assert.equal(jpgs.length, 6, 'jpg 数量异常');
+  assert.equal(jpgs.length, 10, 'jpg 数量异常');
   for (const j of jpgs) {
     assert.ok(exists('assets/img/' + j.replace(/\.jpg$/, '.webp')), '缺 webp：' + j);
   }
@@ -171,8 +171,7 @@ test('v1.1 灰阶系统：作品图 grayscale(.7)/hover .3；hero grayscale(.72)
   const all = cssFiles().map((f) => read('css/' + f)).join('\n');
   assert.ok(all.includes('grayscale(.7)'), '缺全站灰阶 grayscale(.7)');
   assert.ok(all.includes('grayscale(.3)'), '缺 hover 透色 grayscale(.3)');
-  assert.ok(read('css/hero.css').includes('grayscale(.72)'), 'hero 缺 grayscale(.72)');
-  assert.ok(read('css/hero.css').includes('contrast(1.13)'), 'hero 缺 contrast(1.13)');
+  /* v2.8.8：hero 已删除，不再检查 hero.css 的 grayscale */
 });
 
 test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点填充）', () => {
@@ -182,69 +181,12 @@ test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点�
   assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
 });
 
-test('v2.5 hero：6 张图固定位置交叉淡入 + 文字飞入 + is-light 恢复（v2.8.2 文字改飞入/A 删除）', () => {
+test('v2.8.8 hero 已删除：index 无 hero，hero.js 防御性返回', () => {
   const html = read('index.html');
-  assert.ok(html.includes('data-js="hero-pin"'), 'index 缺 hero-pin');
-  assert.ok(html.includes('data-js="hero-fixed"'), 'index 缺 hero-fixed');
-  assert.ok(html.includes('data-js="hero-track-txt"'), 'index 缺 hero-track-txt');
-  assert.ok(!html.includes('data-js="hero-track-img"'), 'hero-track-img 残留');
-  assert.ok(!/data-js="hero-track"(?!-)/.test(html), '旧单 track 残留');
-  assert.ok(!html.includes('data-js="hero-slides"'), 'hero-slides 残留');
+  assert.ok(!html.includes('data-js="hero"'), 'index 不应再有 hero');
   const js = read('js/hero.js');
-  assert.ok(!/SLIDE_MS/.test(js), 'SLIDE_MS 残留');
-  assert.ok(!/hero\.auto\(\)/.test(js) && !/auto:\s*function/.test(js), 'auto() 主循环残留');
-  assert.ok(!/is-entering/.test(js) && !/is-leaving/.test(js) && !/pre-enter/.test(js),
-    'mask transition 类残留');
-  assert.ok(/goTo/.test(js) && /scrollTo/.test(js), '缺 goTo/scrollTo');
-  assert.ok(/addEventListener\('scroll'/.test(js), '缺 scroll 监听');
-  /* 6 张 img slide 叠放（非单张），无 imgSlide 单体 */
-  assert.ok(/hero\.imgSlides\[i\] = s/.test(js), '缺 6 张 imgSlides 构建');
-  assert.ok(!/hero\.imgSlide\b/.test(js.replace(/hero\.imgSlides/g, '')), '单体 hero.imgSlide 残留');
-  assert.ok(/hero-slide-img/.test(js), '缺 .hero-slide-img 类');
-  /* crossfade 数学：opacity = 1-|i-f|，scale = 1.06-0.06*o，JS 直接驱动 */
-  assert.ok(/1 - Math\.abs\(i - f\)/.test(js), '缺 crossfade opacity = 1-|i-f|');
-  assert.ok(/1\.06 - 0\.06 \* o/.test(js), '缺 crossfade scale = 1.06-0.06*o');
-  /* v2.8.2：文字不再反向滚动，改为叠放飞入（translateX 从右侧飞入） */
-  assert.ok(!/-\(1 - p\) \* total/.test(js), '文字 track 反向位移应已删除（v2.8.2 改飞入）');
-  const heroCss = read('css/hero.css');
-  assert.ok(/\.hero-slide-txt\s*\{[^}]*position:\s*absolute/.test(heroCss), '文字 slide 应为叠放 absolute（v2.8.2）');
-  assert.ok(/translateX\(90px\)/.test(heroCss), '文字层应从右侧飞入 translateX(90px)（v2.8.2）');
-  /* v2.8.2：A 水印已删除 */
-  assert.ok(!/hero-a-fixed/.test(js.replace(/\/\*[\s\S]*?\*\//g, '')), 'hero.js 不应再建 .hero-a-fixed（v2.8.2 已删除）');
-  /* is-light 恢复：按 tone 切 section 类 */
-  const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-  assert.ok(/classList\.toggle\('is-light'/.test(jsNoComment), '缺 is-light toggle（浅色图）');
-  assert.ok(/w\.tone === 'light'/.test(jsNoComment), 'is-light 未按 tone=light 判定');
-  /* breath 已删除（与 crossfade scale 冲突） */
-  assert.ok(!/breath/.test(jsNoComment), 'breath 残留（应删除）');
-  assert.ok(!/BREATH_MS/.test(jsNoComment), 'BREATH_MS 残留');
-  assert.ok(!/data-breath/.test(jsNoComment), 'data-breath 残留');
-  /* 旧 cursor 模块已搬走 */
-  assert.ok(!/hero\.cursor/.test(jsNoComment), 'hero.js 残留 cursor 模块');
-  assert.ok(!/hero-cursor/.test(jsNoComment), 'hero.js 残留 hero-cursor');
-  /* split-screen 残留清理 */
-  assert.ok(!/half-img/.test(jsNoComment) && !/half-txt/.test(jsNoComment), 'js 残留 half-*');
-  assert.ok(js.includes('data-cursor') && js.includes("'view'"), 'VIEW PROJECT 缺 data-cursor="view"');
-  const cssNoComment = read('css/hero.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.ok(!/\.half-img/.test(cssNoComment), 'css 残留 .half-img');
-  assert.ok(!/\.project-hero/.test(cssNoComment), 'css 残留 .project-hero 兼容块');
-  assert.ok(!/\.hero-cursor/.test(cssNoComment), 'css 残留 .hero-cursor');
-  const css = read('css/hero.css');
-  assert.ok(/\.hero-slide-img\s*\{[^}]*opacity:\s*0/.test(css), 'CSS 缺 .hero-slide-img 叠放（opacity:0 起始）');
-  var imgBase = (cssNoComment.match(/\.hero-slide-img\s*\{[^}]*\}/) || [''])[0];
-  assert.ok(!/transition\s*:/.test(imgBase), '.hero-slide-img 基规则不应有 transition（JS 直接驱动）');
-  assert.ok(/\.hero-a-fixed/.test(css), 'CSS 缺 .hero-a-fixed');
-  assert.ok(/\.hero\.is-light/.test(css), 'CSS 缺 .hero.is-light 主题规则');
-  assert.ok(/\[data-layer="desc"\]/.test(css) && /\[data-layer="link"\]/.test(css),
-    'CSS 缺 desc/link 图层样式');
-  assert.ok(/\.hero-slide-txt\.is-active/.test(css), 'CSS 缺 txt slide is-active 交互规则');
-  /* i18n key */
-  const i18n = loadI18n();
-  assert.ok(i18n.dict.zh['hero.view'] && i18n.dict.en['hero.view'], '缺 hero.view key');
-  /* 导航字间距收窄 + 无衬线粗体保留 */
-  const layout = read('css/layout.css');
-  assert.ok(/\.site-nav a\s*\{[^}]*letter-spacing:\s*\.08em/.test(layout), 'nav 缺 letter-spacing:.08em');
-  assert.ok(/\.site-nav a\s*\{[^}]*font-weight:\s*700/.test(layout), 'nav 缺无衬线粗体');
+  /* 防御性：找不到元素直接返回，不抛错 */
+  assert.ok(/if\s*\(!el\)\s*return/.test(js), 'hero.js 应防御性返回');
 });
 
 test('v2.2 回归：project 页 is-light 保留（hero.css 原生支持，无需兼容块）', () => {
@@ -992,7 +934,8 @@ test('v2.7-B：video 条目第一位 + HERO_WORKS 含 video + 摄影网格仍只
   assert.ok(data.indexOf("id: 'river-leviathan'") > -1, '缺 river-leviathan 条目');
   assert.ok(data.indexOf("id: 'river-leviathan'") < data.indexOf("id: 'neon-city-nights'"),
     'video 条目应在 WORKS 第一位（轮播开场即视频）');
-  assert.ok(/\['photo',\s*'video'\]/.test(data), 'HERO_WORKS filter 未包含 video');
+  /* v2.8.7：HERO_WORKS 改为指定 3 个 id（含 video river-leviathan）；v2.8.8 hero 已删除 */
+  assert.ok(data.includes("'river-leviathan'"), 'HERO_WORKS 未包含 video');
   const main = read('js/main.js');
   assert.ok(/w\.kind === 'photo'/.test(main), 'main.js 摄影网格应仍只取 photo');
   assert.ok(!/\['photo',\s*'video'\]/.test(main), 'main.js 不应包含 video（视频不进照片墙）');
