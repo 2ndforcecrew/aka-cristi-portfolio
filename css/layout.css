@@ -30,12 +30,15 @@
   gap: 12px;
   color: var(--ink);
 }
-.brand-a {
-  height: 20px;
-  width: auto;
-  color: var(--ink); /* svg 用 currentColor，直接上墨色 */
+/* 笔触 LOGO（assets/logo）：浅底用黑版，深底用白版；宽按 2744:690 自适应 */
+.brand-logo { display: inline-flex; height: 30px; }
+.brand-logo img { display: block; height: 100%; width: auto; }
+/* 载入笔触：clip-path 从左向右 wipe 展开，模拟书写，每页载入跑一次 */
+.brand-logo.is-paint { animation: brand-paint 600ms var(--ease-out) both; }
+@keyframes brand-paint {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
 }
-.brand .wordmark { font-size: 15px; }
 
 .site-nav {
   display: flex;
@@ -99,7 +102,7 @@
   justify-content: space-between;
   height: 48px;
 }
-.mobile-menu-top .brand-a { height: 20px; color: var(--ink); }
+.mobile-menu-top .brand-logo { height: 24px; }
 .menu-close {
   font-family: var(--font-mono);
   font-size: var(--label-size);
@@ -481,8 +484,21 @@ a.work-card, a.photo-cell, a.design-cell {
   gap: 12px;
   margin-bottom: var(--space-5);
 }
-.footer-brand .brand-a { height: 20px; color: var(--paper); }
-.footer-brand .wordmark { font-size: 15px; }
+.footer-brand .brand-logo { height: 26px; } /* footer 深底，用白版 */
+/* 音效开关：mono 小字，跟 footer 文字统一，无 pill */
+.sound-toggle {
+  font-family: var(--font-mono);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--paper);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: .65;
+}
+.sound-toggle:hover { opacity: 1; }
 .footer-links {
   display: flex;
   flex-wrap: wrap;
@@ -534,11 +550,16 @@ a.work-card, a.photo-cell, a.design-cell {
 }
 
 @media (max-width: 480px) {
-  .brand .wordmark { display: none; }   /* ≤480px 字标收进菜单，只留 A */
+  .brand-logo { height: 24px; }   /* ≤480px 缩小继续显示，不隐藏 */
   .site-header { height: 60px; }
   .photo-grid { grid-template-columns: 1fr; } /* §10 P4：2→1 */
   .design-grid { grid-template-columns: 1fr; } /* §10 P4：→1 列 */
   .design-cell.span7,
   .design-cell.span5,
   .design-cell.span4 { grid-column: span 1; }
+}
+
+/* reduced-motion：笔触载入动画直接给终态 */
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo.is-paint { animation: none; }
 }

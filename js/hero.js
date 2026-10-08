@@ -45,6 +45,7 @@
 
       hero.build(works);
       hero.nav.build();
+      hero.cursor.build();
       hero.a11y.bind();
       hero.parallax.bind();
 
@@ -316,10 +317,11 @@
             hero.tmx = 0; hero.tmy = 0;
           });
         }
-        /* scroll + breath 共用一个 rAF */
+        /* scroll + breath + cursor 共用一个 rAF */
         var raf = function (now) {
           hero.parallax.frame(now);
           hero.breath.tick(now);
+          hero.cursor.tick();
           hero.rafId = requestAnimationFrame(raf);
         };
         hero.rafId = requestAnimationFrame(raf);
@@ -342,6 +344,44 @@
           var y = hero.my * 8 * depth + (p - 0.5) * 2 * srange;
           g.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px)';
         });
+      }
+    },
+
+    /* ============ cursor：方形跟随光标（fine pointer 限定） ============ */
+    /* mix-blend-mode: difference 实现深浅自适应，无需 is-light 切换 */
+    cursor: {
+      el: null, x: 0, y: 0, tx: 0, ty: 0,
+      build: function () {
+        if (hero.state.reduced || !hero.el) return;
+        var mq = window.matchMedia;
+        var fine = mq && mq('(hover: hover) and (pointer: fine)').matches;
+        if (!fine) return;
+        var c = document.createElement('div');
+        c.className = 'hero-cursor';
+        c.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(c);
+        hero.cursor.el = c;
+        hero.el.classList.add('has-cursor');
+        hero.el.addEventListener('mousemove', function (ev) {
+          hero.cursor.tx = ev.clientX;
+          hero.cursor.ty = ev.clientY;
+          c.classList.add('is-on');
+        });
+        hero.el.addEventListener('mouseleave', function () {
+          c.classList.remove('is-on', 'is-hover');
+        });
+        /* 悬停可交互元素时放大 */
+        hero.el.addEventListener('mouseover', function (ev) {
+          var t = ev.target && ev.target.closest ? ev.target.closest('button, a') : null;
+          c.classList.toggle('is-hover', !!t);
+        });
+      },
+      tick: function () {
+        var cu = hero.cursor;
+        if (!cu.el) return;
+        cu.x += (cu.tx - cu.x) * 0.22;
+        cu.y += (cu.ty - cu.y) * 0.22;
+        cu.el.style.transform = 'translate(' + cu.x.toFixed(1) + 'px,' + cu.y.toFixed(1) + 'px)';
       }
     },
 
@@ -371,6 +411,26 @@
         nav.innerHTML = '';
         nav.appendChild(dots);
         hero.nav.sync();
+        /* 左右箭头：挂在 section.hero 上（CSS 绝对定位两侧），JS 生成 */
+        hero.nav.buildArrows();
+      },
+      buildArrows: function () {
+        if (!hero.el) return;
+        var mk = function (dir) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'hero-arrow hero-arrow--' + (dir < 0 ? 'prev' : 'next');
+          b.setAttribute('aria-label', dir < 0 ? 'Previous slide' : 'Next slide');
+          b.innerHTML = '<span aria-hidden="true">' + (dir < 0 ? '←' : '→') + '</span>';
+          b.addEventListener('click', function () {
+            hero.timeline.clear();
+            hero.transition.to((hero.state.i + dir + hero.state.n) % hero.state.n);
+            hero.auto();
+          });
+          return b;
+        };
+        hero.el.appendChild(mk(-1));
+        hero.el.appendChild(mk(1));
       },
       sync: function () {
         var nav = byHook('hero-nav', hero.el);
@@ -387,8 +447,12 @@
     a11y: {
       bind: function () {
         if (!hero.el) return;
-        /* 键盘 ←/→ */
+        /* 键盘 ←/→（仅 hero 在视口内；表单输入时不劫持） */
         document.addEventListener('keydown', function (ev) {
+          var t = ev.target;
+          var tag = t && t.tagName;
+          if (tag && /^(INPUT|TEXTAREA|SELECT)$/.test(tag)) return;
+          if (t && t.isContentEditable) return;
           var r = hero.el.getBoundingClientRect();
           var inView = r.bottom > 0 && r.top < window.innerHeight;
           if (!inView) return;

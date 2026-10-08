@@ -10,14 +10,15 @@
   <meta property="og:title" content="AKA.CRISTI">
   <meta property="og:description" content="Cold / Precise / Editorial / Expensive / Sharp.">
   <title>AKA.CRISTI</title>
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.5">
-  <link rel="stylesheet" href="css/tokens.css?v=1.5">
-  <link rel="stylesheet" href="css/base.css?v=1.5">
-  <link rel="stylesheet" href="css/layout.css?v=1.5">
-  <link rel="stylesheet" href="css/hero.css?v=1.5">
-  <link rel="stylesheet" href="css/motion.css?v=1.5">
-  <link rel="stylesheet" href="css/pages.css?v=1.5">
-  <link rel="stylesheet" href="css/transition.css?v=1.5">
+  <link rel="icon" type="image/png" href="assets/logo/favicon-180.png?v=1.6">
+  <link rel="apple-touch-icon" href="assets/logo/favicon-180.png?v=1.6">
+  <link rel="stylesheet" href="css/tokens.css?v=1.6">
+  <link rel="stylesheet" href="css/base.css?v=1.6">
+  <link rel="stylesheet" href="css/layout.css?v=1.6">
+  <link rel="stylesheet" href="css/hero.css?v=1.6">
+  <link rel="stylesheet" href="css/motion.css?v=1.6">
+  <link rel="stylesheet" href="css/pages.css?v=1.6">
+  <link rel="stylesheet" href="css/transition.css?v=1.6">
 </head>
 <body>
 
@@ -25,8 +26,10 @@
   <header class="site-header" data-js="site-header">
     <div class="header-inner">
       <a class="brand" href="index.html" data-js="brand" aria-label="AKA.CRISTI — home">
-        <img class="brand-a" src="assets/a-symbol.svg?v=1.5" alt="" aria-hidden="true">
-        <span class="wordmark">AKA.CRISTI</span>
+        <picture class="brand-logo is-paint">
+          <source type="image/webp" srcset="assets/logo/aka-cristi-black.webp?v=1.6">
+          <img src="assets/logo/aka-cristi-black.png?v=1.6" alt="AKA.CRISTI">
+        </picture>
       </a>
       <nav class="site-nav" data-js="site-nav" aria-label="Primary">
         <a href="index.html#work">Work</a>
@@ -44,7 +47,10 @@
   <!-- Mobile menu（spec §38，跨页版本） -->
   <div class="mobile-menu" data-js="mobile-menu" aria-hidden="true">
     <div class="mobile-menu-top">
-      <img class="brand-a" src="assets/a-symbol.svg?v=1.5" alt="AKA.CRISTI">
+      <picture class="brand-logo brand-logo--sm">
+          <source type="image/webp" srcset="assets/logo/aka-cristi-black.webp?v=1.6">
+          <img src="assets/logo/aka-cristi-black.png?v=1.6" alt="AKA.CRISTI">
+        </picture>
       <button class="menu-close" type="button" data-js="menu-close">Close</button>
     </div>
     <nav aria-label="Mobile">
@@ -144,8 +150,10 @@
   <footer class="site-footer">
     <div class="container">
       <a class="footer-brand" href="index.html" aria-label="AKA.CRISTI — home">
-        <img class="brand-a" src="assets/a-symbol.svg?v=1.5" alt="" aria-hidden="true">
-        <span class="wordmark">AKA.CRISTI</span>
+        <picture class="brand-logo brand-logo--footer">
+          <source type="image/webp" srcset="assets/logo/aka-cristi-white.webp?v=1.6">
+          <img src="assets/logo/aka-cristi-white.png?v=1.6" alt="AKA.CRISTI">
+        </picture>
       </a>
       <nav class="footer-links" aria-label="Social">
         <a href="#">Instagram</a>
@@ -155,13 +163,15 @@
       </nav>
       <p class="footer-copy">© AKA.CRISTI <span data-js="year">2026</span></p>
       <p class="micro footer-colophon">Colophon</p>
+      <p class="micro"><button class="sound-toggle" type="button" data-js="sound-toggle" aria-pressed="true">SOUND ON</button></p>
     </div>
   </footer>
 
-  <script src="js/data.js?v=1.5"></script>
-  <script src="js/hero.js?v=1.5"></script>
-  <script src="js/main.js?v=1.5"></script>
-  <script src="js/project.js?v=1.5"></script>
-  <script src="js/transition.js?v=1.5"></script>
+  <script src="js/data.js?v=1.6"></script>
+  <script src="js/hero.js?v=1.6"></script>
+  <script src="js/main.js?v=1.6"></script>
+  <script src="js/project.js?v=1.6"></script>
+  <script src="js/transition.js?v=1.6"></script>
+  <script src="js/sound.js?v=1.6"></script>
 </body>
 </html>

@@ -19,12 +19,12 @@ const jsFiles = () => fs.readdirSync(path.join(ROOT, 'js')).filter((f) => f.ends
 const PAGES = ['index.html', 'project.html', 'about.html', 'contact.html'];
 
 /* ---------- 1. 文件存在 ---------- */
-test('文件存在：4 页面 / css 6 个 / js 5 个 / svg / md / webp / wp-migration', () => {
+test('文件存在：4 页面 / css 7 个 / js 6 个 / svg / md / webp / wp-migration / logo', () => {
   for (const p of PAGES) assert.ok(exists(p), '缺页面 ' + p);
   assert.deepEqual(cssFiles().sort(),
     ['base.css', 'hero.css', 'layout.css', 'motion.css', 'pages.css', 'tokens.css', 'transition.css']);
   assert.deepEqual(jsFiles().sort(),
-    ['data.js', 'hero.js', 'main.js', 'project.js', 'transition.js']);
+    ['data.js', 'hero.js', 'main.js', 'project.js', 'sound.js', 'transition.js']);
   assert.ok(exists('assets/a-symbol.svg'));
   assert.ok(exists('assets/favicon.svg'));
   assert.ok(exists('DESIGN.md'));
@@ -38,6 +38,12 @@ test('文件存在：4 页面 / css 6 个 / js 5 个 / svg / md / webp / wp-migr
   /* wp-migration 参考包 */
   for (const f of ['wp-migration/cpt.php', 'wp-migration/acf-fields.json',
     'wp-migration/theme.json', 'wp-migration/MIGRATION.md']) {
+    assert.ok(exists(f), '缺 ' + f);
+  }
+  /* 笔触 LOGO：黑/白版 png+webp + favicon */
+  for (const f of ['assets/logo/aka-cristi-black.png', 'assets/logo/aka-cristi-black.webp',
+    'assets/logo/aka-cristi-white.png', 'assets/logo/aka-cristi-white.webp',
+    'assets/logo/favicon-180.png']) {
     assert.ok(exists(f), '缺 ' + f);
   }
 });
@@ -257,11 +263,11 @@ test('Phase 2 WebP：AKA.picture 生成 webp 优先；模板全接入；svg 不�
 test('Phase 2 页面转场：transition.js/css 存在且接线正确', () => {
   const js = read('js/transition.js');
   for (const s of ['shouldIntercept', 'prefers-reduced-motion', 'is-cover', 'is-leave',
-    'page-wipe-a', '1600', 'invert']) {
+    'page-wipe-a', '1600', 'aka-cristi-white']) {
     assert.ok(js.includes(s) || read('css/transition.css').includes(s), '转场缺 ' + s);
   }
-  assert.ok(js.includes('invert(1)') || read('css/transition.css').includes('invert(1)'),
-    'A 标闪现未用 invert(1) 反色');
+  assert.ok(js.includes('assets/logo/aka-cristi-white.png'),
+    '转场闪现未用白版笔触 LOGO');
   assert.ok(!/a-symbol\.svg/.test(js.replace(/assets\/a-symbol\.svg/, '')) ||
     js.includes('assets/a-symbol.svg'), 'transition.js 引用 A 标异常');
   const css = read('css/transition.css');
@@ -397,4 +403,53 @@ test('站内 #锚点 都有对应 id；ABOUT/CONTACT 导航指向独立页面', 
       assert.ok(/^(about|contact)\.html$/.test(m[1]), p + ' 导航 About/Contact 指向 ' + m[1]);
     }
   }
+});
+
+/* ---------- 15. 轮播键盘 + 箭头 + 自定义光标 ---------- */
+test('轮播：键盘 ←/→（表单守卫）、箭头按钮、方形光标', () => {
+  const js = read('js/hero.js');
+  // 表单守卫：INPUT/TEXTAREA/SELECT + contentEditable
+  assert.ok(/INPUT\|TEXTAREA\|SELECT/.test(js), 'hero.js 缺少键盘表单守卫');
+  assert.ok(/isContentEditable/.test(js), 'hero.js 缺少 contentEditable 守卫');
+  // 箭头按钮（类名是拼接生成的，检查构造模式）
+  assert.ok(/buildArrows/.test(js), 'hero.js 缺少 buildArrows');
+  assert.ok(/hero-arrow--' \+ \(dir < 0 \? 'prev' : 'next'\)/.test(js), 'hero.js 箭头类名构造缺失');
+  assert.ok(/Previous slide/.test(js) && /Next slide/.test(js), 'hero.js 箭头无障碍标签缺失');
+  const css = read('css/hero.css');
+  assert.ok(css.includes('.hero-arrow'), 'hero.css 缺少 .hero-arrow');
+  assert.ok(css.includes('.hero.is-light .hero-arrow'), 'hero.css 箭头缺少浅色主题');
+  assert.ok(css.includes('(hover: none)'), 'hero.css 箭头缺少触屏常显');
+  // 自定义光标
+  assert.ok(/cursor:\s*{/.test(js), 'hero.js 缺少 cursor 模块');
+  assert.ok(css.includes('.hero-cursor'), 'hero.css 缺少 .hero-cursor');
+  assert.ok(css.includes('mix-blend-mode: difference'), 'hero-cursor 缺少 difference 自适应');
+  assert.ok(css.includes('.hero.has-cursor'), 'hero.css 缺少原生光标隐藏');
+  assert.ok(/prefers-reduced-motion/.test(css), 'hero-cursor 缺少 reduced-motion 降级');
+});
+
+/* ---------- 16. 笔触 LOGO + 导航音效 ---------- */
+test('笔触 LOGO 全站接线：黑白版分场景、favicon、转场白版、音效', () => {
+  const pages = ['index.html', 'project.html', 'about.html', 'contact.html'];
+  for (const p of pages) {
+    const html = read(p);
+    // header/移动菜单用黑版（浅底），footer 用白版（深底）
+    assert.ok(html.includes('assets/logo/aka-cristi-black'), p + ' 缺黑版 LOGO');
+    assert.ok(html.includes('assets/logo/aka-cristi-white'), p + ' 缺白版 LOGO');
+    // favicon 换成笔触 A 裁剪
+    assert.ok(html.includes('assets/logo/favicon-180.png'), p + ' favicon 未换笔触版');
+    // sound.js 引入 + footer 开关
+    assert.ok(html.includes('js/sound.js'), p + ' 未引入 sound.js');
+    assert.ok(html.includes('data-js="sound-toggle"'), p + ' 缺音效开关');
+  }
+  // 转场闪现用白版（ink 黑底）
+  assert.ok(read('js/transition.js').includes('assets/logo/aka-cristi-white.png'),
+    'transition.js 转场闪现未换白版 LOGO');
+  // 音效：WebAudio 合成、无外部音频、pointer:fine 限定、localStorage 开关
+  const snd = read('js/sound.js');
+  assert.ok(/createOscillator/.test(snd), 'sound.js 非 WebAudio 合成');
+  assert.ok(!/https?:\/\//.test(snd), 'sound.js 含外部 URL');
+  assert.ok(/pointer:\s?fine/.test(snd), 'sound.js 缺 pointer:fine 限定');
+  assert.ok(/aka-sound/.test(snd), 'sound.js 缺 localStorage 开关');
+  // LOGO 载入笔触动画
+  assert.ok(read('css/layout.css').includes('brand-paint'), 'layout.css 缺 LOGO 笔触动画');
 });

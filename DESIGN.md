@@ -147,10 +147,30 @@ svg 占位图保持原样。
 - 所有动效过两道门：`prefers-reduced-motion` 直接给终态（hero 停 autoplay/timeline/parallax/breath，
   slide 静态切换）；移动端简化。
 - 页面转场（§40）：站内 4 页（index / project / about / contact）跳转时，ink 面板从底部 wipe 进入
-  （translateY 100%→0，350ms）→ 中央 A 标闪现（`assets/a-symbol.svg` + `filter: invert(1)` 得 paper 白，
-  120px，~200ms）→ 跳转；新页面若 `document.referrer` 同源，面板从顶部 wipe 退出（0→-100%，350ms）。
+  （translateY 100%→0，350ms）→ 中央白版笔触 LOGO 闪现（`assets/logo/aka-cristi-white.png`，
+  ~200px，~200ms）→ 跳转；新页面若 `document.referrer` 同源，面板从顶部 wipe 退出（0→-100%，350ms）。
   总计 500–700ms。页内锚点（`#work` 等）不拦截；`prefers-reduced-motion` 直接跳转无动画；
   修饰键/右键新标签/外链/`mailto:` 不拦截；1600ms 兜底强制跳转，浏览器前进/后退走原生导航，不卡死。
+- 轮播键盘：`←`/`→` 切上下张（仅 hero 在视口内；焦点在 INPUT/TEXTAREA/SELECT/contentEditable
+  时不劫持，循环首尾）。
+- 轮播箭头：JS 生成 `←`/`→` 按钮，hero 两侧垂直居中；桌面 hover 显现（.6→1），触屏常显（.65）；
+  浅色 slide 切 ink 色；可聚焦 + aria-label。
+- 方形跟随光标（fine pointer 限定）：16px 方形描边（2px 圆角），`mix-blend-mode: difference`
+  深浅自适应；lerp 跟随；悬停 button/a 时放大到 30px；hero 区域隐藏原生光标；
+  `mouseleave` 隐藏；reduced-motion / 触屏不启用。
+
+## Brand（笔触 LOGO，2026-10-08 用户提供）
+
+- `assets/logo/`：`aka-cristi-black.png/.webp`（黑版，浅底用）、`aka-cristi-white.png/.webp`
+  （白版，深底用）、`favicon-180.png`（笔触 A 裁剪）。源 PNG 为 RGBA（图案在 alpha 通道）。
+- header / 移动菜单：黑版，高 30px（≤480px 缩至 24px 继续显示，不隐藏）；footer（深底）：白版，
+  高 26px；转场闪现：白版 ~200px；favicon/apple-touch-icon：`favicon-180.png`。
+- 载入笔触：`brand-paint` 600ms，`clip-path: inset(0 100% 0 0)→0` 从左向右 wipe 展开，
+  每页载入跑一次；hover 不加特效。
+- Hero 巨型描边 A 保持原样（构图锚点，不替换）。
+- 导航音效（`js/sound.js`）：WebAudio 原生合成，零外部音频；hover sine 660→990Hz / 70ms /
+  gain .05，click 440→880Hz / 90ms / gain .07；仅 `(pointer: fine)` 启用；AudioContext 懒初始化；
+  footer 设 `SOUND ON/OFF` 开关（`localStorage aka-sound`，默认开）。
 
 ## Don'ts
 

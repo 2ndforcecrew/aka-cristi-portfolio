@@ -279,3 +279,66 @@
   .hero-nav { bottom: 24px; }
   .scroll-indicator { display: none; }
 }
+
+/* ---------- 左右箭头（JS 生成，hover 显现；触屏常显） ---------- */
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 56px;
+  height: 56px;
+  margin-top: -28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #FAFAF8;
+  font-size: 30px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity .35s var(--ease-out);
+  cursor: pointer;
+}
+.hero-arrow--prev { left: clamp(6px, 2vw, 24px); }
+.hero-arrow--next { right: clamp(6px, 2vw, 24px); }
+.hero.is-light .hero-arrow { color: var(--ink); }
+@media (hover: hover) {
+  .hero:hover .hero-arrow { opacity: .6; }
+  .hero .hero-arrow:hover { opacity: 1; }
+}
+@media (hover: none) {
+  .hero-arrow { opacity: .65; }
+}
+
+/* ---------- 方形跟随光标（fine pointer 限定，difference 自适应深浅） ---------- */
+.hero-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 80;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 1.5px solid #fff;
+  border-radius: 2px;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s linear, width .25s var(--ease-out),
+              height .25s var(--ease-out), margin .25s var(--ease-out);
+}
+.hero-cursor.is-on { opacity: 1; }
+.hero-cursor.is-hover {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+}
+/* 有自定义光标时隐藏原生光标（仅 hero 区域） */
+.hero.has-cursor,
+.hero.has-cursor a,
+.hero.has-cursor button { cursor: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-cursor { display: none; }
+}
