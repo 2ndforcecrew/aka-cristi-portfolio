@@ -376,14 +376,21 @@
         p = Math.max(0, Math.min(1, p));
         /* v2.8.2：文字不再反向滚动（track 位移已删除）；文字 slide 为叠放，
            由 setActive 切换 .is-active + timeline 飞入 */
-        /* 图片交叉淡入：JS 直接驱动（无 CSS transition）。
-           f 为连续值；opacity = 1-|i-f|
-           v2.8.4：移除 scale（排查合成层黑屏问题） */
+        /* 图片覆盖式切换：JS 直接驱动（无 CSS transition）。
+           v2.8.6：用户要求滚动时下一张直接覆盖（不再交叉淡入透出底色变白）。
+           当前张保持不透明在下层(z=1)，下一张在上层(z=2)淡入盖住；滚过的隐藏。 */
         var f = p * (hero.state.n - 1);
+        var fi = Math.floor(f);
+        var frac = f - fi;
         each(hero.imgSlides, function (s, i) {
           if (!s) return;
-          var o = Math.max(0, Math.min(1, 1 - Math.abs(i - f)));
+          var o, z;
+          if (i < fi) { o = 0; z = 0; }
+          else if (i === fi) { o = 1; z = 1; }
+          else if (i === fi + 1) { o = frac; z = 2; }
+          else { o = 0; z = 0; }
           s.style.opacity = o.toFixed(4);
+          s.style.zIndex = z;
         });
         /* 进度条：JS 直接 scaleX */
         if (hero.progressBar) hero.progressBar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
