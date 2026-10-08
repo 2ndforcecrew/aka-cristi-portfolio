@@ -1,12 +1,14 @@
 /* ============================================================
  * AKA.CRISTI — hero.js（AKA_HOME_HERO，spec §07–§19）
- * v2.4：图片固定 + 文字反向滚动。section 高 n*100vh；.hero-pin sticky 锁 100vh；
- *   .hero-fixed：一张固定全屏图片（works[0]，bg + 描边 A + Ken Burns + mouse 视差），
- *     不随滚动切换；.hero-track-txt（文字 slide，倒序 [5..0]）
- *     位移 translateY(-(1-p)*total)，滚轮往下时文字往下走（反向），
- *     在固定视口位置一张张经过。位移本身即过渡，无 mask 切换。
- *   图层 stagger 入场（图片播一次 / 文字每张进入播）；tone/is-light 在 hero 移除
- *   （图片固定为深色，文字恒白；data.js tone 字段保留给 project 页）。
+ * v2.5：图片固定位置交叉淡入 + 文字反向滚动。section 高 n*100vh；
+ *   .hero-pin sticky 锁 100vh；
+ *   .hero-fixed：6 张 .hero-slide-img 叠在同一固定位置（absolute inset-0），
+ *     滚轮驱动交叉淡入（opacity = 1-|i-f|，内层图 scale = 1.06-0.06*opacity，
+ *     JS 直接驱动，无 CSS transition）；描边 A 为 pin 内单个静态水印 .hero-a-fixed；
+ *   .hero-track-txt（文字 slide，倒序 [5..0]）位移 translateY(-(1-p)*total)，
+ *     滚轮往下时文字往下走（反向），在固定视口位置一张张经过。
+ *   图层 stagger 入场（文字每张进入播）；is-light 恢复（浅色图上文字转 ink）；
+ *   Ken Burns（breath）已删除（与 crossfade scale 公式冲突）。
  *   光标已移至 js/cursor.js（全站）。
  * JS 只调度、不直接写样式（样式全在 hero.css）。
  * 全部防御性：钩子缺失静默跳过，不抛错。
@@ -17,8 +19,7 @@
   var AKA = (window.AKA = window.AKA || {});
 
   /* spec §13 timeline 延迟（s） */
-  var TL = { bg: 0, num: 0.15, loc: 0.15, cat: 0.30, title: 0.45, desc: 0.52, meta: 0.58, link: 0.64, a: 0.60 };
-  var BREATH_MS = 7000;         /* §10 P1：Ken Burns 7s linear（参考参数，覆盖 §15） */
+  var TL = { num: 0.15, loc: 0.15, cat: 0.30, title: 0.45, desc: 0.52, meta: 0.58, link: 0.64, a: 0.60 };
   var EASE = 'cubic-bezier(0.16,1,0.3,1)'; /* 仅文档用，样式在 CSS */
 
   function each(arr, fn) {
@@ -31,11 +32,10 @@
 
   var hero = (AKA.hero = {
     state: { i: 0, n: 0, timers: [], reduced: false, inited: false },
-    el: null, pinEl: null, imgSlide: null, txtSlides: [], rafId: 0,
+    el: null, pinEl: null, imgSlides: [], txtSlides: [], rafId: 0,
     progressBar: null,
     /* parallax 状态 */
     mx: 0, my: 0, tmx: 0, tmy: 0,
-    breathT0: 0,
 
     /* ============ init ============ */
     init: function () {
@@ -62,32 +62,20 @@
       hero.scroll.measure();
       hero.scroll.bind();
 
-      /* 首张文字：跑 timeline；固定图片的图层播一次（独立 timer，
-         不进 timeline 状态池，避免被 setActive 的 clear 取消） */
-      if (hero.imgSlide) {
-        (function () {
-          var layers = hero.imgSlide.querySelectorAll('[data-layer]');
-          if (hero.state.reduced) {
-            each(layers, function (l) { l.classList.add('in'); });
-            return;
-          }
-          each(layers, function (l) {
-            var key = l.getAttribute('data-layer');
-            var d = (TL[key] != null ? TL[key] : 0.8) * 1000;
-            window.setTimeout(function () { l.classList.add('in'); }, d);
-          });
-        })();
-      }
+      /* v2.5：图片交叉淡入由 scroll.update 按帧直接驱动，无需入场 timer；
+         固定 A 水印在 build 时直接点亮 */
       hero.setActive(0);
       hero.scroll.update();
     },
 
-    /* ============ 建 slide DOM（v2.4：单张固定图 + 文字 track） ============ */
-    /* .hero-fixed：works[0] 的全幅 bg + 描边 A，不随滚动切换
-       .hero-track-txt：文字 slide，倒序 [5..0]（topline + textgroup + desc + link）
+    /* ============ 建 slide DOM（v2.5：6 张图叠放交叉淡入 + 文字 track） ============ */
+    /* .hero-fixed：6 张 .hero-slide-img（顺序 [0..5]）absolute 叠在同一固定位置，
+       每张含全幅 bg（[data-layer="bg"] + data-px mouse 视差）；opacity/scale 由
+       scroll.update 按帧直接写（无 CSS transition）。
+       .hero-a-fixed：pin 内单个静态描边 A 水印（图片层之上、文字层之下）。
        描边 A：内联 a-symbol.svg 几何（§10 P1）。
        paths 改 fill="none" stroke-width="6"；针尖/方点保留填充；
-       几何不变，不算重画。clipPath id 按 slide 加后缀防冲突。 */
+       几何不变，不算重画。 */
     aOutlineSVG: function (i) {
       var u = 'a-upper-' + i, l = 'a-lower-' + i;
       return '<svg viewBox="60 -20 312 432" aria-hidden="true" focusable="false">' +
@@ -114,46 +102,54 @@
       if (!txtWrap) return;
       hero.txtSlides = [];
 
-      /* ---- 固定图片：works[0]，全幅 bg + 描边 A，不随滚动切换 ---- */
+      /* ---- 图片层：6 张叠放，同一固定位置，交叉淡入 ---- */
       if (fixedWrap) {
-        var w0 = works[0];
-        var s = document.createElement('article');
-        s.className = 'hero-slide hero-slide-fixed';
-        s.setAttribute('data-js', 'hero-slide-fixed');
-        s.setAttribute('aria-hidden', 'true');
-        s._work = w0;
+        var imgFrag = document.createDocumentFragment();
+        each(works, function (w, i) {
+          var s = document.createElement('article');
+          s.className = 'hero-slide hero-slide-img';
+          s.setAttribute('aria-hidden', 'true');
+          s._work = w;
+          s._idx = i;
 
-        /* layer 01：背景 */
-        var bgw = document.createElement('div');
-        bgw.className = 'hero-bgwrap';
-        bgw.setAttribute('data-px', 'bg');
-        var bg = document.createElement('div');
-        bg.setAttribute('data-layer', 'bg');
-        /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback */
-        var pic = AKA.picture(w0.hero || w0.cover,
-          'AKA.CRISTI — ' + w0.titleEn + ' — ' + w0.category,
-          { eager: true });
-        var heroImg = (pic.tagName === 'PICTURE') ? pic.querySelector('img') : pic;
-        heroImg.setAttribute('data-breath', '1');
-        heroImg.setAttribute('alt', 'AKA.CRISTI — ' + w0.title + ' — ' + w0.category);
-        bg.appendChild(pic);
-        bgw.appendChild(bg);
-        s.appendChild(bgw);
+          /* layer 01：背景（mouse 视差挂在 wrapper 上，crossfade scale 写在 img 上） */
+          var bgw = document.createElement('div');
+          bgw.className = 'hero-bgwrap';
+          bgw.setAttribute('data-px', 'bg');
+          var bg = document.createElement('div');
+          bg.setAttribute('data-layer', 'bg');
+          /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback */
+          var pic = AKA.picture(w.hero || w.cover,
+            'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category,
+            { eager: i === 0 });
+          var picImg = (pic.tagName === 'PICTURE') ? pic.querySelector('img') : pic;
+          s._img = picImg;
+          bg.appendChild(pic);
+          bgw.appendChild(bg);
+          s.appendChild(bgw);
 
-        /* layer 02：A 标（描边版内联 SVG） */
-        var ag = document.createElement('div');
-        ag.className = 'hero-agroup';
-        ag.setAttribute('data-px', 'a');
+          imgFrag.appendChild(s);
+          hero.imgSlides[i] = s;
+        });
+        fixedWrap.innerHTML = '';
+        fixedWrap.appendChild(imgFrag);
+      }
+
+      /* ---- 描边 A：单个静态水印（图片层之上、文字层之下） ---- */
+      var pin = hero.pinEl || hero.el;
+      if (pin && !byHook('hero-a-fixed', pin)) {
+        var aFixed = document.createElement('div');
+        aFixed.className = 'hero-a-fixed';
+        aFixed.setAttribute('data-js', 'hero-a-fixed');
+        aFixed.setAttribute('aria-hidden', 'true');
         var awrap = document.createElement('div');
         awrap.setAttribute('data-layer', 'a');
-        awrap.setAttribute('aria-hidden', 'true');
         awrap.innerHTML = hero.aOutlineSVG(0);
-        ag.appendChild(awrap);
-        s.appendChild(ag);
-
-        fixedWrap.innerHTML = '';
-        fixedWrap.appendChild(s);
-        hero.imgSlide = s;
+        aFixed.appendChild(awrap);
+        /* 插在 hero-fixed 之后（z 顺序由 CSS 保证） */
+        pin.insertBefore(aFixed, txtWrap);
+        /* 入场：独立 timer 点亮，不进 timeline 状态池 */
+        window.setTimeout(function () { awrap.classList.add('in'); }, 60);
       }
 
       /* ---- 文字 slide：透明叠加（topline + textgroup + desc + link），倒序 ---- */
@@ -253,14 +249,21 @@
       var elLink = q('link');
       if (elLink) elLink.textContent = view;
       t.setAttribute('aria-label', (i + 1) + ' / ' + n + ' — ' + title);
-      /* 固定图片 slide 的 alt 同步（无障碍） */
-      var imgS = hero.imgSlide;
-      var img = imgS && imgS.querySelector('[data-breath]');
-      if (img && i === 0) img.setAttribute('alt', 'AKA.CRISTI — ' + title + ' — ' + cat);
     },
     applyLang: function () {
+      var I = AKA.i18n;
+      var zh = !I || I.lang !== 'en';
       each(hero.txtSlides, function (t) {
         if (t && t._work) hero.paintSlide(t, t._work, t._idx, hero.state.n);
+      });
+      /* 6 张 img slide 的 alt 按当前语言更新 */
+      each(hero.imgSlides, function (s) {
+        var w = s && s._work;
+        var img = s && s._img;
+        if (!w || !img) return;
+        var title = zh ? w.title : w.titleEn;
+        var cat = I ? I.cat(w.category) : w.category;
+        img.setAttribute('alt', 'AKA.CRISTI — ' + title + ' — ' + cat);
       });
     },
 
@@ -291,8 +294,8 @@
       }
     },
 
-    /* ============ 当前文字 slide：dots + 入场 + 呼吸 ============ */
-    /* v2.4：图片固定只播一次（init），setActive 只处理文字 slide */
+    /* ============ 当前文字 slide：dots + 入场 + is-light ============ */
+    /* v2.5：图片交叉淡入由 scroll.update 驱动；setActive 处理文字 slide + 主题 */
     setActive: function (idx) {
       var txt = hero.txtSlides[idx];
       if (!txt) return;
@@ -302,12 +305,14 @@
       each(hero.txtSlides, function (t, k) {
         if (t) t.classList.toggle('is-active', k === idx);
       });
+      /* is-light 恢复：浅色图上文字/dots/箭头转 ink（CSS 规则在 hero.css） */
+      var w = txt._work;
+      if (hero.el) hero.el.classList.toggle('is-light', !!(w && w.tone === 'light'));
       if (hero.state.reduced) {
         each(txt.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
       } else {
         hero.timeline.play(txt);
       }
-      hero.breath.restart();
     },
 
     /* ============ scroll 驱动（v1.9） ============ */
@@ -329,6 +334,16 @@
         /* 文字 track 反向位移：滚轮往下时文字往下走；位移本身即过渡 */
         var trackTxt = byHook('hero-track-txt', hero.el);
         if (trackTxt) trackTxt.style.transform = 'translateY(' + (-(1 - p) * total).toFixed(1) + 'px)';
+        /* 图片交叉淡入：JS 直接驱动（无 CSS transition）。
+           f 为连续值；opacity = 1-|i-f|，内层图 scale = 1.06-0.06*opacity */
+        var f = p * (hero.state.n - 1);
+        each(hero.imgSlides, function (s, i) {
+          if (!s) return;
+          var o = Math.max(0, Math.min(1, 1 - Math.abs(i - f)));
+          s.style.opacity = o.toFixed(4);
+          var img = s._img;
+          if (img) img.style.transform = 'scale(' + (1.06 - 0.06 * o).toFixed(4) + ')';
+        });
         /* 进度条：JS 直接 scaleX */
         if (hero.progressBar) hero.progressBar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
         /* scroll 指示器：滚开即淡出 */
@@ -367,22 +382,6 @@
       });
     },
 
-    /* ============ breath（§10 P1）：scale 1.01→1.07 / 7000ms linear ============ */
-    breath: {
-      restart: function () { hero.breathT0 = performance.now(); },
-      tick: function (now) {
-        if (hero.state.reduced) return;
-        var slide = hero.imgSlide;
-        if (!slide) return;
-        var img = slide.querySelector('[data-breath]');
-        if (!img) return;
-        /* 单程 linear：每张 slide 播一次，切换时 restart（参考行为） */
-        var t = Math.min(1, (now - hero.breathT0) / BREATH_MS);
-        var s = 1.01 + 0.06 * t;
-        img.style.transform = 'scale(' + s.toFixed(4) + ')';
-      }
-    },
-
     /* ============ parallax（§17）：只保留 mouse 分支 ============ */
     /* v1.9：sticky 时 section rect.top 恒 ~0，旧 scroll 三层视差已无意义，删除 */
     parallax: {
@@ -401,10 +400,9 @@
             hero.tmx = 0; hero.tmy = 0;
           });
         }
-        /* breath 共用 rAF（光标已移至 js/cursor.js） */
+        /* mouse parallax 共用 rAF（光标已移至 js/cursor.js） */
         var raf = function (now) {
           hero.parallax.frame(now);
-          hero.breath.tick(now);
           hero.rafId = requestAnimationFrame(raf);
         };
         hero.rafId = requestAnimationFrame(raf);
@@ -496,12 +494,6 @@
             hero.goTo(hero.state.i + 1);
           } else if (ev.key === 'ArrowLeft') {
             hero.goTo(hero.state.i - 1);
-          }
-        });
-        /* visibilitychange：rAF 由浏览器自动节流；回来后重开呼吸避免跳变 */
-        document.addEventListener('visibilitychange', function () {
-          if (!document.hidden && !hero.state.reduced) {
-            hero.breath.restart();
           }
         });
       }

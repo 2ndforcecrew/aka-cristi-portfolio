@@ -175,7 +175,7 @@ test('v1.1 描边 A：hero.js 内联 a-symbol 几何（stroke 6，针尖/方点�
   assert.ok(!/a-symbol\.svg\?v=/.test(js), 'hero 仍在引用 a-symbol.svg 文件（应内联）');
 });
 
-test('v2.4 hero：图片固定 + 文字反向滚动 + 无 is-light 同步 + 无旧 cursor', () => {
+test('v2.5 hero：6 张图固定位置交叉淡入 + 文字反向滚动 + is-light 恢复', () => {
   const html = read('index.html');
   assert.ok(html.includes('data-js="hero-pin"'), 'index 缺 hero-pin');
   assert.ok(html.includes('data-js="hero-fixed"'), 'index 缺 hero-fixed');
@@ -190,29 +190,44 @@ test('v2.4 hero：图片固定 + 文字反向滚动 + 无 is-light 同步 + 无�
     'mask transition 类残留');
   assert.ok(/goTo/.test(js) && /scrollTo/.test(js), '缺 goTo/scrollTo');
   assert.ok(/addEventListener\('scroll'/.test(js), '缺 scroll 监听');
-  /* 固定图 + 文字反向位移数学 */
-  assert.ok(js.includes('hero-fixed') && js.includes('hero-track-txt'), '缺 fixed/txt hook');
-  assert.ok(/hero\.imgSlide\b/.test(js) && !/imgSlides/.test(js), 'imgSlides 数组残留，应为单 imgSlide');
+  /* 6 张 img slide 叠放（非单张），无 imgSlide 单体 */
+  assert.ok(/hero\.imgSlides\[i\] = s/.test(js), '缺 6 张 imgSlides 构建');
+  assert.ok(!/hero\.imgSlide\b/.test(js.replace(/hero\.imgSlides/g, '')), '单体 hero.imgSlide 残留');
+  assert.ok(/hero-slide-img/.test(js), '缺 .hero-slide-img 类');
+  /* crossfade 数学：opacity = 1-|i-f|，scale = 1.06-0.06*o，JS 直接驱动 */
+  assert.ok(/1 - Math\.abs\(i - f\)/.test(js), '缺 crossfade opacity = 1-|i-f|');
+  assert.ok(/1\.06 - 0\.06 \* o/.test(js), '缺 crossfade scale = 1.06-0.06*o');
+  /* 文字 track 反向位移保留 */
   assert.ok(/insertBefore\(t, txtFrag\.firstChild\)/.test(js), 'txt track 未倒序插入');
-  assert.ok(!/-p \* total/.test(js.replace(/-\(1 - p\) \* total/g, '')), '图片 track 位移残留（图片应固定）');
   assert.ok(/-\(1 - p\) \* total/.test(js), '缺文字 track translateY(-(1-p)*total)');
-  assert.ok(js.includes('data-cursor') && js.includes("'view'"), 'VIEW PROJECT 缺 data-cursor="view"');
-  /* v2.4：hero 移除 tone/is-light 同步 */
+  assert.ok(!/-p \* total/.test(js.replace(/-\(1 - p\) \* total/g, '')), '图片 track 位移残留（图片应固定叠放）');
+  /* 单个静态 A 水印（非每张 slide 一个） */
+  assert.ok(/hero-a-fixed/.test(js), '缺 .hero-a-fixed 静态水印');
+  assert.ok(!/hero-agroup/.test(js), 'hero.js 不应再建 hero-agroup（A 已独立）');
+  /* is-light 恢复：按 tone 切 section 类 */
   const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-  assert.ok(!/tone\.sync/.test(jsNoComment), 'hero tone.sync 残留');
-  assert.ok(!/tone:\s*\{/.test(jsNoComment), 'hero tone 对象残留');
+  assert.ok(/classList\.toggle\('is-light'/.test(jsNoComment), '缺 is-light toggle（浅色图）');
+  assert.ok(/w\.tone === 'light'/.test(jsNoComment), 'is-light 未按 tone=light 判定');
+  /* breath 已删除（与 crossfade scale 冲突） */
+  assert.ok(!/breath/.test(jsNoComment), 'breath 残留（应删除）');
+  assert.ok(!/BREATH_MS/.test(jsNoComment), 'BREATH_MS 残留');
+  assert.ok(!/data-breath/.test(jsNoComment), 'data-breath 残留');
   /* 旧 cursor 模块已搬走 */
   assert.ok(!/hero\.cursor/.test(jsNoComment), 'hero.js 残留 cursor 模块');
   assert.ok(!/hero-cursor/.test(jsNoComment), 'hero.js 残留 hero-cursor');
   /* split-screen 残留清理 */
   assert.ok(!/half-img/.test(jsNoComment) && !/half-txt/.test(jsNoComment), 'js 残留 half-*');
+  assert.ok(js.includes('data-cursor') && js.includes("'view'"), 'VIEW PROJECT 缺 data-cursor="view"');
   const cssNoComment = read('css/hero.css').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.ok(!/\.half-img/.test(cssNoComment), 'css 残留 .half-img');
   assert.ok(!/\.project-hero/.test(cssNoComment), 'css 残留 .project-hero 兼容块');
   assert.ok(!/\.hero-cursor/.test(cssNoComment), 'css 残留 .hero-cursor');
   const css = read('css/hero.css');
-  assert.ok(css.includes('.hero-fixed') && css.includes('.hero-track-txt'), 'CSS 缺 fixed/txt');
-  assert.ok(/\.hero\.is-light/.test(css), 'CSS 缺 .hero.is-light 主题规则（project 页仍需）');
+  assert.ok(/\.hero-slide-img\s*\{[^}]*opacity:\s*0/.test(css), 'CSS 缺 .hero-slide-img 叠放（opacity:0 起始）');
+  var imgBase = (cssNoComment.match(/\.hero-slide-img\s*\{[^}]*\}/) || [''])[0];
+  assert.ok(!/transition\s*:/.test(imgBase), '.hero-slide-img 基规则不应有 transition（JS 直接驱动）');
+  assert.ok(/\.hero-a-fixed/.test(css), 'CSS 缺 .hero-a-fixed');
+  assert.ok(/\.hero\.is-light/.test(css), 'CSS 缺 .hero.is-light 主题规则');
   assert.ok(/\[data-layer="desc"\]/.test(css) && /\[data-layer="link"\]/.test(css),
     'CSS 缺 desc/link 图层样式');
   assert.ok(/\.hero-slide-txt\.is-active/.test(css), 'CSS 缺 txt slide is-active 交互规则');
@@ -663,11 +678,13 @@ test('v2.4 网格：photo 6 列满屏 + design 横向滚动', () => {
     '移动端 photo 不是 3 列');
 });
 
-/* ---------- 39. v2.4.1 回归：固定图入场 timer 不得进 timeline 池 ---------- */
-test('hero 固定图：入场不用 timeline.play（避免被 setActive 的 clear 取消）', () => {
+/* ---------- 39. v2.4.1/v2.5 回归：图片层不得走 timeline 入场 ---------- */
+/* v2.4.1 教训：timeline.play 的 timer 会被 setActive 的 clear 同步取消，
+   导致图片永不显示。v2.5：图片 opacity 由 scroll 按帧直接驱动；A 水印用独立 timer。 */
+test('hero 图片层：交叉淡入由 scroll 按帧驱动，不走 timeline', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js/hero.js'), 'utf8');
-  assert.ok(!src.includes('timeline.play(hero.imgSlide)'),
-    '固定图入场禁止走 timeline.play（timer 会被 setActive 清掉导致图片永不显示）');
-  assert.ok(/window\.setTimeout\(function \(\) \{ l\.classList\.add\('in'\)/.test(src),
-    '固定图入场应用独立 setTimeout 加 .in');
+  assert.ok(!src.includes('timeline.play(hero.imgSlide'),
+    '图片入场禁止走 timeline.play（timer 会被 setActive 清掉导致图片永不显示）');
+  assert.ok(/window\.setTimeout\(function \(\) \{ awrap\.classList\.add\('in'\); \}, 60\)/.test(src),
+    'A 水印应用独立 setTimeout 点亮（不进 timeline 状态池）');
 });

@@ -93,8 +93,11 @@ svg 占位图保持原样。
   右 nav（**无衬线粗体** font-display 700 / 15px，hover 1px 下划线；v2.1 起含 HOME），
   nav 字间距 v2.2 起收窄为 `.08em`，
   底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
-- **hero（v2.4：图片固定 + 文字反向滚动）**：单张固定全屏图（works[0]，bg + 描边 A +
-  Ken Burns + mouse 视差，不随滚动切换）+ 文字信息叠加；
+- **hero（v2.5：图片固定位置交叉淡入 + 文字反向滚动）**：`.hero-fixed` 内 6 张
+  `.hero-slide-img`（顺序 [0..5]）absolute 叠在同一固定位置；滚轮驱动**交叉淡入**
+  （JS 按帧直接写，无 CSS transition）：`f = p*(n-1)`，每张
+  `opacity = 1-|i-f|`，内层图 `scale = 1.06-0.06*opacity`（进入时收敛）；
+  描边 A 为 pin 内**单个静态**水印 `.hero-a-fixed`（图片层之上、文字层之下，faint 白）；
   section 高 n*100vh，`.hero-pin` sticky 锁 100vh；
   `.hero-track-txt`（文字 slide，倒序 [5..0]，透明，只含 topline + textgroup）位移
   `translateY(-(1-p)*total)`，滚轮往下时文字往下走（反向），在固定视口位置一张张经过；
@@ -104,10 +107,11 @@ svg 占位图保持原样。
   年份—客户—分类 meta、`查看项目 →` 下划线链接（只有 active 文字 slide 可交互，
   `pointer-events`；带 `data-cursor="view"`）；巨大描边 A 为构图锚点（描边版内联 a-symbol.svg 几何：
   paths `fill="none" stroke-width="6"`，针尖/方点保留填充，几何不变）。
-  图层 stagger：固定图播一次，文字 slide 每张进入时播。文字恒白（图片固定为深色）；
-  **is-light 在 hero 移除**（data.js tone 字段保留给 project 页）。
+  图层 stagger：文字 slide 每张进入时播。**is-light 恢复**：按当前 slide 的 `tone`
+  给 section 切 `is-light`（浅色图上文字/dots/箭头转 ink）。
+  Ken Burns（breath）已删除（与 crossfade scale 公式冲突）。
   底部短横线 dots（34px→active 62px）+ 2px 进度条由 JS 按 scroll 进度 scaleX。
-  Hero 图 `grayscale(.72) contrast(1.13)`；Ken Burns `scale 1.01→1.07` / 7s linear（单程）。
+  Hero 图 `grayscale(.72) contrast(1.13)`。
 - **服务跑马灯**（v2.3，替代 Selected Work，占 `#work` 锚点）：ink 黑底横条，
   大字无限循环 `AKA.CRISTI ✦ 平面设计 GRAPHIC DESIGN ✦ 时装摄影 FASHION PHOTOGRAPHY ✦
   品牌设计 BRAND DESIGN ✦ 画册设计 BROCHURE DESIGN ✦ 包装设计 PACKAGING DESIGN ✦

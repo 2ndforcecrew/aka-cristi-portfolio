@@ -1,9 +1,11 @@
-/* v2.4：图片固定 + 文字反向滚动。section 高 n*100vh；
- * .hero-pin sticky 锁 100vh；.hero-fixed 单张全屏图（不位移）；
+/* v2.5：6 张图叠放固定位置交叉淡入 + 文字反向滚动。section 高 n*100vh；
+ * .hero-pin sticky 锁 100vh；.hero-fixed 内 6 张 .hero-slide-img 叠在同一位置，
+ *   opacity/scale 由 JS 按帧直接写（无 CSS transition）；
+ * .hero-a-fixed：单个静态描边 A 水印（图片层之上、文字层之下）；
  * .hero-track-txt（文字，倒序 [5..0]）随滚动位移 translateY(-(1-p)*total)，
  * 滚轮往下时文字往下走，在固定视口位置一张张经过。
  * 7+2 层 layer：bg / A / num / loc / cat / title / desc / meta / link / scroll。
- * 文字恒白（图片固定为深色）；is-light 规则保留给 project.html。
+ * is-light 恢复：浅色图上文字/dots/箭头转 ink（project.html 同样用此类）。
  * Easing 统一 var(--ease-out)。
  * ============================================================ */
 
@@ -20,19 +22,45 @@
   min-height: 560px;
   overflow: hidden;
 }
-/* 固定图：单张全屏，不位移；文字 track：绝对叠放 pin 内，纵向溢出，由 JS 写 transform */
+/* 固定图容器：6 张 .hero-slide-img 叠在同一固定位置 */
 .hero-fixed {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
-.hero-fixed .hero-slide {
+/* v2.5：img slide 叠放，opacity/scale 由 JS 按帧直接写，无 CSS transition */
+.hero-slide-img {
   position: absolute;
   inset: 0;
-  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+/* 覆盖 [data-layer="bg"] 的 .in 入场（project 页仍用 .in；首页由 JS 直接写 opacity） */
+.hero-slide-img [data-layer="bg"],
+.hero-slide-img [data-layer="bg"].in {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+/* v2.5：单个静态描边 A 水印（图片层之上、文字层之下） */
+.hero-a-fixed {
+  position: absolute;
+  right: 5vw;
+  top: 50%;
+  width: min(63vw, 850px);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+.hero-a-fixed svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 .hero-track-txt {
   position: absolute;
   inset: 0;
+  z-index: 2;
   will-change: transform;
 }
 
@@ -75,7 +103,7 @@
   object-position: 50% 30%; /* 臉部偏上，避開左下標題與右側 A 標（§10 P1） */
   /* §10 P2：hero 灰階優先 */
   filter: grayscale(.72) contrast(1.13);
-  will-change: transform; /* breath（§10 P1：scale 1.01→1.07 / 7s linear）由 JS 寫 transform */
+  will-change: transform; /* v2.5 crossfade：scale 由 JS 按帧写（1.06→1.0 收敛） */
 }
 
 /* ---------- layer 02：巨大 A 标（§16 + §10 P1 描边版） ---------- */
@@ -100,7 +128,7 @@
               clip-path 700ms var(--ease-out);
 }
 /* 浅色 slide：前景全部转 ink（A / 文字 / dots / 进度条 / scroll 指示器）；
-   v2.4 起仅 project.html 用（其 hero 沿用此类）；index hero 图片固定为深色，不再切主题 */
+   v2.5 起 index hero 与 project.html 共用（按当前 slide 的 tone 切换） */
 .hero.is-light .hero-textgroup { color: var(--ink); }
 .hero.is-light .hero-topline { color: var(--ink); }
 .hero.is-light .scroll-indicator { color: var(--ink); }
@@ -284,7 +312,8 @@
 
 /* ---------- 断点 ---------- */
 @media (max-width: 768px) {
-  .hero-agroup {
+  .hero-agroup,
+  .hero-a-fixed {
     width: 68vw;
     right: 4vw;
   }
@@ -297,7 +326,8 @@
   [data-layer="loc"],
   [data-layer="desc"],
   [data-layer="meta"] { display: none; }
-  .hero-agroup {
+  .hero-agroup,
+  .hero-a-fixed {
     width: 74vw;              /* 65–80vw */
     top: auto;
     bottom: 12vh;
