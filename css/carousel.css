@@ -45,7 +45,7 @@
 /* parallax 內層：圖片/視頻由 JS 寫 translateY */
 .carousel-media {
   position: absolute;
-  inset: -10% 0; /* 上下各多 10%，給 parallax 位移空間 */
+  inset: -6% 0; /* v2.9.8：上下各多 6%（原 10% 太大顯得放大），給 parallax 位移空間 */
   will-change: transform;
 }
 

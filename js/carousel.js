@@ -79,10 +79,10 @@
         s.style.visibility = o > 0.01 ? 'visible' : 'hidden';
         s.style.zIndex = (i === fi || i === fi + 1) ? 1 : 0;
 
-        /* parallax：媒體上下位移（±8%），比 scroll 慢 */
+        /* parallax：媒體上下位移（±5%，v2.9.8 從 ±8% 縮小以減少放大感），比 scroll 慢 */
         var media = s.querySelector('.carousel-media');
         if (media) {
-          var py = (o > 0) ? (frac - 0.5) * 16 : 0;
+          var py = (o > 0) ? (frac - 0.5) * 10 : 0;
           /* 只對可見的兩張做 parallax */
           if (i === fi || i === fi + 1) {
             media.style.transform = 'translateY(' + py.toFixed(2) + '%)';
