@@ -662,3 +662,12 @@ test('v2.4 网格：photo 6 列满屏 + design 横向滚动', () => {
   assert.ok(/max-width:\s*768px[\s\S]*?\.photo-grid\s*\{[^}]*repeat\(3,\s*1fr\)/.test(css),
     '移动端 photo 不是 3 列');
 });
+
+/* ---------- 39. v2.4.1 回归：固定图入场 timer 不得进 timeline 池 ---------- */
+test('hero 固定图：入场不用 timeline.play（避免被 setActive 的 clear 取消）', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js/hero.js'), 'utf8');
+  assert.ok(!src.includes('timeline.play(hero.imgSlide)'),
+    '固定图入场禁止走 timeline.play（timer 会被 setActive 清掉导致图片永不显示）');
+  assert.ok(/window\.setTimeout\(function \(\) \{ l\.classList\.add\('in'\)/.test(src),
+    '固定图入场应用独立 setTimeout 加 .in');
+});

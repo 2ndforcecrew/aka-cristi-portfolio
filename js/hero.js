@@ -62,13 +62,21 @@
       hero.scroll.measure();
       hero.scroll.bind();
 
-      /* 首张文字：跑 timeline；固定图片的图层播一次；随后全由滚动驱动 */
+      /* 首张文字：跑 timeline；固定图片的图层播一次（独立 timer，
+         不进 timeline 状态池，避免被 setActive 的 clear 取消） */
       if (hero.imgSlide) {
-        if (hero.state.reduced) {
-          each(hero.imgSlide.querySelectorAll('[data-layer]'), function (l) { l.classList.add('in'); });
-        } else {
-          hero.timeline.play(hero.imgSlide);
-        }
+        (function () {
+          var layers = hero.imgSlide.querySelectorAll('[data-layer]');
+          if (hero.state.reduced) {
+            each(layers, function (l) { l.classList.add('in'); });
+            return;
+          }
+          each(layers, function (l) {
+            var key = l.getAttribute('data-layer');
+            var d = (TL[key] != null ? TL[key] : 0.8) * 1000;
+            window.setTimeout(function () { l.classList.add('in'); }, d);
+          });
+        })();
       }
       hero.setActive(0);
       hero.scroll.update();
