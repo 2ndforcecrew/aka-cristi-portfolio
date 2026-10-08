@@ -1153,10 +1153,11 @@ test('v2.8.1：motion.css reduced-motion 只隐藏 .hero-slide-txt（图片 slid
   assert.ok(/hero\.txtSlides[\s\S]{0,120}?classList\.toggle\('is-active'/.test(js), 'setActive 未给文字 slide 挂 .is-active');
 });
 
-/* ---------- v2.8.1：hero bg 层 opacity override 必须用 !important 压住基线 ---------- */
-test('v2.8.1：.hero-slide-img [data-layer="bg"] 用 !important 压住 opacity:0 基线', () => {
+/* ---------- v2.8.3：hero bg 层基线不得有 opacity:0（曾致全黑且 override 压不住） ---------- */
+test('v2.8.3：[data-layer="bg"] 基线无 opacity:0', () => {
   const css = read('css/hero.css');
-  const m = css.match(/\.hero-slide-img \[data-layer="bg"\][\s\S]*?\{([\s\S]*?)\}/);
-  assert.ok(m, '缺 hero bg override 规则');
-  assert.ok(/opacity:\s*1\s*!important/.test(m[1]), 'hero bg override 缺 !important，基线 opacity:0 可能压不住');
+  const m = css.match(/^\[data-layer="bg"\]\s*\{([\s\S]*?)\}/m);
+  assert.ok(m, '缺 [data-layer="bg"] 基线规则');
+  const noComment = m[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(!/opacity\s*:\s*0(?!\.)/.test(noComment), '[data-layer="bg"] 基线不应有 opacity:0（致 hero 全黑）');
 });

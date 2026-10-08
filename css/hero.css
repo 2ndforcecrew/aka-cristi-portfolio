@@ -35,13 +35,13 @@
   opacity: 0;
   pointer-events: none;
 }
-/* 覆盖 [data-layer="bg"] 的 .in 入场（project 页仍用 .in；首页由 JS 直接写 opacity）
-   v2.8.1：加 !important——基线 opacity:0 曾因层叠失效致 hero 图片全黑，强制压住 */
+/* 覆盖 [data-layer="bg"] 的 transform/transition（project 页仍用 .in；首页由 JS 直接写 opacity）
+   v2.8.3：基线已无 opacity:0，此处保留 transform/transition 覆盖 */
 .hero-slide-img [data-layer="bg"],
 .hero-slide-img [data-layer="bg"].in {
-  opacity: 1 !important;
-  transform: none !important;
-  transition: none !important;
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 /* v2.5：单个静态描边 A 水印（图片层之上、文字层之下） */
 .hero-a-fixed {
@@ -95,7 +95,8 @@
 [data-layer="bg"] {
   position: absolute;
   inset: 0;
-  opacity: 0;
+  /* v2.8.3：删除 opacity:0 基线——曾致 hero 图片全黑且 override（含 !important）压不住；
+     project 页 JS 同步加 .in，无需基线隐藏 */
   transform: scale(1.06);
   transition: opacity 900ms var(--ease-out), transform 1400ms var(--ease-out);
 }
