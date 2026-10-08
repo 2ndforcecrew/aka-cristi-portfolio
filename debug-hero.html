@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"><head><meta charset="UTF-8">
+<title>hero debug</title>
+<link rel="stylesheet" href="css/tokens.css?v=2.8.3">
+<link rel="stylesheet" href="css/base.css?v=2.8.3">
+<link rel="stylesheet" href="css/layout.css?v=2.8.3">
+<link rel="stylesheet" href="css/hero.css?v=2.8.3">
+<style>
+#dbg{position:fixed;top:0;left:0;z-index:99999;background:#000;color:#0f0;
+font:12px monospace;padding:10px;white-space:pre;max-width:90vw;}
+</style></head><body>
+<div id="dbg">loading...</div>
+<section class="hero" id="top" data-js="hero" role="region" aria-label="debug">
+<div class="hero-pin" data-js="hero-pin">
+<div class="hero-fixed" data-js="hero-fixed"></div>
+<div class="hero-track-txt" data-js="hero-track-txt"></div>
+</div></section>
+<script src="js/data.js?v=2.8.3"></script>
+<script src="js/hero.js?v=2.8.3"></script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    var out = [];
+    var slides = document.querySelectorAll('.hero-slide-img');
+    out.push('slides: ' + slides.length);
+    slides.forEach(function(s, i) {
+      var img = s.querySelector('img');
+      var vid = s.querySelector('video');
+      if (vid) {
+        out.push(i + ': VIDEO readyState=' + vid.readyState);
+      } else if (img) {
+        out.push(i + ': IMG complete=' + img.complete +
+          ' naturalWidth=' + img.naturalWidth +
+          ' src=' + img.src.slice(-20));
+      } else {
+        out.push(i + ': NO IMG/VIDEO');
+      }
+    });
+    document.getElementById('dbg').textContent = out.join('\n');
+  }, 3000);
+});
+if (window.AKA && AKA.hero) AKA.hero.init();
+</script>
+</body></html>
