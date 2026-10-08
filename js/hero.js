@@ -138,10 +138,11 @@
             s._video = vid;
             bg.appendChild(vid);
           } else {
-            /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback */
+            /* §43 WebP：AKA.picture 生成 <picture> webp 优先 + jpg fallback；
+               v2.8：轮播图全部 eager（关键内容仅 7 张；v2.7 曾因 i===0 导致视频上位后全图 lazy 全黑） */
             var pic = AKA.picture(w.hero || w.cover,
               'AKA.CRISTI — ' + w.titleEn + ' — ' + w.category,
-              { eager: i === 0 });
+              { eager: true });
             var picImg = (pic.tagName === 'PICTURE') ? pic.querySelector('img') : pic;
             s._img = picImg;
             bg.appendChild(pic);

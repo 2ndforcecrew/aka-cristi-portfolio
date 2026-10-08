@@ -232,12 +232,52 @@
     AKA.i18n.onChange.push(function () { renderAll(); });
   }
 
+  /* ---------- design-grid 自动左右滚动（v2.8：rAF ping-pong，约 40px/s） ----------
+     每帧按 hook 取当前 grid（筛选重渲染不缓存死节点）；hover/focus/触摸/手动滚时暂停，
+     离开 3s 恢复；prefers-reduced-motion 不自动滚。手动横滚保留（overflow-x auto）。 */
+  function initDesignAutoScroll() {
+    var mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq && mq.matches) return;
+    var grid0 = byHook('design-grid');
+    if (!grid0) return;
+    var SPEED = 40, dir = 1, last = 0, paused = false, resumeAt = 0, vis = true;
+    function hold(ms) { paused = true; resumeAt = performance.now() + ms; }
+    grid0.addEventListener('mouseenter', function () { paused = true; });
+    grid0.addEventListener('mouseleave', function () { hold(3000); });
+    grid0.addEventListener('focusin', function () { paused = true; });
+    grid0.addEventListener('focusout', function () { hold(3000); });
+    grid0.addEventListener('touchstart', function () { paused = true; }, { passive: true });
+    grid0.addEventListener('touchend', function () { hold(3000); });
+    grid0.addEventListener('wheel', function () { hold(3000); }, { passive: true });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (en) { vis = en[0].isIntersecting; },
+        { threshold: 0 }).observe(grid0);
+    }
+    function tick(ts) {
+      requestAnimationFrame(tick);
+      if (!last) last = ts;
+      var dt = Math.min((ts - last) / 1000, 0.1); last = ts;
+      if (paused && ts >= resumeAt) paused = false;
+      if (paused || !vis) return;
+      var g = byHook('design-grid');
+      if (!g) return;
+      var max = g.scrollWidth - g.clientWidth;
+      if (max <= 2) return;
+      var x = g.scrollLeft + dir * SPEED * dt;
+      if (x >= max) { x = max; dir = -1; }
+      else if (x <= 0) { x = 0; dir = 1; }
+      g.scrollLeft = x;
+    }
+    requestAnimationFrame(tick);
+  }
+
   /* ---------- 启动 ---------- */
   function init() {
     renderAll();
     initMenu();
     initReveal();
     initYear();
+    initDesignAutoScroll();
     if (AKA.hero && typeof AKA.hero.init === 'function') AKA.hero.init();
     if (AKA.marquee && typeof AKA.marquee.init === 'function') AKA.marquee.init();
   }

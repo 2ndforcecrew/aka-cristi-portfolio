@@ -127,24 +127,19 @@
   border: 1px solid var(--ink);
   border-radius: 2px;
   background: var(--paper);
+  color: var(--ink); /* SVG 图标 stroke=currentColor，随主题反色 */
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
-/* 语言按钮：沿用 syncToggle 的「中 / EN」innerHTML，纵向堆叠（"/" 为匿名 flex 项） */
-.float-controls .lang-toggle {
-  flex-direction: column;
-  font-size: 10px;
-  line-height: 1.7;
-  letter-spacing: .04em;
-}
-.float-controls .theme-toggle i { width: 16px; height: 16px; }
+/* v2.8：图标版（inline SVG，currentColor 随主题反色；中/EN 文字版已废弃） */
+.float-controls svg { width: 20px; height: 20px; display: block; }
 @media (max-width: 768px) {
   .float-controls { right: 12px; gap: 8px; }
   .float-controls .lang-toggle,
   .float-controls .theme-toggle { width: 36px; height: 36px; }
-  .float-controls .lang-toggle { font-size: 9px; }
-  .float-controls .theme-toggle i { width: 13px; height: 13px; }
+  .float-controls svg { width: 16px; height: 16px; }
 }
 /* 深色模式：笔触 LOGO 反色（黑版↔白版），转场面板恒黑不需要动 */
 html[data-theme="dark"] .brand-logo img { filter: invert(1); }
@@ -279,6 +274,17 @@ html[data-theme="dark"] .brand-logo img { filter: invert(1); }
 .sec-link:hover {
   border-bottom-color: var(--ink);
   color: var(--frost);
+}
+
+/* v2.8：#photography / #design 筛选栏全视口通栏（打破 .container 限宽，
+   与 .design-grid 同式：100vw + calc(50% - 50vw)；按钮内侧留 padding；tab 样式不变） */
+#photography .filter,
+#design .filter {
+  width: 100vw;
+  max-width: none;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-inline: max(20px, 6vw);
 }
 
 /* 分类 filter（§22 / §26） */

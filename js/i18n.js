@@ -133,11 +133,19 @@
     var btns = document.querySelectorAll('[data-js="lang-toggle"]');
     for (var i = 0; i < btns.length; i++) {
       (function (btn) {
+        /* v2.8：图标版按钮（内含 svg[data-icon]）不重写 innerHTML，只更新无障碍属性；
+           否则 syncToggle 会把 inline SVG 图标 wipe 掉 */
+        var label = lang === 'zh' ? '切换语言到英文 / Switch language to English'
+                                  : 'Switch language to Chinese / 切换语言到中文';
+        if (btn.querySelector('svg[data-icon]')) {
+          btn.setAttribute('aria-label', label);
+          btn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+          btn.setAttribute('data-lang', lang);
+          return;
+        }
         btn.innerHTML = '<span class="' + (lang === 'zh' ? 'on' : 'off') + '">中</span>' +
           ' / <span class="' + (lang === 'en' ? 'on' : 'off') + '">EN</span>';
-        btn.setAttribute('aria-label',
-          lang === 'zh' ? '切换语言到英文 / Switch language to English'
-                        : 'Switch language to Chinese / 切换语言到中文');
+        btn.setAttribute('aria-label', label);
         btn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
       })(btns[i]);
     }

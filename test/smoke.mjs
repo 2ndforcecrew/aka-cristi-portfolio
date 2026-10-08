@@ -437,7 +437,7 @@ test('design.md lint：0 错误 0 警告', () => {
 });
 
 /* ---------- 14. 站内锚点必须存在（防 #about/#contact 这类死锚点回归） ---------- */
-test('站内 #锚点 都有对应 id；ABOUT/CONTACT 导航指向独立页面', () => {
+test('站内 #锚点 都有对应 id；ABOUT/CONTACT 导航（v2.8 起 index 用锚点）', () => {
   const pages = ['index.html', 'project.html', 'about.html', 'contact.html'];
   for (const p of pages) {
     const html = read(p);
@@ -445,13 +445,23 @@ test('站内 #锚点 都有对应 id；ABOUT/CONTACT 导航指向独立页面', 
     for (const a of anchors) {
       assert.ok(new RegExp('id="' + a + '"').test(html), p + ' 的 #' + a + ' 无对应 id');
     }
-    /* 导航里的 About/Contact 必须是页面链接，不能是锚点 */
-    assert.ok(!/href="#about"|href="#contact"/.test(html), p + ' 导航残留 #about/#contact 死锚点');
+    /* v2.8：index.html 导航 About/Contact 改为页内锚点（about/contact 并入首页模块）；
+       其余页面仍须指向独立页面，不能是锚点 */
+    if (p === 'index.html') {
+      assert.ok(/href="#about"/.test(html), 'index 导航缺 #about');
+      assert.ok(/href="#contact"/.test(html), 'index 导航缺 #contact');
+    } else {
+      assert.ok(!/href="#about"|href="#contact"/.test(html), p + ' 导航残留 #about/#contact 死锚点');
+    }
   }
   const navRe = /<a href="([^"]+)">(?:About|Contact)<\/a>/g;
   for (const p of pages) {
     for (const m of read(p).matchAll(navRe)) {
-      assert.ok(/^(about|contact)\.html$/.test(m[1]), p + ' 导航 About/Contact 指向 ' + m[1]);
+      if (p === 'index.html') {
+        assert.ok(/^(#about|#contact)$/.test(m[1]), p + ' 导航 About/Contact 指向 ' + m[1]);
+      } else {
+        assert.ok(/^(about|contact)\.html$/.test(m[1]), p + ' 导航 About/Contact 指向 ' + m[1]);
+      }
     }
   }
 });
@@ -621,7 +631,7 @@ test('跑马灯：#work 为 marquee、无 selected 残留、7 项服务、lens+S
   /* v2.7：空心改实心（difference 透镜在镂空处闪紫，已投诉） */
   assert.ok(!css.includes('-webkit-text-stroke'), '跑马灯不应再有空心描边');
   assert.ok(/\.mq-zh,\s*\.mq-en/.test(css), '中英必须同规则同尺寸');
-  assert.ok(css.includes('font-size: clamp(24px, 3.4vw, 52px)'), '跑马灯字号应为 clamp(24px, 3.4vw, 52px)');
+  assert.ok(css.includes('font-size: clamp(18px, 2.6vw, 40px)'), '跑马灯字号应为 clamp(18px, 2.6vw, 40px)（v2.8 再降）');
   const main = fs.readFileSync(path.join(ROOT, 'js/main.js'), 'utf8');
   assert.ok(!main.includes('renderSelected'), 'renderSelected 必须删除');
   assert.ok(!main.includes('workCard'), 'workCard 死代码必须删除');
@@ -913,7 +923,7 @@ test('v2.6 HTML 接入：effects 引用与钩子', () => {
   assert.ok(/css\/effects\.css\?v=[\d.]+/.test(index), 'index 缺 effects.css');
   assert.ok(/js\/effects\.js\?v=[\d.]+/.test(index), 'index 缺 effects.js');
   assert.equal((index.match(/data-split/g) || []).length, 4, 'index 应有 4 个 data-split h2');
-  assert.ok(index.includes('btn-start magnet'), 'index CTA 缺 magnet');
+  assert.ok(index.includes('form-submit magnet'), 'index 合并模块留言表单提交按钮缺 magnet');
   const about = read('about.html');
   assert.ok(/js\/effects\.js\?v=[\d.]+/.test(about), 'about 缺 effects.js');
   assert.ok(about.includes('data-js="rot"'), 'about 缺 RotatingText 容器');
@@ -964,7 +974,7 @@ test('v2.7：跑马灯实心字（无描边、字号缩小）', () => {
   const css = read('css/marquee.css');
   assert.ok(!css.includes('-webkit-text-stroke'), 'marquee 仍有空心描边');
   assert.ok(!css.includes('color: transparent'), 'marquee 仍有透明填充');
-  assert.ok(css.includes('font-size: clamp(24px, 3.4vw, 52px)'), '跑马灯字号未缩小到 clamp(24px, 3.4vw, 52px)');
+  assert.ok(css.includes('font-size: clamp(18px, 2.6vw, 40px)'), '跑马灯字号未缩小到 clamp(18px, 2.6vw, 40px)（v2.8 再降）');
   assert.ok(/\.mq-zh,\s*\n\.mq-en\s*\{[^}]*color:\s*var\(--paper\)/.test(css), '跑马灯应为实心 var(--paper)');
   assert.ok(css.includes('.marquee-lens'), 'difference 透镜不应被删');
 });
@@ -1009,4 +1019,112 @@ test('v2.7-B：hero.js 视频 slide 构建 + 播放控制', () => {
   assert.ok(/tagName !== 'IMG'/.test(jsNoComment), 'applyLang 缺 video alt 守卫');
   const css = read('css/hero.css');
   assert.ok(/\[data-layer="bg"\] video\s*\{[^}]*object-fit:\s*cover/.test(css), 'CSS 缺 video 全幅规则');
+});
+
+/* ---------- v2.8-A：hero 图片全 eager（v2.7 全黑 bug 回归） ---------- */
+test('v2.8-A：hero 所有图片 slide 传 { eager: true }（无 i===0 残留）', () => {
+  const js = read('js/hero.js');
+  const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+  assert.ok(/\{ eager: true \}/.test(jsNoComment), 'hero 图片 slide 应统一 eager');
+  assert.ok(!/eager: i === 0/.test(jsNoComment), '残留 eager: i === 0（v2.7 全黑根因）');
+});
+
+/* ---------- v2.8-B：跑马灯字号再降 ---------- */
+test('v2.8-B：跑马灯字号 clamp(18px,2.6vw,40px)，分隔符等比缩小', () => {
+  const css = read('css/marquee.css');
+  assert.ok(/font-size: clamp\(18px, 2\.6vw, 40px\)/.test(css), '跑马灯字号未降到 18px/2.6vw/40px');
+  assert.ok(/\.mq-sep\s*\{[^}]*font-size: clamp\(10px, 1\.1vw, 17px\)/.test(css), '分隔符未等比缩小');
+});
+
+/* ---------- v2.8-C：design-grid 自动滚动 ---------- */
+test('v2.8-C：design-grid rAF ping-pong 自动滚动（40px/s，暂停/恢复门控）', () => {
+  const js = read('js/main.js');
+  const jsNoComment = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+  assert.ok(/initDesignAutoScroll/.test(jsNoComment), '缺 initDesignAutoScroll');
+  assert.ok(/SPEED = 40/.test(jsNoComment), '速度应约 40px/s');
+  assert.ok(/requestAnimationFrame\(tick\)/.test(jsNoComment), '缺 rAF 循环');
+  assert.ok(/dir = -1/.test(jsNoComment) && /dir = 1/.test(jsNoComment), '缺 ping-pong 反向');
+  assert.ok(/mouseenter/.test(jsNoComment), '缺 hover 暂停');
+  assert.ok(/focusin/.test(jsNoComment), '缺 focus 暂停');
+  assert.ok(/touchstart/.test(jsNoComment), '缺触摸暂停');
+  assert.ok(/hold\(3000\)/.test(jsNoComment), '缺离开 3s 恢复');
+  assert.ok(/prefers-reduced-motion/.test(jsNoComment), '缺 reduced-motion 门控');
+  assert.ok(/byHook\('design-grid'\)/.test(jsNoComment), '应按 hook 取 grid（重渲染不缓存死节点）');
+});
+
+/* ---------- v2.8-D：浮动按钮图标版 ---------- */
+test('v2.8-D：float-controls 为 inline SVG 图标（地球仪 + 半黑半白圆），无文字', () => {
+  for (const p of PAGES) {
+    const html = read(p);
+    const m = html.match(/<div class="float-controls">([\s\S]*?)<\/div>/);
+    assert.ok(m, p + ' 缺 .float-controls');
+    assert.ok(/data-icon="globe"/.test(m[1]), p + ' 缺地球仪图标');
+    assert.ok(/data-icon="half"/.test(m[1]), p + ' 缺半黑半白圆图标');
+    /* 去掉标签/属性后不应残留中/EN 文字（title/aria-label 属性里的不算） */
+    var textOnly = m[1].replace(/<[^>]*>/g, '');
+    assert.ok(!/中|EN/.test(textOnly), p + ' 浮动按钮内残留中/EN 文字：' + textOnly.trim());
+    assert.ok(/data-js="lang-toggle"/.test(m[1]), p + ' 语言按钮缺 data-js');
+    assert.ok(/data-js="theme-toggle"/.test(m[1]), p + ' 主题按钮缺 data-js');
+    assert.ok(/aria-label="/.test(m[1]), p + ' 缺 aria-label');
+    assert.ok(/title="/.test(m[1]), p + ' 缺 title 提示');
+  }
+  const i18n = read('js/i18n.js');
+  assert.ok(/svg\[data-icon\]/.test(i18n), 'i18n syncToggle 缺图标 guard（SVG 会被 wipe）');
+  const css = read('css/layout.css');
+  assert.ok(/\.float-controls svg/.test(css), 'CSS 缺 float-controls svg 尺寸规则');
+});
+
+/* ---------- v2.8-E：筛选栏全视口通栏 ---------- */
+test('v2.8-E：#photography/#design 的 .filter 全视口通栏', () => {
+  const css = read('css/layout.css');
+  assert.ok(/#photography \.filter/.test(css), '缺 #photography .filter 通栏规则');
+  assert.ok(/#design \.filter/.test(css), '缺 #design .filter 通栏规则');
+  assert.ok(/width: 100vw/.test(css), '缺 100vw');
+  assert.ok(/calc\(50% - 50vw\)/.test(css), '缺全宽突破 margin');
+  assert.ok(/padding-inline: max\(20px, 6vw\)/.test(css), '按钮内侧缺 padding');
+});
+
+/* ---------- v2.8-F：about + contact 合并模块 ---------- */
+test('v2.8-F：index.html about-contact 合并结构', () => {
+  const html = read('index.html');
+  assert.ok(/<section class="section about-contact" id="about">/.test(html), '缺合并 section');
+  assert.ok(/class="about-contact-grid"/.test(html), '缺两栏 grid');
+  assert.ok(/class="about-contact-left"/.test(html), '缺左栏');
+  assert.ok(/<div class="about-contact-right" id="contact"/.test(html), '右栏缺 id="contact" 锚点');
+  assert.ok(/about-hero-img/.test(html), '左栏缺照片');
+  assert.ok(/data-i18n="about\.p1"/.test(html) && /data-i18n="about\.p3"/.test(html), '左栏缺人物介绍三段');
+  /* 旧独立 section 已移除 */
+  assert.ok(!/class="section contact-cta"/.test(html), '旧 contact section 未移除');
+  assert.ok(!/class="about-screen2"/.test(html), '旧 about-screen2 未移除');
+});
+
+test('v2.8-F：合并模块留言表单（姓名/邮箱/留言 + mailto）', () => {
+  const html = read('index.html');
+  const m = html.match(/<div class="about-contact-right" id="contact"[\s\S]*?<\/form>/);
+  assert.ok(m, '右栏缺表单');
+  assert.ok(/data-i18n="contact\.name"/.test(m[0]), '缺姓名');
+  assert.ok(/data-i18n="contact\.email"/.test(m[0]), '缺邮箱');
+  assert.ok(/data-i18n="contact\.msg"/.test(m[0]), '缺留言');
+  assert.ok(/data-i18n="contact\.send"/.test(m[0]), '缺发送按钮');
+  assert.ok(/data-js="inquiry-form"/.test(m[0]), '缺 inquiry-form hook');
+  /* 内联脚本：校验 + mailto */
+  assert.ok(/mailto:akacristi@gmail\.com\?subject=/.test(html), '缺 mailto 提交逻辑');
+  assert.ok(/EMAIL_RE/.test(html), '缺邮箱格式校验');
+});
+
+test('v2.8-F：导航 关于→#about / 联系→#contact（index.html 桌面+移动）', () => {
+  const html = read('index.html');
+  assert.equal((html.match(/href="#about"/g) || []).length, 2, '桌面+移动导航 关于 应各 1 个 #about');
+  assert.equal((html.match(/href="#contact"/g) || []).length, 2, '桌面+移动导航 联系 应各 1 个 #contact');
+  assert.ok(!/href="about\.html"/.test(html), 'index.html 残留 about.html 链接');
+  assert.ok(!/href="contact\.html"/.test(html), 'index.html 残留 contact.html 链接');
+  /* about.html / contact.html 独立页不动 */
+  assert.ok(/id="contact"|<\/form>/.test(read('contact.html')), 'contact.html 独立页被动了');
+});
+
+test('v2.8-F：about-contact 两栏 CSS（桌面两栏/移动堆叠/#contact 锚点偏移）', () => {
+  const css = read('css/pages.css');
+  assert.ok(/\.about-contact-grid/.test(css), '缺 .about-contact-grid');
+  assert.ok(/grid-template-columns: 1\.1fr 1fr/.test(css), '缺桌面两栏');
+  assert.ok(/#contact\s*\{\s*scroll-margin-top/.test(css), '缺 #contact 锚点偏移');
 });

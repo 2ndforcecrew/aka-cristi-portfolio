@@ -30,12 +30,12 @@
   gap: 22px;
   white-space: nowrap;
 }
-/* v2.7：实心字（空心描边在 difference 透镜下镂空处闪紫，已投诉），字号略降 */
+/* v2.8：字号再降一档（用户：黑底白字滚动字号再小点） */
 .mq-zh,
 .mq-en {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(24px, 3.4vw, 52px);
+  font-size: clamp(18px, 2.6vw, 40px);
   letter-spacing: .04em;
   line-height: 1;
   color: var(--paper);   /* 实心：随深色模式自动反转（白条黑字/黑条白字） */
@@ -45,9 +45,9 @@
   letter-spacing: .06em;
 }
 .mq-sep {
-  font-size: clamp(14px, 1.5vw, 22px);
+  font-size: clamp(10px, 1.1vw, 17px);
   color: var(--paper);
-  margin-inline: clamp(24px, 3.5vw, 56px);
+  margin-inline: clamp(18px, 2.6vw, 42px);
   user-select: none;
 }
 /* 反色透镜：方形，呼应站内方形光标；只在细指针设备出现 */

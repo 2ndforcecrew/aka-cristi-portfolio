@@ -103,6 +103,7 @@ svg 占位图保持原样。
   active 时 `play()`（promise catch）、其余 `pause()`、`document.hidden` 全停、
   reduced-motion 只留 poster；`HERO_WORKS` 取 `['photo','video']`，摄影网格仍只取 photo；
   poster 有 jpg + webp（ImageTrail 的 `.jpg→.webp` 替换可直接用）。
+  **v2.8-A**：轮播图全部 `eager`（v2.7 视频上位第 0 位后曾因 `i===0` 致全图 lazy 全黑，已修）。
   section 高 n*100vh，`.hero-pin` sticky 锁 100vh；
   `.hero-track-txt`（文字 slide，倒序 [5..0]，透明，只含 topline + textgroup）位移
   `translateY(-(1-p)*total)`，滚轮往下时文字往下走（反向），在固定视口位置一张张经过；
@@ -128,7 +129,8 @@ svg 占位图保持原样。
   品牌设计 BRAND DESIGN ✦ 画册设计 BROCHURE DESIGN ✦ 包装设计 PACKAGING DESIGN ✦
   展览设计 EXHIBITION DESIGN`（v2.4：中英同尺寸空心描边小字，`clamp(28px,4vw,64px)` +
   `-webkit-text-stroke: 1.5px`；**v2.7-A 改实心** `color: var(--paper)` 去描边，
-  字号略降 `clamp(24px,3.4vw,52px)`——空心字在 difference 透镜镂空处闪紫，被投诉）；JS rAF 驱动（两组序列无缝循环）；
+  字号略降 `clamp(24px,3.4vw,52px)`——空心字在 difference 透镜镂空处闪紫，被投诉；
+  **v2.8-B 再降** `clamp(18px,2.6vw,40px)`，分隔符等比缩小 `clamp(10px,1.1vw,17px)`）；JS rAF 驱动（两组序列无缝循环）；
   速度 = `70px/s + 平滑滚动速度*4`（lerp 0.08，上滚反转方向，轻微 `skewX` 随速度 ±8°）；
   hover 210px/s 加速已删（与速度模型冲突）；方形反色透镜保留
   （`mix-blend-mode: difference` 白方块 170px，lerp 缓动）；细指针限定，reduced-motion 静止。
@@ -146,14 +148,26 @@ svg 占位图保持原样。
   条目 `分类 / 序号`（10px mono）+ 标题 + 年份；分类切换用 display:none（禁 fade filter）。
 - **design-grid**（v2.4：横向滚动单排）：`display:flex; overflow-x:auto`（滚动条隐藏但可滚），
   每项 `flex: 0 0 clamp(260px,32vw,420px)`（移动端 72vw），全宽条带，缩略图统一 `3/4`；
-  旧 span/ratio 类保留（JS 仍加，无害）。
+  旧 span/ratio 类保留（JS 仍加，无害）。**v2.8-C**：rAF ping-pong 自动滚动约 40px/s
+  （到头反向；hover/focus/触摸/手动滚暂停，离 3s 恢复；`prefers-reduced-motion` 不滚；
+  每帧按 hook 取当前 grid，筛选重渲染不缓存死节点；IntersectionObserver 屏外停跑）。
+- **筛选栏**（v2.8-E）：`#photography` / `#design` 的 `.filter[role=tablist]` 打破 `.container`
+  限宽，全视口通栏（`100vw` + `calc(50% - 50vw)`，按钮内侧 `padding-inline: max(20px,6vw)`），tab 样式不变。
+- **about-contact 合并模块**（v2.8-F，index.html）：`#about` + `#contact` 并成
+  `<section id="about" class="about-contact">`，`.about-contact-grid` 两栏
+  （桌面 `1.1fr 1fr`，移动堆叠）；左：`about-word` + bw-01 照片 + `about-long` 三段；
+  右（`id="contact"` 锚点，`scroll-margin-top: 96px`）：留言表单（姓名/邮箱/留言三底线输入 +
+  发送按钮，复用 contact.html 校验→mailto 逻辑）；导航 关于→`#about` / 联系→`#contact`
+  （about.html / contact.html 独立页不动）。
 - **vertical-names**：版块间呼吸口。5 列描边 `AKA.CRISTI`（纸底 `-webkit-text-stroke: 1px #b7b7b7`，
   深色带 `rgba(255,255,255,.14)`），每列不同速度/负延迟竖向漂移（18/23/20/26/21s，alternate 往返），
   慢速不抢戏。statement 区用其做背景（opacity .55）。
 - **编号体系**：sec-head 右侧 `01 / 06` 式索引（mono 10px #8A8A8A）；
   photography 配 `ARCHIVE / 2023—2025` 馆藏标签（由 data.js 年份计算），design 配 `ARCHIVE / 06 PROJECTS`；
   about `04 / 06`、contact `05 / 06`、footer `06 / 06 — Colophon`；10px mono 微标签全站统一。
-- **contact-cta**：`START A PROJECT` 黑底白字 16px 32px；hover 反转为透明底 + 1px ink 描边 + ink 字。
+- **contact 表单**（contact.html 独立页 + v2.8-F 起 index 合并模块右栏）：底线式输入
+  （姓名/邮箱/留言；独立页另有项目类型字段），前端校验 → 拼 `mailto:akacristi@gmail.com` →
+  `location.href`；发送按钮 `.form-submit.magnet`。
 - **footer**：#0A0A0A 底，文字 paper，hover frost。
 - **project.html（AKA_PROJECT_HERO，非自动轮播）**：全幅 hero 图 + `PROJECT` / `N°序号`
   （data.js 顺序）/ 大标题 / 年份 / 分类 / scroll cue；复用 hero.css 的 7 层类与
@@ -221,7 +235,7 @@ svg 占位图保持原样。
   改为视口右侧固定浮动按钮组 `.float-controls`（`position: fixed; right: 18px; top: 50%`，
   纵向排列；44px 方形/移动端 36px，radius 2px，1px ink 边框，paper 底；
   z-index 150：内容/导航之上，移动菜单 overlay(200)/转场(9999)/光标(10001)之下；
-  语言按钮「中/EN」纵向堆叠；沿用 `data-js` 绑定，`js/theme.js`/`js/i18n.js` 无需改动；
+  语言按钮「中/EN」纵向堆叠；**v2.8-D 改图标版**：地球仪（语言）+ 半黑半白圆（主题）\n  inline SVG，`stroke="currentColor"` 随主题反色；`i18n.js syncToggle` 加 `svg[data-icon]`\n  guard（否则重写 innerHTML 会 wipe 图标）；沿用 `data-js` 绑定，`js/theme.js` 无需改动；
   hero 左右箭头对称内移避让）；各页 `<head>` 内联防闪烁脚本；
   深色下笔触 LOGO `filter: invert(1)`；转场面板恒黑（`#0A0A0A`）；跑马灯自动反转为白条黑字。
 
@@ -252,7 +266,8 @@ svg 占位图保持原样。
   `description`（中）/`descEn`（英）按语言选用。
 - 切换按钮（**v2.7-A 起**）：四页各一个 `.float-controls` 浮动组（含
   `<button class="lang-toggle" data-js="lang-toggle">` + `<button class="theme-toggle" data-js="theme-toggle">`），
-  显示 `中 / EN`（纵向堆叠，当前高亮），mono 小字无 pill；JS 按 `data-js` 统一绑定（原 header/移动菜单内的按钮已移除）。
+  **v2.8-D** 显示图标（地球仪 + 半黑半白圆 inline SVG）替代「中 / EN」文字；
+  JS 按 `data-js` 统一绑定（原 header/移动菜单内的按钮已移除）。
 - 中文字体：系统 fallback（`--font-body` 已含 PingFang TC / Noto Sans TC / Microsoft JhengHei），
   不引入外部字体。HTML 静态默认英文（无 JS 时完整可读），`applyStatic` 在 DOMContentLoaded 即转中文。
 

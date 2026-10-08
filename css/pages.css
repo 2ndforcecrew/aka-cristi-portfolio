@@ -333,6 +333,25 @@ html, body {
 }
 
 /* ============================================================
+ * v2.8 ABOUT + CONTACT 合并模块：左=照片+人物介绍，右=留言区
+ * 黑白杂志风两栏；移动端堆叠。#contact 锚点留 scroll-margin 避开固定 header。
+ * ============================================================ */
+.about-contact-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(40px, 6vw, 96px);
+  margin-top: var(--space-6);
+  align-items: start;
+}
+.about-contact-left .about-word { margin-bottom: var(--space-5); }
+.about-contact-left picture { display: block; margin-bottom: var(--space-6); }
+.about-contact-left .about-hero-img { width: 100%; }
+#contact { scroll-margin-top: 96px; }
+@media (max-width: 860px) {
+  .about-contact-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
  * CONTACT — 表单（底线式输入）
  * ============================================================ */
 .contact-title {
