@@ -688,3 +688,10 @@ test('hero 图片层：交叉淡入由 scroll 按帧驱动，不走 timeline', (
   assert.ok(/window\.setTimeout\(function \(\) \{ awrap\.classList\.add\('in'\); \}, 60\)/.test(src),
     'A 水印应用独立 setTimeout 点亮（不进 timeline 状态池）');
 });
+
+/* ---------- 40. v2.5.1 回归：深色主题下 is-light 仍用固定墨色 ---------- */
+test('深色主题 is-light：文字/dots/进度条钉死 #0A0A0A（不跟随 --ink 反转）', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'css/hero.css'), 'utf8');
+  assert.ok(css.includes('html[data-theme="dark"] .hero.is-light'),
+    '缺深色主题 is-light 覆盖规则（浅色照片上白字不可读）');
+});

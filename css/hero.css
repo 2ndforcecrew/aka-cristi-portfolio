@@ -138,6 +138,13 @@
 .hero.is-light .hero-dots button:hover { background-color: rgba(10, 10, 12, .7); background-clip: content-box; }
 .hero.is-light .hero-dots button.is-active { background-color: var(--ink); background-clip: content-box; }
 .hero.is-light .hero-progress i { background: var(--ink); }
+/* v2.5.1：is-light 针对的是浅色照片（与页面主题无关），深色主题下仍钉死墨色，
+   否则 var(--ink) 被反转为纸白，浅色照片上白字不可读 */
+html[data-theme="dark"] .hero.is-light .hero-textgroup,
+html[data-theme="dark"] .hero.is-light .hero-topline,
+html[data-theme="dark"] .hero.is-light .scroll-indicator { color: #0A0A0A; }
+html[data-theme="dark"] .hero.is-light .hero-dots button.is-active { background-color: #0A0A0A; }
+html[data-theme="dark"] .hero.is-light .hero-progress i { background: #0A0A0A; }
 [data-layer="a"] svg {
   width: 100%;
   height: auto;
