@@ -46,9 +46,9 @@
   gap: var(--space-5);
 }
 .site-nav a {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: var(--label-size);
+  font-family: var(--font-display); /* v2.1：无衬线粗体 */
+  font-weight: 700;
+  font-size: 15px; /* v2.1：导航字号加大（原 12px label） */
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--ink);

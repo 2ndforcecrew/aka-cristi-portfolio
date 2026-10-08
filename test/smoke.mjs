@@ -565,10 +565,12 @@ test('i18n：cat/city 映射 + 未知值原样返回', () => {
   assert.equal(i18n.city('HONG KONG'), '香港');
   assert.equal(i18n.city('—'), '—');
   i18n.setLang('en');
+  assert.equal(i18n.t('nav.home'), 'Home');
   assert.equal(i18n.cat('FASHION'), 'FASHION');
   assert.equal(i18n.city('SHANGHAI'), 'SHANGHAI');
   assert.equal(i18n.t('nav.work'), 'Work');
   i18n.setLang('zh');
+  assert.equal(i18n.t('nav.home'), '首页');
   assert.equal(i18n.t('nav.work'), '作品');
   assert.equal(i18n.t('no.such.key'), 'no.such.key');
 });

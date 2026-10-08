@@ -27,7 +27,7 @@
   /* ---------- 字典（zh/en key 必须完全对应，smoke 校验） ---------- */
   var DICT = {
     zh: {
-      'nav.work': '作品', 'nav.photo': '摄影', 'nav.design': '设计',
+      'nav.home': '首页', 'nav.work': '作品', 'nav.photo': '摄影', 'nav.design': '设计',
       'nav.about': '关于', 'nav.contact': '联系', 'nav.close': '关闭',
       'hero.scroll': '滚动<br>↓',
       'hero.view': '查看项目 →',
@@ -65,7 +65,7 @@
       'filter.all': '全部'
     },
     en: {
-      'nav.work': 'Work', 'nav.photo': 'Photography', 'nav.design': 'Design',
+      'nav.home': 'Home', 'nav.work': 'Work', 'nav.photo': 'Photography', 'nav.design': 'Design',
       'nav.about': 'About', 'nav.contact': 'Contact', 'nav.close': 'Close',
       'hero.scroll': 'Scroll<br>↓',
       'hero.view': 'VIEW PROJECT →',

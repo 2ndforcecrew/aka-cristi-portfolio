@@ -118,7 +118,7 @@
 [data-layer="meta"] {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: var(--label-size);
+  font-size: 13px; /* v2.1：面板 label 加大（原 12px） */
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
 }
@@ -127,7 +127,7 @@
 [data-layer="title"] {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(40px, 5.4vw, 92px); /* 半幅面板，字号按 50vw 校准 */
+  font-size: clamp(52px, 7vw, 120px); /* v2.1：半幅面板字号加大 */
   line-height: .92;
   letter-spacing: -.04em;
   text-transform: uppercase;
@@ -136,10 +136,10 @@
 [data-layer="title-en"] { color: var(--gray-700); margin-bottom: 22px; }
 [data-layer="desc"] {
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 17px; /* v2.1：加大 */
   line-height: 1.8;
   color: var(--gray-700);
-  max-width: 38ch;
+  max-width: 42ch;
   margin-bottom: 26px;
 }
 [data-layer="meta"] { color: var(--gray-500); margin-bottom: 30px; }

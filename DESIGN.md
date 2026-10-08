@@ -90,7 +90,8 @@ svg 占位图保持原样。
 
 - 圆角只有 0px（品牌默认）/ 2px（头像、小标签）/ 4px（一般 UI 上限）。**禁止 pill（999px）**。
 - **header**：72–80px（手机 60–64px），左 A 标（20px 高 img）+ AKA.CRISTI 字标，
-  右 nav（mono label，hover 1px 下划线），底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
+  右 nav（**无衬线粗体** font-display 700 / 15px，hover 1px 下划线；v2.1 起含 HOME），
+  底部 1px #D9D9D9，无 shadow/blur/glass/gradient。
 - **hero（v2.0：50/50 split-screen）**：左半图片（50%×100vh）/ 右半纸色文字面板
   （50%×100vh）；滚轮驱动两半**反向运动**（图上 / 文下），过渡中每半都是一半一半；
   移动端（≤768px）两半上下堆叠（图 52% / 文 48%），同向运动。
