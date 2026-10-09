@@ -55,21 +55,21 @@
       p = Math.max(0, Math.min(1, p));
 
       var f = p * (n - 1);
-      var fi = Math.floor(f);
-      var frac = f - fi;
 
       for (var i = 0; i < n; i++) {
         var s = slides[i];
-        var o;
-        if (f <= 0) o = (i === 0) ? 1 : 0;
-        else if (f >= n - 1) o = (i === n - 1) ? 1 : 0;
-        else if (i === fi) o = 1 - frac;
-        else if (i === fi + 1) o = frac;
-        else o = 0;
+        /* v2.9.11：上滑出現（非漸隱） */
+        var offset = (i - f) * 100;
+        s.style.transform = 'translateY(' + offset.toFixed(2) + '%)';
+        s.style.visibility = (offset > -100 && offset < 100) ? 'visible' : 'hidden';
+        s.style.zIndex = 1;
 
-        s.style.opacity = o.toFixed(4);
-        s.style.visibility = o > 0.01 ? 'visible' : 'hidden';
-        s.style.zIndex = (i === fi || i === fi + 1) ? 1 : 0;
+        /* 文字視差延遲：動得比圖片慢 0.7x，先出圖後出字 */
+        var cap = s.querySelector('.carousel-caption');
+        if (cap) {
+          var textOffset = offset * 0.7;
+          cap.style.transform = 'translateY(' + textOffset.toFixed(2) + '%)';
+        }
       }
 
       var activeIdx = Math.round(f);

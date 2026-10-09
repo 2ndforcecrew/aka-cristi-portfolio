@@ -18,7 +18,7 @@
   overflow: hidden;
 }
 
-/* slides 疊放：scroll 驅動 crossfade（v2.9.10 sticky 敘事，無放大） */
+/* slides：上滑出現（v2.9.11），無漸隱 */
 .carousel-slides {
   position: absolute;
   inset: 0;
@@ -30,14 +30,15 @@
 .carousel-slide {
   position: absolute;
   inset: 0;
-  opacity: 0;
   visibility: hidden;
-  z-index: 0;
-  /* opacity 由 JS 按 scroll 直接寫 */
+  z-index: 1;
+  /* transform 由 JS 按 scroll 直接寫 */
+  will-change: transform;
 }
 
-.carousel-slide.is-active {
-  z-index: 1;
+/* 文字：JS 寫 parallax 延遲位移 */
+.carousel-caption {
+  will-change: transform;
 }
 
 /* 媒體：原尺寸，無放大 */
@@ -177,21 +178,7 @@
   letter-spacing: 0.18em;
 }
 
-/* 標題飛入逐子顯示 */
-.carousel-caption > * {
-  opacity: 0;
-  transform: translateX(90px);
-  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
-}
-
-.carousel-slide.is-active .carousel-caption > *:nth-child(1) { transition-delay: 150ms; }
-.carousel-slide.is-active .carousel-caption > *:nth-child(2) { transition-delay: 230ms; }
-.carousel-slide.is-active .carousel-caption > *:nth-child(3) { transition-delay: 310ms; }
-
-.carousel-slide.is-active .carousel-caption > * {
-  opacity: 1;
-  transform: translateX(0);
-}
+/* v2.9.11：文字位移由 JS 驅動（視差延遲），移除飛入 stagger */
 
 /* reduced motion：直接切換無滑動 */
 @media (prefers-reduced-motion: reduce) {
