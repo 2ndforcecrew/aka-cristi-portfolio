@@ -217,7 +217,7 @@
         render();
         /* 停止舊 slide 的時間軸 */
         stopHeroTimeline(slides[from]);
-        stopWawaMaskOff(slides[from]);
+
         /* 新 slide 打字機 + 自動播放 */
         startTypewriter(slides[current]);
         startAutoplay();
@@ -225,9 +225,7 @@
         if (slides[current].classList.contains('hero-video')) {
           startHeroTimeline(slides[current]);
         }
-        if (slides[current].classList.contains('mask-dark')) {
-          startWawaMaskOff(slides[current]);
-        }
+        /* WAWA：常駐文字遮罩，不關（v2.9.28） */
         inSlide.classList.add('is-active');
         slides[from].classList.remove('is-active');
       }, 650);
@@ -454,7 +452,7 @@
     startTypewriter(slides[0]);
     startAutoplay();
     if (heroSlide && slides[0] === heroSlide) startHeroTimeline(slides[0]);
-    if (slides[0].classList.contains('mask-dark')) startWawaMaskOff(slides[0]);
+
     slides[0].classList.add('is-active');
   }
 
