@@ -244,31 +244,61 @@
   position: absolute;
   inset: 0;
 }
-/* v2.9.24: 雙層 — 打字機打完關遮罩 */
-.carousel-slide.text-mask-slide .full-video {
+/* v2.9.26: Hero Video — 深色底 + 文字遮罩 + 字母散開 + Parallax */
+.carousel-slide.hero-video {
+  background: #0A0A0A;
+}
+.carousel-slide.hero-video .carousel-media {
+  position: absolute;
+  inset: 0;
+}
+.carousel-slide.hero-video .mask-bg {
+  position: absolute;
+  inset: 0;
+  background: #0A0A0A;
+  z-index: 0;
+}
+.carousel-slide.hero-video .full-video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 800ms ease;
+  transition: opacity 1s ease;
   z-index: 1;
 }
-.carousel-slide.text-mask-slide.mask-off .full-video {
+.carousel-slide.hero-video.mask-off .full-video {
   opacity: 1;
 }
-.carousel-slide.text-mask-slide .mask-svg {
+.carousel-slide.hero-video .mask-parallax {
   position: absolute;
-  inset: 0;
+  inset: -30px;
+  z-index: 2;
+  will-change: transform;
+}
+.carousel-slide.hero-video .mask-svg {
   width: 100%;
   height: 100%;
-  z-index: 2;
-  transition: opacity 500ms ease;
+  display: block;
+  transition: opacity 1s ease;
 }
-.carousel-slide.text-mask-slide.mask-off .mask-svg {
+.carousel-slide.hero-video.mask-off .mask-svg {
   opacity: 0;
   pointer-events: none;
+}
+.carousel-slide.hero-video.scatter .river-letter {
+  animation: heroScatter 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes heroScatter {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; filter: blur(0px); }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; filter: blur(12px); }
+}
+.carousel-slide.hero-video .carousel-caption h2 { display: none; }
+.carousel-slide.hero-video .carousel-caption {
+  left: 50%; right: auto; top: auto; bottom: var(--space-6);
+  transform: translateX(-50%); text-align: center;
+  color: #FAFAF8; max-width: 720px; z-index: 3;
 }
 .carousel-slide.text-mask-slide .carousel-caption h2 {
   display: none; /* 標題已在 mask 形狀中 */

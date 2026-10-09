@@ -57,7 +57,7 @@
     }
     function startTypewriter(slide) {
       clearTypeTimers();
-      var isMask = slide.classList.contains('text-mask-slide');
+      var isMask = slide.classList.contains('text-mask-slide') || slide.classList.contains('hero-video');
       var h2 = slide.querySelector('h2');
       var p = slide.querySelector('.carousel-caption > p:last-child');
       if (!h2) return;
@@ -215,15 +215,15 @@
       setTimeout(function () {
         animating = false;
         render();
-        /* 停止舊 slide 的遮罩計時 */
-        stopMaskTypewriter(slides[from]);
+        /* 停止舊 slide 的時間軸 */
+        stopHeroTimeline(slides[from]);
         stopWawaMaskOff(slides[from]);
         /* 新 slide 打字機 + 自動播放 */
         startTypewriter(slides[current]);
         startAutoplay();
         /* 如果是第一張（RIVER），啟動字母散開 */
-        if (slides[current].classList.contains('text-mask-slide') && !slides[current].classList.contains('mask-dark')) {
-          startMaskTypewriter(slides[current]);
+        if (slides[current].classList.contains('hero-video')) {
+          startHeroTimeline(slides[current]);
         }
         if (slides[current].classList.contains('mask-dark')) {
           startWawaMaskOff(slides[current]);
@@ -233,8 +233,24 @@
       }, 650);
     }
 
-    /* 文字遮罩：RIVER LEVIATHAN 打字機逐字出現，打完關遮罩（v2.9.24） */
-    function buildRiverMask(slide) {
+    /* Hero Video：字母散開方向（v2.9.26） */
+    var HERO_SCATTER = [
+      { dx: '-320px', dy: '-220px', r: '-35deg' },
+      { dx: '-140px', dy: '-280px', r: '-12deg' },
+      { dx: '60px',   dy: '-300px', r: '8deg' },
+      { dx: '240px',  dy: '-240px', r: '22deg' },
+      { dx: '380px',  dy: '-160px', r: '38deg' },
+      { dx: '-360px', dy: '180px',  r: '-28deg' },
+      { dx: '-200px', dy: '260px',  r: '-15deg' },
+      { dx: '-40px',  dy: '300px',  r: '-5deg' },
+      { dx: '120px',  dy: '290px',  r: '10deg' },
+      { dx: '280px',  dy: '230px',  r: '25deg' },
+      { dx: '-280px', dy: '120px',  r: '-20deg' },
+      { dx: '360px',  dy: '140px',  r: '30deg' },
+      { dx: '-120px', dy: '-180px', r: '-18deg' },
+      { dx: '180px',  dy: '-200px', r: '18deg' },
+    ];
+    function buildHeroMask(slide) {
       var h2 = slide.querySelector('h2');
       if (!h2) return;
       var text = (h2.getAttribute('data-text') || h2.textContent).trim();
@@ -247,52 +263,64 @@
         lines = [text.replace(/\s+/g, '')];
       }
       var textEls = slide.querySelectorAll('#river-clip text');
+      var di = 0;
       for (var li = 0; li < textEls.length && li < lines.length; li++) {
-        var line = lines[li];
-        var tspanHtml = '';
-        for (var ci = 0; ci < line.length; ci++) {
-          tspanHtml += '<tspan class="river-letter" style="display:none">' +
-            line.charAt(ci).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</tspan>';
+        var html = '';
+        for (var ci = 0; ci < lines[li].length; ci++) {
+          var d = HERO_SCATTER[di % HERO_SCATTER.length];
+          html += '<tspan class="river-letter" style="--dx:' + d.dx + ';--dy:' + d.dy + ';--r:' + d.r + '">' +
+            lines[li].charAt(ci).replace(/&/g, '&amp;') + '</tspan>';
+          di++;
         }
-        textEls[li].innerHTML = tspanHtml;
+        textEls[li].innerHTML = html;
       }
     }
-    /* 打字機時間軸：逐字出現 → 打完關遮罩 → 全片播放 */
-    var maskTimers = [];
-    function startMaskTypewriter(slide) {
-      for (var t = 0; t < maskTimers.length; t++) clearTimeout(maskTimers[t]);
-      maskTimers = [];
-      slide.classList.remove('scatter', 'scatter-done', 'mask-off');
-      var letters = slide.querySelectorAll('.river-letter');
-      /* 重置：全部隱藏 */
-      for (var i = 0; i < letters.length; i++) letters[i].style.display = 'none';
-      var fullVid = slide.querySelector('.full-video');
+    /* Hero 時間軸：0-3s 遮罩 → 3-4.5s 散開 → 4.5s 全片 */
+    var heroTimers = [];
+    function startHeroTimeline(slide) {
+      for (var t = 0; t < heroTimers.length; t++) clearTimeout(heroTimers[t]);
+      heroTimers = [];
+      slide.classList.remove('scatter', 'mask-off');
       var maskSvg = slide.querySelector('.mask-svg');
-      if (maskSvg) { maskSvg.style.display = ''; maskSvg.style.opacity = '1'; }
-      if (fullVid) fullVid.style.opacity = '0';
-      /* 逐字打出 */
-      var idx = 0;
-      function typeNext() {
-        if (idx < letters.length) {
-          letters[idx].style.display = 'inline';
-          idx++;
-          maskTimers.push(setTimeout(typeNext, 110));
-        } else {
-          /* 打完立刻關遮罩 */
-          maskTimers.push(setTimeout(function () {
-            slide.classList.add('mask-off');
-            maskTimers.push(setTimeout(function () {
-              if (maskSvg) maskSvg.style.display = 'none';
-            }, 900));
-          }, 400));
-        }
+      if (maskSvg) { maskSvg.style.display = ''; }
+      /* 雙視頻同步 */
+      var fullVid = slide.querySelector('.full-video');
+      var maskVid = slide.querySelector('.mask-svg video');
+      if (fullVid && maskVid) {
+        try { fullVid.currentTime = maskVid.currentTime || 0; } catch (e) {}
       }
-      maskTimers.push(setTimeout(typeNext, 300));
+      heroTimers.push(setTimeout(function () {
+        slide.classList.add('scatter'); /* 3s：字母散開 */
+      }, 3000));
+      heroTimers.push(setTimeout(function () {
+        slide.classList.add('mask-off'); /* 4.5s：全片 */
+        heroTimers.push(setTimeout(function () {
+          if (maskSvg) maskSvg.style.display = 'none';
+        }, 1100));
+      }, 4500));
     }
-    function stopMaskTypewriter(slide) {
-      for (var t = 0; t < maskTimers.length; t++) clearTimeout(maskTimers[t]);
-      maskTimers = [];
-      if (slide) slide.classList.remove('scatter', 'scatter-done', 'mask-off');
+    function stopHeroTimeline(slide) {
+      for (var t = 0; t < heroTimers.length; t++) clearTimeout(heroTimers[t]);
+      heroTimers = [];
+      if (slide) slide.classList.remove('scatter', 'mask-off');
+    }
+    /* Mouse Parallax（v2.9.26） */
+    function initParallax(root, slide) {
+      var layer = slide.querySelector('.mask-parallax');
+      var fullVid = slide.querySelector('.full-video');
+      if (!layer) return;
+      var raf = null;
+      root.addEventListener('mousemove', function (e) {
+        if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = null;
+          var r = root.getBoundingClientRect();
+          var nx = (e.clientX - r.left) / r.width - 0.5;
+          var ny = (e.clientY - r.top) / r.height - 0.5;
+          layer.style.transform = 'translate(' + (-nx * 40).toFixed(1) + 'px,' + (-ny * 40).toFixed(1) + 'px)';
+          if (fullVid) fullVid.style.transform = 'translate(' + (nx * 20).toFixed(1) + 'px,' + (ny * 20).toFixed(1) + 'px) scale(1.05)';
+        });
+      });
     }
     /* WAWA：3秒後關遮罩（v2.9.25） */
     var wawaTimers = [];
@@ -418,11 +446,14 @@
     /* 初始 */
     render();
     /* 第一張：構建 RIVER 字母遮罩 */
-    var maskSlide = root.querySelector('.text-mask-slide:not(.mask-dark)');
-    if (maskSlide) buildRiverMask(maskSlide);
+    var heroSlide = root.querySelector('.hero-video');
+    if (heroSlide) {
+      buildHeroMask(heroSlide);
+      initParallax(root, heroSlide);
+    }
     startTypewriter(slides[0]);
     startAutoplay();
-    if (maskSlide && slides[0] === maskSlide) startMaskTypewriter(slides[0]);
+    if (heroSlide && slides[0] === heroSlide) startHeroTimeline(slides[0]);
     if (slides[0].classList.contains('mask-dark')) startWawaMaskOff(slides[0]);
     slides[0].classList.add('is-active');
   }
