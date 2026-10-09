@@ -256,7 +256,9 @@
       var text = (h2.getAttribute('data-text') || h2.textContent).trim();
       var words = text.split(/\s+/);
       var lines;
-      if (words.length >= 2) {
+      if (text.indexOf('AKA.CRISTI') !== -1 || text.indexOf('AKA') !== -1) {
+        lines = ['AKA.', 'CRISTI'];
+      } else if (words.length >= 2) {
         var mid = Math.ceil(words.length / 2);
         lines = [words.slice(0, mid).join(''), words.slice(mid).join('')];
       } else {
