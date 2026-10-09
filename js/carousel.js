@@ -195,8 +195,9 @@
       setTimeout(function () {
         animating = false;
         render();
-        /* 新 slide 打字機 */
+        /* 新 slide 打字機 + 自動播放 */
         startTypewriter(slides[current]);
+        startAutoplay();
         inSlide.classList.add('is-active');
         slides[from].classList.remove('is-active');
       }, 650);
@@ -204,6 +205,38 @@
 
     function next() { return goTo(current + 1); }
     function prev() { return goTo(current - 1); }
+
+    /* 自動播放：視頻播完切下一個，圖片停 6 秒，最後一張停不循環（v2.9.19） */
+    var autoTimer = null;
+    function stopAutoplay() {
+      if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+      for (var i = 0; i < n; i++) {
+        var v = slides[i].querySelector('video');
+        if (v && slides[i]._autoEnded) {
+          v.removeEventListener('ended', slides[i]._autoEnded);
+          slides[i]._autoEnded = null;
+        }
+      }
+    }
+    function startAutoplay() {
+      stopAutoplay();
+      if (current >= n - 1) return; /* 最後一張：停，不循環 */
+      var slide = slides[current];
+      var vid = slide.querySelector('video');
+      if (vid) {
+        var onEnded = function () {
+          vid.removeEventListener('ended', onEnded);
+          slides[current]._autoEnded = null;
+          if (current < n - 1) goTo(current + 1);
+        };
+        slide._autoEnded = onEnded;
+        vid.addEventListener('ended', onEnded);
+      } else {
+        autoTimer = setTimeout(function () {
+          if (current < n - 1) goTo(current + 1);
+        }, 6000);
+      }
+    }
 
     /* 滾輪劫持：只切輪播，播完才放行頁面 */
     root.addEventListener('wheel', function (e) {
@@ -261,6 +294,7 @@
     /* 初始 */
     render();
     startTypewriter(slides[0]);
+    startAutoplay();
     slides[0].classList.add('is-active');
   }
 
