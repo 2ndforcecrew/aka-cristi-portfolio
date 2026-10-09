@@ -216,37 +216,20 @@
         animating = false;
         render();
         /* 停止舊 slide 的散開 */
-        stopScatter(slides[from]);
+        stopMaskTypewriter(slides[from]);
         /* 新 slide 打字機 + 自動播放 */
         startTypewriter(slides[current]);
         startAutoplay();
         /* 如果是第一張（RIVER），啟動字母散開 */
         if (slides[current].classList.contains('text-mask-slide') && !slides[current].classList.contains('mask-dark')) {
-          startScatter(slides[current]);
+          startMaskTypewriter(slides[current]);
         }
         inSlide.classList.add('is-active');
         slides[from].classList.remove('is-active');
       }, 650);
     }
 
-    /* 文字遮罩：RIVER LEVIATHAN 字母散開（v2.9.23） */
-    /* 每個字母的散開方向 */
-    var SCATTER_DIRS = [
-      { dx: '-320px', dy: '-220px', r: '-35deg' },  /* R */
-      { dx: '-140px', dy: '-280px', r: '-12deg' },  /* I */
-      { dx: '60px',   dy: '-300px', r: '8deg' },    /* V */
-      { dx: '240px',  dy: '-240px', r: '22deg' },   /* E */
-      { dx: '380px',  dy: '-160px', r: '38deg' },   /* R */
-      { dx: '-360px', dy: '180px',  r: '-28deg' },  /* L */
-      { dx: '-200px', dy: '260px',  r: '-15deg' },  /* E */
-      { dx: '-40px',  dy: '300px',  r: '-5deg' },   /* V */
-      { dx: '120px',  dy: '290px',  r: '10deg' },   /* I */
-      { dx: '280px',  dy: '230px',  r: '25deg' },   /* A */
-      { dx: '-280px', dy: '120px',  r: '-20deg' },  /* T */
-      { dx: '360px',  dy: '140px',  r: '30deg' },   /* H */
-      { dx: '-120px', dy: '-180px', r: '-18deg' },  /* A */
-      { dx: '180px',  dy: '-200px', r: '18deg' },   /* N */
-    ];
+    /* 文字遮罩：RIVER LEVIATHAN 打字機逐字出現，打完關遮罩（v2.9.24） */
     function buildRiverMask(slide) {
       var h2 = slide.querySelector('h2');
       if (!h2) return;
@@ -260,43 +243,52 @@
         lines = [text.replace(/\s+/g, '')];
       }
       var textEls = slide.querySelectorAll('#river-clip text');
-      var dirIdx = 0;
       for (var li = 0; li < textEls.length && li < lines.length; li++) {
         var line = lines[li];
         var tspanHtml = '';
         for (var ci = 0; ci < line.length; ci++) {
-          var d = SCATTER_DIRS[dirIdx % SCATTER_DIRS.length];
-          tspanHtml += '<tspan class="river-letter" style="--dx:' + d.dx + ';--dy:' + d.dy + ';--r:' + d.r + '">' +
+          tspanHtml += '<tspan class="river-letter" style="display:none">' +
             line.charAt(ci).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</tspan>';
-          dirIdx++;
         }
         textEls[li].innerHTML = tspanHtml;
       }
     }
-    /* 散開時間軸：2秒後字母散開，3.5秒後隱藏 SVG 層 */
-    var scatterTimers = [];
-    function startScatter(slide) {
-      for (var t = 0; t < scatterTimers.length; t++) clearTimeout(scatterTimers[t]);
-      scatterTimers = [];
-      slide.classList.remove('scatter', 'scatter-done');
-      /* 同步雙視頻 */
+    /* 打字機時間軸：逐字出現 → 打完關遮罩 → 全片播放 */
+    var maskTimers = [];
+    function startMaskTypewriter(slide) {
+      for (var t = 0; t < maskTimers.length; t++) clearTimeout(maskTimers[t]);
+      maskTimers = [];
+      slide.classList.remove('scatter', 'scatter-done', 'mask-off');
+      var letters = slide.querySelectorAll('.river-letter');
+      /* 重置：全部隱藏 */
+      for (var i = 0; i < letters.length; i++) letters[i].style.display = 'none';
       var fullVid = slide.querySelector('.full-video');
-      var maskVid = slide.querySelector('.mask-svg video');
-      if (fullVid && maskVid) {
-        try { fullVid.currentTime = maskVid.currentTime || 0; } catch (e) {}
+      var maskSvg = slide.querySelector('.mask-svg');
+      if (maskSvg) { maskSvg.style.display = ''; maskSvg.style.opacity = '1'; }
+      if (fullVid) fullVid.style.opacity = '0';
+      /* 逐字打出 */
+      var idx = 0;
+      function typeNext() {
+        if (idx < letters.length) {
+          letters[idx].style.display = 'inline';
+          idx++;
+          maskTimers.push(setTimeout(typeNext, 110));
+        } else {
+          /* 打完立刻關遮罩 */
+          maskTimers.push(setTimeout(function () {
+            slide.classList.add('mask-off');
+            maskTimers.push(setTimeout(function () {
+              if (maskSvg) maskSvg.style.display = 'none';
+            }, 900));
+          }, 400));
+        }
       }
-      var t1 = setTimeout(function () {
-        slide.classList.add('scatter');
-      }, 2000);
-      var t2 = setTimeout(function () {
-        slide.classList.add('scatter-done');
-      }, 3500);
-      scatterTimers.push(t1, t2);
+      maskTimers.push(setTimeout(typeNext, 300));
     }
-    function stopScatter(slide) {
-      for (var t = 0; t < scatterTimers.length; t++) clearTimeout(scatterTimers[t]);
-      scatterTimers = [];
-      if (slide) slide.classList.remove('scatter', 'scatter-done');
+    function stopMaskTypewriter(slide) {
+      for (var t = 0; t < maskTimers.length; t++) clearTimeout(maskTimers[t]);
+      maskTimers = [];
+      if (slide) slide.classList.remove('scatter', 'scatter-done', 'mask-off');
     }
 
     function next() { return goTo(current + 1); }
@@ -399,7 +391,7 @@
     if (maskSlide) buildRiverMask(maskSlide);
     startTypewriter(slides[0]);
     startAutoplay();
-    if (maskSlide && slides[0] === maskSlide) startScatter(slides[0]);
+    if (maskSlide && slides[0] === maskSlide) startMaskTypewriter(slides[0]);
     slides[0].classList.add('is-active');
   }
 
