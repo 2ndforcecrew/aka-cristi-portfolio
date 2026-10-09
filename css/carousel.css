@@ -215,14 +215,47 @@
 .carousel-slide.text-mask-slide {
   background: var(--paper);
 }
+.carousel-slide.text-mask-slide .carousel-media {
+  position: absolute;
+  inset: 0;
+}
+/* v2.9.23: 雙層 — 底層全片 + 頂層文字遮罩，2秒後字母散開 */
+.carousel-slide.text-mask-slide .full-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 800ms ease;
+  z-index: 1;
+}
+.carousel-slide.text-mask-slide.scatter .full-video {
+  opacity: 1;
+}
+.carousel-slide.text-mask-slide .mask-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  transition: opacity 500ms ease;
+}
+.carousel-slide.text-mask-slide.scatter-done .mask-svg {
+  opacity: 0;
+  pointer-events: none;
+}
 .carousel-slide.text-mask-slide .carousel-media video {
-  /* mask 由 JS 動態生成（取 h2 文字） */
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
+  /* 舊 data-uri mask 已廢棄，改用 SVG clipPath */
+}
+.carousel-slide.scatter .river-letter {
+  animation: riverScatter 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes riverScatter {
+  to {
+    transform: translate(var(--dx), var(--dy)) rotate(var(--r));
+    opacity: 0;
+  }
 }
 .carousel-slide.text-mask-slide .carousel-caption h2 {
   display: none; /* 標題已在 mask 形狀中 */

@@ -146,14 +146,16 @@
         var pad = function (x) { return (x < 10 ? '0' : '') + x; };
         countEl.textContent = pad(current + 1) + ' / ' + pad(n);
       }
-      /* 視頻播放控制 */
+      /* 視頻播放控制（支援雙層視頻） */
       for (var v = 0; v < n; v++) {
-        var vid = slides[v].querySelector('video');
-        if (!vid) continue;
-        if (v === current) {
-          if (vid.paused) { try { vid.play(); } catch (e) {} }
-        } else {
-          if (!vid.paused) vid.pause();
+        var vids = slides[v].querySelectorAll('video');
+        for (var vi = 0; vi < vids.length; vi++) {
+          var vid = vids[vi];
+          if (v === current) {
+            if (vid.paused) { try { vid.play(); } catch (e) {} }
+          } else {
+            if (!vid.paused) vid.pause();
+          }
         }
       }
     }
@@ -196,14 +198,16 @@
         countEl.textContent = pad(current + 1) + ' / ' + pad(n);
       }
 
-      /* 視頻 */
+      /* 視頻（支援雙層） */
       for (var v = 0; v < n; v++) {
-        var vid = slides[v].querySelector('video');
-        if (!vid) continue;
-        if (v === current) {
-          if (vid.paused) { try { vid.play(); } catch (e) {} }
-        } else {
-          if (!vid.paused) vid.pause();
+        var vids2 = slides[v].querySelectorAll('video');
+        for (var vi2 = 0; vi2 < vids2.length; vi2++) {
+          var vid2 = vids2[vi2];
+          if (v === current) {
+            if (vid2.paused) { try { vid2.play(); } catch (e) {} }
+          } else {
+            if (!vid2.paused) vid2.pause();
+          }
         }
       }
 
@@ -211,38 +215,88 @@
       setTimeout(function () {
         animating = false;
         render();
+        /* 停止舊 slide 的散開 */
+        stopScatter(slides[from]);
         /* 新 slide 打字機 + 自動播放 */
         startTypewriter(slides[current]);
         startAutoplay();
+        /* 如果是第一張（RIVER），啟動字母散開 */
+        if (slides[current].classList.contains('text-mask-slide') && !slides[current].classList.contains('mask-dark')) {
+          startScatter(slides[current]);
+        }
         inSlide.classList.add('is-active');
         slides[from].classList.remove('is-active');
       }, 650);
     }
 
-    /* 文字遮罩：用 h2 生成 SVG mask，視頻只在字體筆畫內（v2.9.20） */
-    function applyTextMask(slide) {
+    /* 文字遮罩：RIVER LEVIATHAN 字母散開（v2.9.23） */
+    /* 每個字母的散開方向 */
+    var SCATTER_DIRS = [
+      { dx: '-320px', dy: '-220px', r: '-35deg' },  /* R */
+      { dx: '-140px', dy: '-280px', r: '-12deg' },  /* I */
+      { dx: '60px',   dy: '-300px', r: '8deg' },    /* V */
+      { dx: '240px',  dy: '-240px', r: '22deg' },   /* E */
+      { dx: '380px',  dy: '-160px', r: '38deg' },   /* R */
+      { dx: '-360px', dy: '180px',  r: '-28deg' },  /* L */
+      { dx: '-200px', dy: '260px',  r: '-15deg' },  /* E */
+      { dx: '-40px',  dy: '300px',  r: '-5deg' },   /* V */
+      { dx: '120px',  dy: '290px',  r: '10deg' },   /* I */
+      { dx: '280px',  dy: '230px',  r: '25deg' },   /* A */
+      { dx: '-280px', dy: '120px',  r: '-20deg' },  /* T */
+      { dx: '360px',  dy: '140px',  r: '30deg' },   /* H */
+      { dx: '-120px', dy: '-180px', r: '-18deg' },  /* A */
+      { dx: '180px',  dy: '-200px', r: '18deg' },   /* N */
+    ];
+    function buildRiverMask(slide) {
       var h2 = slide.querySelector('h2');
-      var video = slide.querySelector('video');
-      if (!h2 || !video) return;
+      if (!h2) return;
       var text = (h2.getAttribute('data-text') || h2.textContent).trim();
       var words = text.split(/\s+/);
       var lines;
       if (words.length >= 2) {
         var mid = Math.ceil(words.length / 2);
-        lines = [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+        lines = [words.slice(0, mid).join(''), words.slice(mid).join('')];
       } else {
-        lines = [text];
+        lines = [text.replace(/\s+/g, '')];
       }
-      function esc(s) {
-        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      var textEls = slide.querySelectorAll('#river-clip text');
+      var dirIdx = 0;
+      for (var li = 0; li < textEls.length && li < lines.length; li++) {
+        var line = lines[li];
+        var tspanHtml = '';
+        for (var ci = 0; ci < line.length; ci++) {
+          var d = SCATTER_DIRS[dirIdx % SCATTER_DIRS.length];
+          tspanHtml += '<tspan class="river-letter" style="--dx:' + d.dx + ';--dy:' + d.dy + ';--r:' + d.r + '">' +
+            line.charAt(ci).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</tspan>';
+          dirIdx++;
+        }
+        textEls[li].innerHTML = tspanHtml;
       }
-      var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'>" +
-        "<text x='600' y='340' text-anchor='middle' font-family='Arial Black, Arial, Helvetica, sans-serif' font-weight='900' font-size='175' fill='white'>" + esc(lines[0]) + "</text>" +
-        (lines[1] ? "<text x='600' y='530' text-anchor='middle' font-family='Arial Black, Arial, Helvetica, sans-serif' font-weight='900' font-size='175' fill='white'>" + esc(lines[1]) + "</text>" : "") +
-        "</svg>";
-      var uri = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
-      video.style.webkitMaskImage = uri;
-      video.style.maskImage = uri;
+    }
+    /* 散開時間軸：2秒後字母散開，3.5秒後隱藏 SVG 層 */
+    var scatterTimers = [];
+    function startScatter(slide) {
+      for (var t = 0; t < scatterTimers.length; t++) clearTimeout(scatterTimers[t]);
+      scatterTimers = [];
+      slide.classList.remove('scatter', 'scatter-done');
+      /* 同步雙視頻 */
+      var fullVid = slide.querySelector('.full-video');
+      var maskVid = slide.querySelector('.mask-svg video');
+      if (fullVid && maskVid) {
+        try { fullVid.currentTime = maskVid.currentTime || 0; } catch (e) {}
+      }
+      var t1 = setTimeout(function () {
+        slide.classList.add('scatter');
+      }, 2000);
+      var t2 = setTimeout(function () {
+        slide.classList.add('scatter-done');
+      }, 3500);
+      scatterTimers.push(t1, t2);
+    }
+    function stopScatter(slide) {
+      for (var t = 0; t < scatterTimers.length; t++) clearTimeout(scatterTimers[t]);
+      scatterTimers = [];
+      if (slide) slide.classList.remove('scatter', 'scatter-done');
     }
 
     function next() { return goTo(current + 1); }
@@ -253,11 +307,13 @@
     function stopAutoplay() {
       if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
       for (var i = 0; i < n; i++) {
-        var v = slides[i].querySelector('video');
-        if (v && slides[i]._autoEnded) {
-          v.removeEventListener('ended', slides[i]._autoEnded);
-          slides[i]._autoEnded = null;
+        var vs = slides[i].querySelectorAll('video');
+        for (var vii = 0; vii < vs.length; vii++) {
+          if (slides[i]._autoEnded) {
+            vs[vii].removeEventListener('ended', slides[i]._autoEnded);
+          }
         }
+        slides[i]._autoEnded = null;
       }
     }
     function startAutoplay() {
@@ -267,12 +323,15 @@
       var vid = slide.querySelector('video');
       if (vid) {
         var onEnded = function () {
-          vid.removeEventListener('ended', onEnded);
+          var vs2 = slide.querySelectorAll('video');
+          for (var q = 0; q < vs2.length; q++) vs2[q].removeEventListener('ended', onEnded);
           slides[current]._autoEnded = null;
           if (current < n - 1) goTo(current + 1);
         };
         slide._autoEnded = onEnded;
-        vid.addEventListener('ended', onEnded);
+        /* 雙層視頻都監聽 ended */
+        var vidsAll = slide.querySelectorAll('video');
+        for (var qq = 0; qq < vidsAll.length; qq++) vidsAll[qq].addEventListener('ended', onEnded);
       } else {
         autoTimer = setTimeout(function () {
           if (current < n - 1) goTo(current + 1);
@@ -335,11 +394,12 @@
 
     /* 初始 */
     render();
-    /* 第一張：生成文字遮罩 */
-    var maskSlide = root.querySelector('.text-mask-slide');
-    if (maskSlide) applyTextMask(maskSlide);
+    /* 第一張：構建 RIVER 字母遮罩 */
+    var maskSlide = root.querySelector('.text-mask-slide:not(.mask-dark)');
+    if (maskSlide) buildRiverMask(maskSlide);
     startTypewriter(slides[0]);
     startAutoplay();
+    if (maskSlide && slides[0] === maskSlide) startScatter(slides[0]);
     slides[0].classList.add('is-active');
   }
 
