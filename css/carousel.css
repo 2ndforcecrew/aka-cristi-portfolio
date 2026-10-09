@@ -72,17 +72,21 @@
   pointer-events: none;
 }
 
-/* 文字 caption 位置：四張各不同（v2.9.13） */
+/* 文字 caption 位置：按內容主體定排版（v2.9.16），避開主體、畫面平衡 */
 .carousel-caption {
   position: absolute;
   z-index: 2;
   color: #FAFAF8;
   max-width: 640px;
 }
-.carousel-caption.pos-bl { left: var(--space-6); bottom: var(--space-6); }
-.carousel-caption.pos-tr { right: var(--space-6); top: var(--space-6); text-align: right; }
+/* RIVER：生物居中 → 右中（水面留白） */
+.carousel-caption.pos-mr { right: var(--space-6); top: 50%; transform: translateY(-50%); text-align: right; }
+/* WAWA：機器人居中 → 左上（天空留白） */
 .carousel-caption.pos-tl { left: var(--space-6); top: var(--space-6); }
-.carousel-caption.pos-br { right: var(--space-6); bottom: var(--space-6); text-align: right; }
+/* NEON：模特居中 → 左中（模特身旁、背景虛化處） */
+.carousel-caption.pos-ml { left: var(--space-6); top: 50%; transform: translateY(-50%); }
+/* URBAN：模特偏左 → 右上（清水混凝土牆面留白） */
+.carousel-caption.pos-tr { right: var(--space-6); top: var(--space-6); text-align: right; }
 
 .carousel-caption .micro {
   color: rgba(250, 250, 248, 0.7);
