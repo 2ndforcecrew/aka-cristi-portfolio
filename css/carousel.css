@@ -85,8 +85,8 @@
 .carousel-caption.pos-ml150 { left: 150px; top: 60%; transform: translateY(-50%); }
 /* NEON：模特居中 → 左中（模特身旁、背景虛化處） */
 .carousel-caption.pos-ml { left: var(--space-6); top: 50%; transform: translateY(-50%); }
-/* URBAN：模特偏左 → 右上（清水混凝土牆面留白） */
-.carousel-caption.pos-tr { right: var(--space-6); top: var(--space-6); text-align: right; }
+/* URBAN：模特偏左 → 右側牆面中部（紅框位置，垂直約 62%） */
+.carousel-caption.pos-tr { right: var(--space-6); top: 62%; transform: translateY(-50%); text-align: right; }
 
 .carousel-caption .micro {
   color: rgba(250, 250, 248, 0.7);
