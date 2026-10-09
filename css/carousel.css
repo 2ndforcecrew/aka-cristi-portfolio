@@ -37,10 +37,6 @@
 }
 
 /* 文字：JS 寫 parallax 延遲位移 */
-.carousel-caption {
-  will-change: transform;
-}
-
 /* 媒體：原尺寸，無放大 */
 .carousel-media {
   position: absolute;
@@ -179,6 +175,17 @@
 }
 
 /* v2.9.11：文字位移由 JS 驅動（視差延遲），移除飛入 stagger */
+/* v2.9.12：文字延遲出現（先出圖後出字），CSS transition + delay */
+.carousel-caption {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 500ms var(--ease-out) 250ms, transform 500ms var(--ease-out) 250ms;
+}
+
+.carousel-slide.is-active .carousel-caption {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 /* reduced motion：直接切換無滑動 */
 @media (prefers-reduced-motion: reduce) {

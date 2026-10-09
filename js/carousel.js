@@ -55,20 +55,33 @@
       p = Math.max(0, Math.min(1, p));
 
       var f = p * (n - 1);
+      var fi = Math.floor(f);
+      var frac = f - fi;
+      /* 邊界：f 為整數時 frac=0，fi 即當前 */
+      if (fi >= n - 1) { fi = n - 2; frac = 1; }
 
       for (var i = 0; i < n; i++) {
         var s = slides[i];
-        /* v2.9.11：上滑出現（非漸隱） */
-        var offset = (i - f) * 100;
-        s.style.transform = 'translateY(' + offset.toFixed(2) + '%)';
-        s.style.visibility = (offset > -100 && offset < 100) ? 'visible' : 'hidden';
-        s.style.zIndex = 1;
-
-        /* 文字視差延遲：動得比圖片慢 0.7x，先出圖後出字 */
-        var cap = s.querySelector('.carousel-caption');
-        if (cap) {
-          var textOffset = offset * 0.7;
-          cap.style.transform = 'translateY(' + textOffset.toFixed(2) + '%)';
+        if (i < fi) {
+          /* 已滾過：在上方藏起 */
+          s.style.transform = 'translateY(-100%)';
+          s.style.visibility = 'hidden';
+          s.style.zIndex = 0;
+        } else if (i === fi) {
+          /* 當前：原地不動在下層 */
+          s.style.transform = 'translateY(0%)';
+          s.style.visibility = 'visible';
+          s.style.zIndex = 1;
+        } else if (i === fi + 1) {
+          /* 下一張：從下方上滑蓋住（v2.9.12） */
+          s.style.transform = 'translateY(' + ((1 - frac) * 100).toFixed(2) + '%)';
+          s.style.visibility = 'visible';
+          s.style.zIndex = 2;
+        } else {
+          /* 更遠：在下方待命 */
+          s.style.transform = 'translateY(100%)';
+          s.style.visibility = 'hidden';
+          s.style.zIndex = 0;
         }
       }
 
