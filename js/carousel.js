@@ -57,6 +57,7 @@
     }
     function startTypewriter(slide) {
       clearTypeTimers();
+      var isMask = slide.classList.contains('text-mask-slide');
       var h2 = slide.querySelector('h2');
       var p = slide.querySelector('.carousel-caption > p:last-child');
       if (!h2) return;
@@ -64,9 +65,24 @@
       h2.setAttribute('data-text', h2Text);
       var pText = p ? (p.getAttribute('data-text') || p.textContent) : '';
       if (p) p.setAttribute('data-text', pText);
-      h2.textContent = '';
+      /* mask slide：標題不打字（已在形狀中），只打描述 */
+      if (!isMask) h2.textContent = '';
       if (p) p.textContent = '';
       var delayT = setTimeout(function () {
+        if (isMask) {
+          /* 直接打描述 */
+          if (p) {
+            var pi0 = 0;
+            var pTimer0 = setInterval(function () {
+              if (pi0 < pText.length) {
+                p.textContent += pText.charAt(pi0);
+                pi0++;
+              } else { clearInterval(pTimer0); }
+            }, 60);
+            typeTimers.push(pTimer0);
+          }
+          return;
+        }
         var hi = 0;
         var hTimer = setInterval(function () {
           if (hi < h2Text.length) {
@@ -203,6 +219,32 @@
       }, 650);
     }
 
+    /* 文字遮罩：用 h2 生成 SVG mask，視頻只在字體筆畫內（v2.9.20） */
+    function applyTextMask(slide) {
+      var h2 = slide.querySelector('h2');
+      var video = slide.querySelector('video');
+      if (!h2 || !video) return;
+      var text = (h2.getAttribute('data-text') || h2.textContent).trim();
+      var words = text.split(/\s+/);
+      var lines;
+      if (words.length >= 2) {
+        var mid = Math.ceil(words.length / 2);
+        lines = [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+      } else {
+        lines = [text];
+      }
+      function esc(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'>" +
+        "<text x='600' y='340' text-anchor='middle' font-family='Arial Black, Arial, Helvetica, sans-serif' font-weight='900' font-size='175' fill='white'>" + esc(lines[0]) + "</text>" +
+        (lines[1] ? "<text x='600' y='530' text-anchor='middle' font-family='Arial Black, Arial, Helvetica, sans-serif' font-weight='900' font-size='175' fill='white'>" + esc(lines[1]) + "</text>" : "") +
+        "</svg>";
+      var uri = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+      video.style.webkitMaskImage = uri;
+      video.style.maskImage = uri;
+    }
+
     function next() { return goTo(current + 1); }
     function prev() { return goTo(current - 1); }
 
@@ -293,6 +335,9 @@
 
     /* 初始 */
     render();
+    /* 第一張：生成文字遮罩 */
+    var maskSlide = root.querySelector('.text-mask-slide');
+    if (maskSlide) applyTextMask(maskSlide);
     startTypewriter(slides[0]);
     startAutoplay();
     slides[0].classList.add('is-active');

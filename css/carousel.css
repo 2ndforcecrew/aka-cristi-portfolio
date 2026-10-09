@@ -181,10 +181,34 @@
 }
 
 /* v2.9.11：文字位移由 JS 驅動（視差延遲），移除飛入 stagger */
-/* v2.9.13：打字機效果，CSS 只負責定位，文字由 JS 逐字打出 */
-.carousel-caption h2,
-.carousel-caption > p:last-child {
-  opacity: 1;
+/* v2.9.20: 第一張文字遮罩 — 視頻只在巨型字體筆畫內 */
+.carousel-slide.text-mask-slide {
+  background: var(--paper);
+}
+.carousel-slide.text-mask-slide .carousel-media video {
+  /* mask 由 JS 動態生成（取 h2 文字） */
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+.carousel-slide.text-mask-slide .carousel-caption h2 {
+  display: none; /* 標題已在 mask 形狀中 */
+}
+.carousel-slide.text-mask-slide .carousel-caption {
+  left: 50%;
+  right: auto;
+  top: 76%;
+  bottom: auto;
+  transform: translateX(-50%);
+  text-align: center;
+  color: var(--ink);
+  max-width: 720px;
+}
+.carousel-slide.text-mask-slide .carousel-caption .micro {
+  color: var(--ink);
 }
 
 /* reduced motion：直接切換無滑動 */
