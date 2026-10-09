@@ -91,6 +91,66 @@
       descEn: 'A minimalist silhouette series saluting the architectural quality of haute couture through contour lines.',
       credits: 'PHOTOGRAPHY — AKA.CRISTI'
     },
+    {
+      id: 'sculpted-void', kind: 'photo', category: 'FASHION',
+      title: '雕塑虚空', titleEn: 'SCULPTED VOID', year: '2025',
+      client: 'ATELIER NOIR', location: 'SHANGHAI',
+      cover: 'assets/img/photo-05.jpg', hero: 'assets/img/photo-05.jpg',
+      gallery: ['assets/img/photo-05.jpg'],
+      description: '雕塑感廓形与冷冽混凝土空间的对话，极简中的力量感。',
+      descEn: 'A dialogue between sculptural silhouettes and cold concrete space — power in minimalism.',
+      credits: 'PHOTOGRAPHY — AKA.CRISTI'
+    },
+    {
+      id: 'androgynous-gaze', kind: 'photo', category: 'PORTRAIT',
+      title: '中性凝视', titleEn: 'ANDROGYNOUS GAZE', year: '2025',
+      client: '—', location: 'BERLIN',
+      cover: 'assets/img/photo-06.jpg', hero: 'assets/img/photo-06.jpg',
+      gallery: ['assets/img/photo-06.jpg'],
+      description: '戏剧性侧光下的中性面孔，深影中透出的疏离与冷峻。',
+      descEn: 'An androgynous face under dramatic side light — detachment and coldness emerging from deep shadow.',
+      credits: 'PHOTOGRAPHY — AKA.CRISTI'
+    },
+    {
+      id: 'liquid-skin', kind: 'photo', category: 'BEAUTY',
+      title: '液态肌肤', titleEn: 'LIQUID SKIN', year: '2024',
+      client: 'LUMIÈRE BEAUTY', location: 'TOKYO',
+      cover: 'assets/img/photo-07.jpg', hero: 'assets/img/photo-07.jpg',
+      gallery: ['assets/img/photo-07.jpg'],
+      description: '水珠覆盖下的先锋妆容微距，探索肌肤的液态质感。',
+      descEn: 'Macro of avant-garde makeup under water droplets — exploring the liquid texture of skin.',
+      credits: 'PHOTOGRAPHY — AKA.CRISTI'
+    },
+    {
+      id: 'neon-alley', kind: 'photo', category: 'EDITORIAL',
+      title: '霓虹巷弄', titleEn: 'NEON ALLEY', year: '2024',
+      client: 'VELVET MAGAZINE', location: 'HONG KONG',
+      cover: 'assets/img/photo-08.jpg', hero: 'assets/img/photo-08.jpg',
+      gallery: ['assets/img/photo-08.jpg'],
+      description: '深夜巷弄里的廓形大衣，霓虹光晕下的电影感街头时装。',
+      descEn: 'An oversized coat in a midnight alley — cinematic street fashion under neon glow.',
+      credits: 'PHOTOGRAPHY — AKA.CRISTI'
+    },
+    {
+      id: 'ethereal-drift', kind: 'photo', category: 'CAMPAIGN',
+      title: '空灵漂流', titleEn: 'ETHEREAL DRIFT', year: '2023',
+      client: 'MAISON BRUME', location: 'PARIS',
+      cover: 'assets/img/photo-09.jpg', hero: 'assets/img/photo-09.jpg',
+      gallery: ['assets/img/photo-09.jpg'],
+      description: '半透明纱幔包裹下的空灵瞬间，柔光中的漂流梦境。',
+      descEn: 'An ethereal moment wrapped in translucent veils — a drifting dream in soft light.',
+      credits: 'PHOTOGRAPHY — AKA.CRISTI'
+    },
+    {
+      id: 'brutalist-form', kind: 'photo', category: 'PERSONAL', tone: 'light',
+      title: '野兽形态', titleEn: 'BRUTALIST FORM', year: '2023',
+      client: 'PERSONAL', location: 'LONDON',
+      cover: 'assets/img/photo-10.jpg', hero: 'assets/img/photo-10.jpg',
+      gallery: ['assets/img/photo-10.jpg'],
+      description: '几何建筑立面前的剪影，粗野主义背景下的图形化时装。',
+      descEn: 'A silhouette against geometric facades — graphic fashion on brutalist background.',
+      credits: 'PHOTOGRAPHY — AKA.CRISTI'
+    },
     /* ---------------- GRAPHIC DESIGN ---------------- */
     {
       id: 'street-brand-identity', kind: 'design', category: 'BRANDING',
