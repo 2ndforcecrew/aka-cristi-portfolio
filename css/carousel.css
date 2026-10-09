@@ -81,8 +81,8 @@
 }
 /* RIVER：生物居中 → 右中（水面留白） */
 .carousel-caption.pos-mr { right: var(--space-6); top: 50%; transform: translateY(-50%); text-align: right; }
-/* WAWA：機器人居中 → 左上（天空留白） */
-.carousel-caption.pos-tl { left: var(--space-6); top: var(--space-6); }
+/* WAWA：機器人居中 → 左側垂直居中，距左邊 150px */
+.carousel-caption.pos-ml150 { left: 150px; top: 50%; transform: translateY(-50%); }
 /* NEON：模特居中 → 左中（模特身旁、背景虛化處） */
 .carousel-caption.pos-ml { left: var(--space-6); top: 50%; transform: translateY(-50%); }
 /* URBAN：模特偏左 → 右上（清水混凝土牆面留白） */
