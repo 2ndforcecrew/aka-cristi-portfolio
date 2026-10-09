@@ -6,13 +6,19 @@
 
 .carousel {
   position: relative;
-  height: 100vh; /* v2.9.9：改回單屏覆蓋滑入，不再 scroll 驅動 */
-  min-height: 560px;
-  overflow: hidden;
+  height: 400vh; /* v2.9.10: sticky 敘事，4 張各 100vh 滾程 */
   background: var(--paper);
 }
 
-/* slides 疊放：覆蓋滑入（v2.9.9：無放大、無 parallax） */
+.carousel-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 560px;
+  overflow: hidden;
+}
+
+/* slides 疊放：scroll 驅動 crossfade（v2.9.10 sticky 敘事，無放大） */
 .carousel-slides {
   position: absolute;
   inset: 0;
@@ -24,35 +30,17 @@
 .carousel-slide {
   position: absolute;
   inset: 0;
-  transform: translateX(100%);
+  opacity: 0;
   visibility: hidden;
   z-index: 0;
-  transition: transform 700ms var(--ease-out), visibility 0s linear 700ms;
-}
-
-.carousel-slide.from-left {
-  transform: translateX(-100%);
+  /* opacity 由 JS 按 scroll 直接寫 */
 }
 
 .carousel-slide.is-active {
-  transform: translateX(0);
-  visibility: visible;
-  z-index: 2;
-  transition: transform 700ms var(--ease-out), visibility 0s linear 0s;
-}
-
-.carousel-slide.is-under {
-  transform: translateX(0);
-  visibility: visible;
   z-index: 1;
-  transition: none;
 }
 
-.carousel-slide.no-anim {
-  transition: none !important;
-}
-
-/* 媒體：無放大，原尺寸 cover */
+/* 媒體：原尺寸，無放大 */
 .carousel-media {
   position: absolute;
   inset: 0;
