@@ -71,16 +71,17 @@
   pointer-events: none;
 }
 
-/* 文字 caption：左下，由 JS 寫反向位移（v2.9.7） */
+/* 文字 caption 位置：四張各不同（v2.9.13） */
 .carousel-caption {
   position: absolute;
-  left: var(--space-6);
-  bottom: var(--space-6);
   z-index: 2;
   color: #FAFAF8;
   max-width: 640px;
-  will-change: transform;
 }
+.carousel-caption.pos-bl { left: var(--space-6); bottom: var(--space-6); }
+.carousel-caption.pos-tr { right: var(--space-6); top: var(--space-6); text-align: right; }
+.carousel-caption.pos-tl { left: var(--space-6); top: var(--space-6); }
+.carousel-caption.pos-br { right: var(--space-6); bottom: var(--space-6); text-align: right; }
 
 .carousel-caption .micro {
   color: rgba(250, 250, 248, 0.7);
@@ -175,16 +176,10 @@
 }
 
 /* v2.9.11：文字位移由 JS 驅動（視差延遲），移除飛入 stagger */
-/* v2.9.12：文字延遲出現（先出圖後出字），CSS transition + delay */
-.carousel-caption {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 500ms var(--ease-out) 250ms, transform 500ms var(--ease-out) 250ms;
-}
-
-.carousel-slide.is-active .carousel-caption {
+/* v2.9.13：打字機效果，CSS 只負責定位，文字由 JS 逐字打出 */
+.carousel-caption h2,
+.carousel-caption > p:last-child {
   opacity: 1;
-  transform: translateY(0);
 }
 
 /* reduced motion：直接切換無滑動 */

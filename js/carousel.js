@@ -35,6 +35,71 @@
       }
     }
 
+    /* 打字機：2s 延遲後慢速打出（v2.9.13） */
+    var typeTimers = [];
+
+    function clearTypeTimers() {
+      for (var t = 0; t < typeTimers.length; t++) {
+        clearTimeout(typeTimers[t]);
+        clearInterval(typeTimers[t]);
+      }
+      typeTimers = [];
+    }
+
+    function startTypewriter(slide) {
+      clearTypeTimers();
+      var h2 = slide.querySelector('h2');
+      var p = slide.querySelector('.carousel-caption > p:last-child');
+      if (!h2) return;
+
+      var h2Text = h2.getAttribute('data-text') || h2.textContent;
+      h2.setAttribute('data-text', h2Text);
+      var pText = p ? (p.getAttribute('data-text') || p.textContent) : '';
+      if (p) p.setAttribute('data-text', pText);
+
+      /* 先隱藏 */
+      h2.textContent = '';
+      h2.style.opacity = '1';
+      if (p) { p.textContent = ''; p.style.opacity = '1'; }
+
+      /* 2s 延遲後開始 */
+      var delayT = setTimeout(function () {
+        var hi = 0;
+        var hTimer = setInterval(function () {
+          if (hi < h2Text.length) {
+            h2.textContent += h2Text.charAt(hi);
+            hi++;
+          } else {
+            clearInterval(hTimer);
+            /* 標題打完再打描述 */
+            if (p) {
+              var pi = 0;
+              var pTimer = setInterval(function () {
+                if (pi < pText.length) {
+                  p.textContent += pText.charAt(pi);
+                  pi++;
+                } else {
+                  clearInterval(pTimer);
+                }
+              }, 60);
+              typeTimers.push(pTimer);
+            }
+          }
+        }, 90);
+        typeTimers.push(hTimer);
+      }, 2000);
+      typeTimers.push(delayT);
+    }
+
+    function stopTypewriter(slide) {
+      clearTypeTimers();
+      /* 恢復完整文字 */
+      var h2 = slide.querySelector('h2');
+      var p = slide.querySelector('.carousel-caption > p:last-child');
+      if (h2 && h2.getAttribute('data-text')) h2.textContent = h2.getAttribute('data-text');
+      if (p && p.getAttribute('data-text')) p.textContent = p.getAttribute('data-text');
+    }
+
     function scrollToSlide(idx) {
       var rect = root.getBoundingClientRect();
       var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -62,24 +127,36 @@
 
       for (var i = 0; i < n; i++) {
         var s = slides[i];
+        var dir = s.getAttribute('data-dir') || 'bottom';
         if (i < fi) {
-          /* 已滾過：在上方藏起 */
-          s.style.transform = 'translateY(-100%)';
+          /* 已滾過：藏到進入方向的反側 */
+          var hideT = (dir === 'right') ? 'translateX(-100%)' :
+                      (dir === 'left') ? 'translateX(100%)' :
+                      (dir === 'top') ? 'translateY(100%)' : 'translateY(-100%)';
+          s.style.transform = hideT;
           s.style.visibility = 'hidden';
           s.style.zIndex = 0;
         } else if (i === fi) {
           /* 當前：原地不動在下層 */
-          s.style.transform = 'translateY(0%)';
+          s.style.transform = 'translateX(0%) translateY(0%)';
           s.style.visibility = 'visible';
           s.style.zIndex = 1;
         } else if (i === fi + 1) {
-          /* 下一張：從下方上滑蓋住（v2.9.12） */
-          s.style.transform = 'translateY(' + ((1 - frac) * 100).toFixed(2) + '%)';
+          /* 下一張：從指定方向滑入蓋住（v2.9.13） */
+          var prog = (1 - frac) * 100;
+          var inT = (dir === 'right') ? 'translateX(' + prog.toFixed(2) + '%)' :
+                    (dir === 'left') ? 'translateX(-' + prog.toFixed(2) + '%)' :
+                    (dir === 'top') ? 'translateY(-' + prog.toFixed(2) + '%)' :
+                    'translateY(' + prog.toFixed(2) + '%)';
+          s.style.transform = inT;
           s.style.visibility = 'visible';
           s.style.zIndex = 2;
         } else {
-          /* 更遠：在下方待命 */
-          s.style.transform = 'translateY(100%)';
+          /* 更遠：在進入方向待命 */
+          var waitT = (dir === 'right') ? 'translateX(100%)' :
+                      (dir === 'left') ? 'translateX(-100%)' :
+                      (dir === 'top') ? 'translateY(-100%)' : 'translateY(100%)';
+          s.style.transform = waitT;
           s.style.visibility = 'hidden';
           s.style.zIndex = 0;
         }
@@ -87,10 +164,14 @@
 
       var activeIdx = Math.round(f);
       if (activeIdx !== current) {
+        /* 停止舊的打字機 */
+        if (current >= 0 && slides[current]) stopTypewriter(slides[current]);
         current = activeIdx;
         for (var k = 0; k < n; k++) {
           slides[k].classList.toggle('is-active', k === current);
         }
+        /* 新 slide：2s 延遲打字機 */
+        if (slides[current]) startTypewriter(slides[current]);
         for (var di = 0; di < dots.length; di++) {
           dots[di].classList.toggle('is-active', di === current);
         }
