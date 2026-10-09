@@ -215,14 +215,18 @@
       setTimeout(function () {
         animating = false;
         render();
-        /* 停止舊 slide 的散開 */
+        /* 停止舊 slide 的遮罩計時 */
         stopMaskTypewriter(slides[from]);
+        stopWawaMaskOff(slides[from]);
         /* 新 slide 打字機 + 自動播放 */
         startTypewriter(slides[current]);
         startAutoplay();
         /* 如果是第一張（RIVER），啟動字母散開 */
         if (slides[current].classList.contains('text-mask-slide') && !slides[current].classList.contains('mask-dark')) {
           startMaskTypewriter(slides[current]);
+        }
+        if (slides[current].classList.contains('mask-dark')) {
+          startWawaMaskOff(slides[current]);
         }
         inSlide.classList.add('is-active');
         slides[from].classList.remove('is-active');
@@ -289,6 +293,33 @@
       for (var t = 0; t < maskTimers.length; t++) clearTimeout(maskTimers[t]);
       maskTimers = [];
       if (slide) slide.classList.remove('scatter', 'scatter-done', 'mask-off');
+    }
+    /* WAWA：3秒後關遮罩（v2.9.25） */
+    var wawaTimers = [];
+    function startWawaMaskOff(slide) {
+      for (var t = 0; t < wawaTimers.length; t++) clearTimeout(wawaTimers[t]);
+      wawaTimers = [];
+      slide.classList.remove('mask-off');
+      var maskSvg = slide.querySelector('.mask-svg');
+      var fullVid = slide.querySelector('.full-video');
+      var maskVid = slide.querySelector('.mask-svg video');
+      if (maskSvg) { maskSvg.style.display = ''; maskSvg.style.opacity = ''; }
+      if (fullVid) fullVid.style.opacity = '';
+      /* 同步雙視頻 */
+      if (fullVid && maskVid) {
+        try { fullVid.currentTime = maskVid.currentTime || 0; } catch (e) {}
+      }
+      wawaTimers.push(setTimeout(function () {
+        slide.classList.add('mask-off');
+        wawaTimers.push(setTimeout(function () {
+          if (maskSvg) maskSvg.style.display = 'none';
+        }, 900));
+      }, 3000));
+    }
+    function stopWawaMaskOff(slide) {
+      for (var t = 0; t < wawaTimers.length; t++) clearTimeout(wawaTimers[t]);
+      wawaTimers = [];
+      if (slide) slide.classList.remove('mask-off');
     }
 
     function next() { return goTo(current + 1); }
@@ -392,6 +423,7 @@
     startTypewriter(slides[0]);
     startAutoplay();
     if (maskSlide && slides[0] === maskSlide) startMaskTypewriter(slides[0]);
+    if (slides[0].classList.contains('mask-dark')) startWawaMaskOff(slides[0]);
     slides[0].classList.add('is-active');
   }
 
