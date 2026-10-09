@@ -333,70 +333,149 @@ html, body {
 }
 
 /* ============================================================
- * v2.9.30 ABOUT + CONTACT：滿屏左右排版，簡約整齊，小字號
- * 左=關於（標題+照片+簡介），右=聯繫（標題+表單）
+ * v2.9.32 ABOUT + CONTACT：rogi.dsgn 風格
+ * 左=大標題+簡介+地點時間，右=TO/FROM/EMAIL/MESSAGE 表單，底=巨型品牌字
  * ============================================================ */
 .about-contact {
   min-height: 100vh;
   display: flex;
   align-items: center;
   padding-block: var(--space-7);
+  background: var(--paper);
 }
-.about-contact .container {
-  width: 100%;
-}
+.about-contact .container { width: 100%; }
 .about-contact-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.2fr;
   gap: clamp(48px, 6vw, 96px);
-  margin-top: var(--space-5);
   align-items: start;
 }
-/* 左：關於 */
-.about-contact-left .about-word {
-  font-size: clamp(28px, 4vw, 48px); /* v2.9.30：縮小 */
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: var(--space-4);
-}
-.about-contact-left picture {
-  display: block;
-  margin-bottom: var(--space-4);
-}
-.about-contact-left .about-hero-img {
-  width: 100%;
-  max-height: 42vh;
-  object-fit: cover;
-}
-.about-contact-left .about-long {
-  max-width: 52ch;
-}
-.about-contact-left .about-long p {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--gray-700);
-}
-.about-contact-left .about-long p + p { margin-top: var(--space-2); }
-/* 右：聯繫 */
-#contact { scroll-margin-top: 96px; }
-.about-contact-right .sec-index-static {
-  margin-bottom: var(--space-3);
-}
-.contact-title {
-  margin: 0 0 var(--space-5);
+/* 左：大標題（混合襯線斜體） */
+.rogi-title {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 800;
+  font-size: clamp(48px, 7vw, 96px);
+  line-height: 0.95;
   text-transform: uppercase;
-  font-size: clamp(24px, 3.2vw, 40px); /* v2.9.30：縮小 */
-  letter-spacing: 0.02em;
-  line-height: 1.15;
-  text-align: left;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-5);
   color: var(--ink);
 }
+.rogi-title em {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 400;
+}
+.about-contact-left .about-long { max-width: 46ch; }
+.about-contact-left .about-long p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--gray-600);
+}
+.about-contact-left .about-long p + p { margin-top: var(--space-2); }
+.about-loc {
+  margin-top: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+}
+/* 右：rogi 表單 */
+.rogi-form { width: 100%; }
+.rogi-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--gray-300);
+  position: relative;
+}
+.rogi-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--gray-500);
+  text-transform: uppercase;
+}
+.rogi-to {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 20px;
+  color: var(--ink);
+}
+.rogi-copy {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.rogi-copy:hover { text-decoration: underline; }
+.rogi-row input,
+.rogi-row textarea {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--ink);
+  width: 100%;
+  padding: 0;
+  outline: none;
+  font-family: var(--font-body);
+}
+.rogi-row input::placeholder,
+.rogi-row textarea::placeholder { color: var(--gray-400); }
+.rogi-row textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+.rogi-row .field-error {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  font-size: 11px;
+  color: #c00;
+  display: none;
+}
+.rogi-row.invalid .field-error { display: block; }
+.rogi-submit {
+  display: block;
+  width: 100%;
+  text-align: right;
+  margin-top: var(--space-5);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(20px, 2.5vw, 32px);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink);
+  padding: 0;
+}
+.rogi-submit:hover { text-decoration: underline; }
+/* 底：巨型品牌字 */
+.rogi-brand {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(80px, 18vw, 280px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: var(--space-7);
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#contact { scroll-margin-top: 96px; }
 @media (max-width: 860px) {
   .about-contact { min-height: auto; }
   .about-contact-grid { grid-template-columns: 1fr; }
+  .rogi-row { grid-template-columns: 70px 1fr; }
+  .rogi-copy { display: none; }
 }
 
 /* ============================================================

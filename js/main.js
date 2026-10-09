@@ -271,6 +271,59 @@
     requestAnimationFrame(tick);
   }
 
+  /* ---------- rogi 表單：本地時間 + 複製郵箱 + 驗證（v2.9.32） ---------- */
+  function initRogiForm() {
+    /* 本地時間 */
+    var timeEl = document.querySelector('[data-js="local-time"]');
+    if (timeEl) {
+      function tickTime() {
+        var d = new Date();
+        var p = function (x) { return (x < 10 ? '0' : '') + x; };
+        timeEl.textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+      }
+      tickTime();
+      setInterval(tickTime, 1000);
+    }
+    /* 複製郵箱 */
+    var copyBtn = document.querySelector('[data-js="copy-email"]');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var email = 'hello@aka-cristi.com';
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(email).then(function () {
+            copyBtn.textContent = 'COPIED';
+            setTimeout(function () { copyBtn.textContent = 'COPY EMAIL'; }, 1500);
+          });
+        }
+      });
+    }
+    /* 表單驗證 */
+    var form = document.querySelector('[data-js="inquiry-form"]');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ok = true;
+      var rows = form.querySelectorAll('.rogi-row[data-js^="field-"]');
+      for (var i = 0; i < rows.length; i++) {
+        var input = rows[i].querySelector('input, textarea');
+        var valid = input && input.value.trim().length > 0;
+        if (input && input.type === 'email') {
+          valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+        }
+        rows[i].classList.toggle('invalid', !valid);
+        if (!valid) ok = false;
+      }
+      if (ok) {
+        var btn = form.querySelector('.rogi-submit');
+        if (btn) {
+          btn.textContent = 'MESSAGE SENT ✓';
+          btn.disabled = true;
+        }
+        form.reset();
+      }
+    });
+  }
+
   /* ---------- 启动 ---------- */
   function init() {
     renderAll();
@@ -278,6 +331,7 @@
     initReveal();
     initYear();
     initDesignAutoScroll();
+    initRogiForm();
     if (AKA.hero && typeof AKA.hero.init === 'function') AKA.hero.init();
     if (AKA.marquee && typeof AKA.marquee.init === 'function') AKA.marquee.init();
   }
