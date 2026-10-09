@@ -6,7 +6,7 @@
 
 .carousel {
   position: relative;
-  height: 400vh; /* v2.9.10: sticky 敘事，4 張各 100vh 滾程 */
+  height: 100vh; /* v2.9.14: 滾輪劫持，100vh 不滾頁面 */
   background: var(--paper);
 }
 
@@ -32,7 +32,8 @@
   inset: 0;
   visibility: hidden;
   z-index: 1;
-  /* transform 由 JS 按 scroll 直接寫 */
+  /* v2.9.14：滾輪切換用 CSS transition */
+  transition: transform 600ms var(--ease-out);
   will-change: transform;
 }
 

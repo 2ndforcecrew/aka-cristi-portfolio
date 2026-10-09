@@ -1,8 +1,8 @@
 /* ============================================================
- * AKA.CRISTI — carousel.js（v2.9.10 sticky 敘事）
- * Elementor Sticky 概念：400vh 滾程，sticky 鎖 100vh，
- * 滾動驅動 4 張（視頻×2 + 圖片×2）crossfade，無放大。
- * 箭頭/圓點/鍵盤：點擊滾動到對應位置。
+ * AKA.CRISTI — carousel.js（v2.9.14 滾輪劫持）
+ * 100vh sticky，滾輪只切換輪播內容不滾頁面；
+ * 4 張播完才放行頁面滾動。
+ * 四方向進入（右/左/下/上），文字 2s 延遲打字機。
  * ============================================================ */
 (function () {
   'use strict';
@@ -17,7 +17,8 @@
     var dotsWrap = root.querySelector('[data-carousel-dots]');
     var countEl = root.querySelector('[data-carousel-count]');
 
-    var current = -1;
+    var current = 0;
+    var animating = false;
 
     var dots = [];
     if (dotsWrap) {
@@ -27,7 +28,7 @@
           var b = document.createElement('button');
           b.type = 'button';
           b.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
-          b.addEventListener('click', function () { scrollToSlide(idx); });
+          b.addEventListener('click', function () { goTo(idx); });
           li.appendChild(b);
           dotsWrap.appendChild(li);
           dots.push(b);
@@ -35,9 +36,18 @@
       }
     }
 
-    /* 打字機：2s 延遲後慢速打出（v2.9.13） */
-    var typeTimers = [];
+    /* 方向對應的 transform */
+    function dirTransform(dir, prog) {
+      /* prog: 0=就位, 100=完全在外 */
+      var p = prog.toFixed(2) + '%';
+      if (dir === 'right') return 'translateX(' + p + ')';
+      if (dir === 'left') return 'translateX(-' + p + ')';
+      if (dir === 'top') return 'translateY(-' + p + ')';
+      return 'translateY(' + p + ')'; /* bottom */
+    }
 
+    /* 打字機 */
+    var typeTimers = [];
     function clearTypeTimers() {
       for (var t = 0; t < typeTimers.length; t++) {
         clearTimeout(typeTimers[t]);
@@ -45,24 +55,17 @@
       }
       typeTimers = [];
     }
-
     function startTypewriter(slide) {
       clearTypeTimers();
       var h2 = slide.querySelector('h2');
       var p = slide.querySelector('.carousel-caption > p:last-child');
       if (!h2) return;
-
       var h2Text = h2.getAttribute('data-text') || h2.textContent;
       h2.setAttribute('data-text', h2Text);
       var pText = p ? (p.getAttribute('data-text') || p.textContent) : '';
       if (p) p.setAttribute('data-text', pText);
-
-      /* 先隱藏 */
       h2.textContent = '';
-      h2.style.opacity = '1';
-      if (p) { p.textContent = ''; p.style.opacity = '1'; }
-
-      /* 2s 延遲後開始 */
+      if (p) p.textContent = '';
       var delayT = setTimeout(function () {
         var hi = 0;
         var hTimer = setInterval(function () {
@@ -71,16 +74,13 @@
             hi++;
           } else {
             clearInterval(hTimer);
-            /* 標題打完再打描述 */
             if (p) {
               var pi = 0;
               var pTimer = setInterval(function () {
                 if (pi < pText.length) {
                   p.textContent += pText.charAt(pi);
                   pi++;
-                } else {
-                  clearInterval(pTimer);
-                }
+                } else { clearInterval(pTimer); }
               }, 60);
               typeTimers.push(pTimer);
             }
@@ -90,136 +90,178 @@
       }, 2000);
       typeTimers.push(delayT);
     }
-
     function stopTypewriter(slide) {
       clearTypeTimers();
-      /* 恢復完整文字 */
       var h2 = slide.querySelector('h2');
       var p = slide.querySelector('.carousel-caption > p:last-child');
       if (h2 && h2.getAttribute('data-text')) h2.textContent = h2.getAttribute('data-text');
       if (p && p.getAttribute('data-text')) p.textContent = p.getAttribute('data-text');
     }
 
-    function scrollToSlide(idx) {
-      var rect = root.getBoundingClientRect();
-      var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      var elTop = rect.top + scrollTop;
-      var total = root.offsetHeight - window.innerHeight;
-      var target = elTop + (total * idx) / (n - 1);
-      window.scrollTo({ top: target, behavior: 'smooth' });
-    }
-
-    function update() {
-      var rect = root.getBoundingClientRect();
-      var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      var elTop = rect.top + scrollTop;
-      var total = root.offsetHeight - window.innerHeight;
-      if (total <= 0) return;
-
-      var p = (scrollTop - elTop) / total;
-      p = Math.max(0, Math.min(1, p));
-
-      var f = p * (n - 1);
-      var fi = Math.floor(f);
-      var frac = f - fi;
-      /* 邊界：f 為整數時 frac=0，fi 即當前 */
-      if (fi >= n - 1) { fi = n - 2; frac = 1; }
-
+    /* 顯示指定 slide */
+    function render() {
       for (var i = 0; i < n; i++) {
         var s = slides[i];
         var dir = s.getAttribute('data-dir') || 'bottom';
-        if (i < fi) {
-          /* 已滾過：藏到進入方向的反側 */
-          var hideT = (dir === 'right') ? 'translateX(-100%)' :
-                      (dir === 'left') ? 'translateX(100%)' :
-                      (dir === 'top') ? 'translateY(100%)' : 'translateY(-100%)';
-          s.style.transform = hideT;
+        if (i < current) {
+          s.style.transform = dirTransform(dir, 100);
+          /* 已過：藏到反側避免干擾 */
+          if (dir === 'right') s.style.transform = 'translateX(-100%)';
+          else if (dir === 'left') s.style.transform = 'translateX(100%)';
+          else if (dir === 'top') s.style.transform = 'translateY(100%)';
+          else s.style.transform = 'translateY(-100%)';
           s.style.visibility = 'hidden';
           s.style.zIndex = 0;
-        } else if (i === fi) {
-          /* 當前：原地不動在下層 */
-          s.style.transform = 'translateX(0%) translateY(0%)';
+        } else if (i === current) {
+          s.style.transform = 'translateX(0) translateY(0)';
           s.style.visibility = 'visible';
           s.style.zIndex = 1;
-        } else if (i === fi + 1) {
-          /* 下一張：從指定方向滑入蓋住（v2.9.13） */
-          var prog = (1 - frac) * 100;
-          var inT = (dir === 'right') ? 'translateX(' + prog.toFixed(2) + '%)' :
-                    (dir === 'left') ? 'translateX(-' + prog.toFixed(2) + '%)' :
-                    (dir === 'top') ? 'translateY(-' + prog.toFixed(2) + '%)' :
-                    'translateY(' + prog.toFixed(2) + '%)';
-          s.style.transform = inT;
-          s.style.visibility = 'visible';
-          s.style.zIndex = 2;
         } else {
-          /* 更遠：在進入方向待命 */
-          var waitT = (dir === 'right') ? 'translateX(100%)' :
-                      (dir === 'left') ? 'translateX(-100%)' :
-                      (dir === 'top') ? 'translateY(-100%)' : 'translateY(100%)';
-          s.style.transform = waitT;
+          s.style.transform = dirTransform(dir, 100);
           s.style.visibility = 'hidden';
           s.style.zIndex = 0;
         }
+        s.classList.toggle('is-active', i === current);
       }
-
-      var activeIdx = Math.round(f);
-      if (activeIdx !== current) {
-        /* 停止舊的打字機 */
-        if (current >= 0 && slides[current]) stopTypewriter(slides[current]);
-        current = activeIdx;
-        for (var k = 0; k < n; k++) {
-          slides[k].classList.toggle('is-active', k === current);
-        }
-        /* 新 slide：2s 延遲打字機 */
-        if (slides[current]) startTypewriter(slides[current]);
-        for (var di = 0; di < dots.length; di++) {
-          dots[di].classList.toggle('is-active', di === current);
-        }
-        if (countEl) {
-          var pad = function (x) { return (x < 10 ? '0' : '') + x; };
-          countEl.textContent = pad(current + 1) + ' / ' + pad(n);
-        }
-        for (var v = 0; v < n; v++) {
-          var vid = slides[v].querySelector('video');
-          if (!vid) continue;
-          if (v === current) {
-            if (vid.paused) { try { vid.play(); } catch (e) {} }
-          } else {
-            if (!vid.paused) vid.pause();
-          }
+      for (var di = 0; di < dots.length; di++) {
+        dots[di].classList.toggle('is-active', di === current);
+      }
+      if (countEl) {
+        var pad = function (x) { return (x < 10 ? '0' : '') + x; };
+        countEl.textContent = pad(current + 1) + ' / ' + pad(n);
+      }
+      /* 視頻播放控制 */
+      for (var v = 0; v < n; v++) {
+        var vid = slides[v].querySelector('video');
+        if (!vid) continue;
+        if (v === current) {
+          if (vid.paused) { try { vid.play(); } catch (e) {} }
+        } else {
+          if (!vid.paused) vid.pause();
         }
       }
     }
 
-    if (prevBtn) prevBtn.addEventListener('click', function () {
-      scrollToSlide(Math.max(0, current - 1));
-    });
-    if (nextBtn) nextBtn.addEventListener('click', function () {
-      scrollToSlide(Math.min(n - 1, current + 1));
-    });
+    function goTo(idx) {
+      if (idx < 0 || idx >= n || idx === current || animating) return;
+      var from = current;
+      var to = idx;
+      var forward = to > from;
+
+      /* 停止舊打字機 */
+      stopTypewriter(slides[from]);
+
+      animating = true;
+      current = to;
+
+      var inSlide = slides[to];
+      var dir = inSlide.getAttribute('data-dir') || 'bottom';
+
+      /* 進場 slide：先放到進入方向，無動畫 */
+      inSlide.style.transition = 'none';
+      inSlide.style.transform = dirTransform(dir, 100);
+      inSlide.style.visibility = 'visible';
+      inSlide.style.zIndex = 2;
+      /* 強制 reflow */
+      void inSlide.offsetWidth;
+      /* 再滑入，有動畫 */
+      inSlide.style.transition = '';
+      inSlide.style.transform = 'translateX(0) translateY(0)';
+
+      /* 舊 slide 降到下層 */
+      slides[from].style.zIndex = 1;
+
+      /* 更新 dots/count */
+      for (var di = 0; di < dots.length; di++) {
+        dots[di].classList.toggle('is-active', di === current);
+      }
+      if (countEl) {
+        var pad = function (x) { return (x < 10 ? '0' : '') + x; };
+        countEl.textContent = pad(current + 1) + ' / ' + pad(n);
+      }
+
+      /* 視頻 */
+      for (var v = 0; v < n; v++) {
+        var vid = slides[v].querySelector('video');
+        if (!vid) continue;
+        if (v === current) {
+          if (vid.paused) { try { vid.play(); } catch (e) {} }
+        } else {
+          if (!vid.paused) vid.pause();
+        }
+      }
+
+      /* 動畫結束後整理 */
+      setTimeout(function () {
+        animating = false;
+        render();
+        /* 新 slide 打字機 */
+        startTypewriter(slides[current]);
+        inSlide.classList.add('is-active');
+        slides[from].classList.remove('is-active');
+      }, 650);
+    }
+
+    function next() { return goTo(current + 1); }
+    function prev() { return goTo(current - 1); }
+
+    /* 滾輪劫持：只切輪播，播完才放行頁面 */
+    root.addEventListener('wheel', function (e) {
+      if (animating) { e.preventDefault(); return; }
+      var rect = root.getBoundingClientRect();
+      /* 只有輪播佔滿視口時才劫持 */
+      var pinned = rect.top <= 1 && rect.top >= -1;
+      if (!pinned) return;
+
+      if (e.deltaY > 0) {
+        /* 向下 */
+        if (current < n - 1) {
+          e.preventDefault();
+          next();
+        }
+        /* 最後一張：不 preventDefault，放行頁面滾動 */
+      } else if (e.deltaY < 0) {
+        /* 向上 */
+        if (current > 0) {
+          e.preventDefault();
+          prev();
+        }
+        /* 第一張：不 preventDefault，放行頁面滾動 */
+      }
+    }, { passive: false });
+
+    /* 觸控 */
+    var touchY = null;
+    root.addEventListener('touchstart', function (e) {
+      touchY = e.touches[0].clientY;
+    }, { passive: true });
+    root.addEventListener('touchend', function (e) {
+      if (touchY === null || animating) return;
+      var dy = touchY - e.changedTouches[0].clientY;
+      if (Math.abs(dy) < 40) return;
+      var rect = root.getBoundingClientRect();
+      var pinned = rect.top <= 1 && rect.top >= -1;
+      if (!pinned) return;
+      if (dy > 0 && current < n - 1) next();
+      else if (dy < 0 && current > 0) prev();
+      touchY = null;
+    }, { passive: true });
+
+    if (prevBtn) prevBtn.addEventListener('click', function () { prev(); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { next(); });
 
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       var r = root.getBoundingClientRect();
       if (r.bottom < 0 || r.top > window.innerHeight) return;
-      if (e.key === 'ArrowLeft') scrollToSlide(Math.max(0, current - 1));
-      if (e.key === 'ArrowRight') scrollToSlide(Math.min(n - 1, current + 1));
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
     });
 
-    var ticking = false;
-    function onScroll() {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(function () {
-          update();
-          ticking = false;
-        });
-      }
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-
-    update();
+    /* 初始 */
+    render();
+    startTypewriter(slides[0]);
+    slides[0].classList.add('is-active');
   }
 
   function init() {
