@@ -249,6 +249,8 @@
       { dx: '180px',  dy: '-200px', r: '18deg' },
     ];
     function buildHeroMask(slide) {
+      /* WAWA 的字母已在 HTML 寫死（含散開方向），跳過 */
+      if (slide.querySelector('#wawa-clip')) return;
       var h2 = slide.querySelector('h2');
       if (!h2) return;
       var text = (h2.getAttribute('data-text') || h2.textContent).trim();
@@ -444,11 +446,12 @@
     /* 初始 */
     render();
     /* 第一張：構建 RIVER 字母遮罩 */
-    var heroSlide = root.querySelector('.hero-video');
-    if (heroSlide) {
-      buildHeroMask(heroSlide);
-      initParallax(root, heroSlide);
+    var heroSlides = root.querySelectorAll('.hero-video');
+    for (var hs = 0; hs < heroSlides.length; hs++) {
+      buildHeroMask(heroSlides[hs]);
+      initParallax(root, heroSlides[hs]);
     }
+    var heroSlide = heroSlides[0];
     startTypewriter(slides[0]);
     startAutoplay();
     if (heroSlide && slides[0] === heroSlide) startHeroTimeline(slides[0]);
